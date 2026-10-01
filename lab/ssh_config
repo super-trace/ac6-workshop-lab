@@ -1,25 +1,45 @@
 # AC6 workshop lab — Include this file from ~/.ssh/config:
 #   Include /path/to/workshop/lab/ssh_config
-# Then: stcli leaf1 / stcli leaf2
+# Then: stcli spine-jfk / stcli leaf-jfk / ... / stcli rtr-phl / stcli client-jfk
 #
-# spine1, spine2, isp1, and host1 are not stcli targets (supporting cast —
-# fabric transit, upstream ISP, customer LAN) — reach them with
-# `just lab-cli <node>`.
+# Every node is an stcli target in this lab — unlike the old topology,
+# there's no "supporting cast, docker exec only" tier.
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
 # these are loopback-only lab nodes, not real network exposure.
 
-Host leaf1 leaf2
+Host spine-jfk leaf-jfk client-jfk spine-iad leaf-iad client-iad rtr-phl rtr-ewr
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
-
-Host leaf1
     HostName 127.0.0.1
+
+# JFK
+Host spine-jfk
     Port 2401
     User admin
-
-Host leaf2
-    HostName 127.0.0.1
+Host leaf-jfk
     Port 2402
     User admin
+Host client-jfk
+    Port 2403
+    User root
+
+# IAD
+Host spine-iad
+    Port 2404
+    User admin
+Host leaf-iad
+    Port 2405
+    User admin
+Host client-iad
+    Port 2406
+    User root
+
+# WAN core
+Host rtr-phl
+    Port 2407
+    User root
+Host rtr-ewr
+    Port 2408
+    User root

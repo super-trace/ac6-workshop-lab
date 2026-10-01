@@ -13,4 +13,6 @@ just lab-setup
 
 echo ""
 echo "Setup complete. Run: just lab-up    then: just verify"
-echo "SSH ports 2401 (edge1) / 2402 (core1) auto-forward — VS Code Ports tab, or 'gh codespace ports forward'."
+echo "SSH ports 2401-2408 (spine-jfk, leaf-jfk, client-jfk, spine-iad, leaf-iad,"
+echo "client-iad, rtr-phl, rtr-ewr) auto-forward — VS Code Ports tab, or"
+echo "'gh codespace ports forward'."

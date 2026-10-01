@@ -11,16 +11,22 @@ set positional-arguments
 clab_image := "ghcr.io/srl-labs/clab:latest"
 clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
 
+srl_nodes := "spine-jfk leaf-jfk spine-iad leaf-iad"
+
 # default: list recipes
 default:
     @just --list
 
-# pre-pull images — everything here is free/public, no accounts or licenses
+# pre-pull/build images — everything here is free/public, no accounts or
+# licenses, but client-ssh and frr-ssh are built locally, not pulled: every
+# node in this lab is an stcli target, and neither a plain Linux host nor
+# the stock frrouting/frr image ships an SSH server.
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
     docker pull frrouting/frr:latest
-    docker pull ghcr.io/srl-labs/network-multitool
+    docker build -t client-ssh:latest lab/images/client-ssh
+    docker build -t frr-ssh:latest lab/images/frr-ssh
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
@@ -29,10 +35,11 @@ lab-up:
     @just lab-status
     # See README's "Known quirks" section: an SR Linux node's startup-config
     # has intermittently, silently failed to apply (root cause not fully
-    # pinned down). heal-fabric.sh checks all four and fixes defensively;
+    # pinned down). heal-fabric.sh checks all six and fixes defensively;
     # it's a fast no-op when nothing's wrong, which is the common case.
     @sleep 10
     @./scripts/heal-fabric.sh
+    @./scripts/fix-mtu.sh
 
 # tear down the lab
 lab-down:
@@ -42,14 +49,17 @@ lab-down:
 lab-status:
     {{clab_run}} inspect -t topology.clab.yml
 
-# open a vendor CLI directly on a node: just lab-cli leaf1 | leaf2 | spine1 | spine2 | isp1 | host1
-lab-cli NODE='leaf1':
+# open a vendor CLI directly on a node: just lab-cli spine-jfk | leaf-jfk | ... | rtr-phl | client-jfk
+lab-cli NODE='spine-jfk':
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{NODE}}" in
-      leaf1|leaf2|spine1|spine2) docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
-      isp1)                      docker exec -it clab-ac6-workshop-isp1 vtysh ;;
-      host1)                     docker exec -it clab-ac6-workshop-host1 sh ;;
+      spine-jfk|leaf-jfk|spine-iad|leaf-iad)
+        docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
+      rtr-phl|rtr-ewr)
+        docker exec -it clab-ac6-workshop-{{NODE}} vtysh ;;
+      client-jfk|client-iad)
+        docker exec -it clab-ac6-workshop-{{NODE}} sh ;;
       *) echo "unknown node {{NODE}}" >&2; exit 1 ;;
     esac
 
@@ -80,7 +90,7 @@ lab-diagram:
         -x -f png --scale 2 -o /data/topology.clab.png /data/topology.clab.drawio
     @echo "Wrote lab/topology.clab.png and lab/topology.clab.drawio (editable at app.diagrams.net)."
 
-# break/fix a named scenario: just break bgp | mtu | ospf
+# break/fix a named scenario: just break bgp | mtu | ospf | wan
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh
 

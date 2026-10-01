@@ -3,12 +3,13 @@ set -euo pipefail
 
 lab="clab-ac6-workshop"
 
-cat << 'CFG' | docker exec -i "${lab}-leaf1" sr_cli -ed
-set / routing-policy prefix-set advertised prefix 192.168.100.0/24 mask-length-range exact
+cat << 'CFG' | docker exec -i "${lab}-spine-jfk" sr_cli -ed
+set / routing-policy prefix-set advertised prefix 192.168.11.0/24 mask-length-range exact
 commit now
 CFG
 
-docker exec "${lab}-leaf1" sr_cli "tools network-instance default protocols bgp neighbor 203.0.113.1 reset-peer"
+docker exec "${lab}-spine-jfk" sr_cli "tools network-instance default protocols bgp neighbor 172.16.1.1 reset-peer"
+docker exec "${lab}-spine-jfk" sr_cli "tools network-instance default protocols bgp neighbor 172.16.2.1 reset-peer"
 
 echo ""
-echo "Fixed: leaf1 is re-advertising 192.168.100.0/24 to isp1."
+echo "Fixed: spine-jfk is re-advertising 192.168.11.0/24 (client-jfk) to the WAN."

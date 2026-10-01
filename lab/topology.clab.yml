@@ -1,95 +1,97 @@
 name: ac6-workshop
 
-# Own mgmt network/subnet so a per-attendee lab doesn't collide with the other
-# labs in this org (3node-lab uses stcli3/172.20.22.0/24, the AutoCon demo lab
-# uses clab/172.20.20.0/24).
+# Own mgmt network/subnet so a per-attendee lab doesn't collide with the
+# other labs in this org (3node-lab uses stcli3/172.20.22.0/24, the AutoCon
+# demo lab uses clab/172.20.20.0/24).
 mgmt:
   network: ac6
   ipv4-subnet: 172.20.23.0/24
 
 topology:
   nodes:
-    # Fabric transit — pure OSPF, no BGP. Full-meshed to both leaves for
-    # redundancy/ECMP. Not stcli targets; supporting cast, like isp1/host1.
-    spine1:
+    # ---------------------------------------------------------------- JFK --
+    spine-jfk:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/spine1.cfg
-      labels:
-        graph-level: 0
-        graph-icon: switch
-    spine2:
+      startup-config: configs/spine-jfk.cfg
+      ports: ["2401:22"]
+      labels: { graph-level: 1, graph-icon: router }
+    leaf-jfk:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/spine2.cfg
-      labels:
-        graph-level: 0
-        graph-icon: switch
-
-    # The primary device attendees connect to with stcli: eBGP to isp1
-    # (Scenario 1 lives here), OSPF to both spines.
-    leaf1:
-      kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/leaf1.cfg
-      ports:
-        - "2401:22"
-      labels:
-        graph-level: 1
-        graph-icon: router
-
-    # Second stcli-reachable device — customer LAN (host1) + OSPF to both
-    # spines. Scenario 3 (OSPF) toggles the leaf1<->spine1 link.
-    leaf2:
-      kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/leaf2.cfg
-      ports:
-        - "2402:22"
-      labels:
-        graph-level: 1
-        graph-icon: router
-
-    # The "upstream ISP" — plain FRRouting on Linux, free/open-source
-    # (Apache-2.0), no account or license needed. Not an stcli target: it's
-    # supporting cast, inspected via `docker exec ac6-isp1 vtysh` for
-    # "verify against the device itself" moments.
-    isp1:
+      startup-config: configs/leaf-jfk.cfg
+      ports: ["2402:22"]
+      labels: { graph-level: 2, graph-icon: router }
+    client-jfk:
       kind: linux
-      image: frrouting/frr:latest
-      binds:
-        - configs/isp1-daemons:/etc/frr/daemons
-        - configs/isp1-frr.conf:/etc/frr/frr.conf
-      labels:
-        graph-level: 2
-        graph-icon: router
-
-    # The attendee's own "customer" network — traffic source/sink for the
-    # BGP and MTU scenarios. Not an stcli target; docker exec only.
-    host1:
-      kind: linux
-      image: ghcr.io/srl-labs/network-multitool
-      labels:
-        graph-level: 2
-        graph-icon: host
+      image: client-ssh:latest
+      ports: ["2403:22"]
+      labels: { graph-level: 3, graph-icon: host }
       exec:
-        - ip address add 192.168.100.10/24 dev eth1
-        # `replace`, not `add`: eth0's mgmt-network default route already
-        # exists and would otherwise win, sending LAN traffic the wrong way.
-        - ip route replace default via 192.168.100.1 dev eth1
-        # Healthy MTU baseline for the MTU scenario — see README's "Known
-        # quirk" section for why this lives on host1 (plain Linux, one
-        # `ip link` call) rather than on leaf2's SR Linux interface: SR
-        # Linux's physical-interface `mtu` and its logical subinterface's
-        # `ip-mtu` are two independent settings, and changing the latter live
-        # left the subinterface stuck oper-down. Not worth the fragility
-        # when the same mismatch is trivially reproducible from here instead.
+        - ip address add 192.168.11.10/24 dev eth1
+        - ip route replace default via 192.168.11.1 dev eth1
+        # No MTU baseline here — this is Scenario 2's target, see
+        # scripts/fix-mtu.sh for the healthy-state 1500 this normally runs
+        # once at lab-up.
+
+    # ---------------------------------------------------------------- IAD --
+    spine-iad:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
+      startup-config: configs/spine-iad.cfg
+      ports: ["2404:22"]
+      labels: { graph-level: 1, graph-icon: router }
+    leaf-iad:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
+      startup-config: configs/leaf-iad.cfg
+      ports: ["2405:22"]
+      labels: { graph-level: 2, graph-icon: router }
+    client-iad:
+      kind: linux
+      image: client-ssh:latest
+      ports: ["2406:22"]
+      labels: { graph-level: 3, graph-icon: host }
+      exec:
+        - ip address add 192.168.31.10/24 dev eth1
+        - ip route replace default via 192.168.31.1 dev eth1
         - ip link set eth1 mtu 1500
 
+    # ------------------------------------------------------------ WAN core --
+    # Two independent paths between the sites (rtr-phl, rtr-ewr) plus a
+    # direct link between them for a third form of resilience. eBGP
+    # everywhere here, distinct AS per router — see README's "Why eBGP,
+    # not an iBGP mesh" for the design rationale (RFC 7938 + real DCI
+    # practice).
+    rtr-phl:
+      kind: linux
+      image: frr-ssh:latest
+      ports: ["2407:22"]
+      labels: { graph-level: 0, graph-icon: switch }
+      binds:
+        - configs/rtr-phl-daemons:/etc/frr/daemons
+        - configs/rtr-phl-frr.conf:/etc/frr/frr.conf
+    rtr-ewr:
+      kind: linux
+      image: frr-ssh:latest
+      ports: ["2408:22"]
+      labels: { graph-level: 0, graph-icon: switch }
+      binds:
+        - configs/rtr-ewr-daemons:/etc/frr/daemons
+        - configs/rtr-ewr-frr.conf:/etc/frr/frr.conf
+
   links:
-    - endpoints: ["leaf1:e1-1", "isp1:eth1"]     # eBGP, 203.0.113.0/31
-    - endpoints: ["leaf1:e1-2", "spine1:e1-1"]   # fabric, 10.1.1.0/31
-    - endpoints: ["leaf1:e1-3", "spine2:e1-1"]   # fabric, 10.1.2.0/31
-    - endpoints: ["leaf2:e1-2", "spine1:e1-2"]   # fabric, 10.1.3.0/31
-    - endpoints: ["leaf2:e1-3", "spine2:e1-2"]   # fabric, 10.1.4.0/31
-    - endpoints: ["leaf2:e1-1", "host1:eth1"]    # customer LAN + MTU scenario, 192.168.100.0/24
+    # JFK fabric
+    - endpoints: ["spine-jfk:e1-1", "leaf-jfk:e1-1"]     # OSPF, 10.10.1.0/31 — Scenario 3
+    - endpoints: ["leaf-jfk:e1-2", "client-jfk:eth1"]    # 192.168.11.0/24 — Scenarios 1 & 2
+
+    # IAD fabric
+    - endpoints: ["spine-iad:e1-1", "leaf-iad:e1-1"]     # OSPF, 10.30.1.0/31
+    - endpoints: ["leaf-iad:e1-2", "client-iad:eth1"]    # 192.168.31.0/24
+
+    # WAN — 2 paths between sites + 1 direct link between the WAN routers
+    - endpoints: ["spine-jfk:e1-3", "rtr-phl:eth1"]      # eBGP, 172.16.1.0/31 — Scenario 4
+    - endpoints: ["spine-jfk:e1-4", "rtr-ewr:eth1"]      # eBGP, 172.16.2.0/31
+    - endpoints: ["spine-iad:e1-3", "rtr-phl:eth2"]      # eBGP, 172.16.3.0/31
+    - endpoints: ["spine-iad:e1-4", "rtr-ewr:eth2"]      # eBGP, 172.16.4.0/31
+    - endpoints: ["rtr-phl:eth3", "rtr-ewr:eth3"]        # eBGP, 172.16.5.0/31
