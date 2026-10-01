@@ -10,7 +10,7 @@ mgmt:
 topology:
   nodes:
     # The one device attendees connect to with stcli for most of the
-    # workshop: eBGP to isp1, OSPF + the MTU-scenario link to core1.
+    # workshop: eBGP to isp1, OSPF to core1.
     edge1:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
@@ -19,8 +19,7 @@ topology:
         - "2401:22"
 
     # Second stcli-reachable device — OSPF neighbor of edge1, attached to the
-    # "customer LAN" (host1). Used for the OSPF-adjacency menu scenario and as
-    # the other end of the MTU-mismatch link.
+    # "customer LAN" (host1). Used for the OSPF-adjacency menu scenario.
     core1:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
@@ -49,8 +48,16 @@ topology:
         # `replace`, not `add`: eth0's mgmt-network default route already
         # exists and would otherwise win, sending LAN traffic the wrong way.
         - ip route replace default via 192.168.100.1 dev eth1
+        # Healthy MTU baseline for the MTU scenario — see README's "Known
+        # quirk" section for why this lives on host1 (plain Linux, one
+        # `ip link` call) rather than on core1's SR Linux interface: SR
+        # Linux's physical-interface `mtu` and its logical subinterface's
+        # `ip-mtu` are two independent settings, and changing the latter live
+        # left the subinterface stuck oper-down. Not worth the fragility
+        # when the same mismatch is trivially reproducible from here instead.
+        - ip link set eth1 mtu 1500
 
   links:
     - endpoints: ["edge1:e1-1", "isp1:eth1"]    # eBGP, 203.0.113.0/31
-    - endpoints: ["edge1:e1-2", "core1:e1-1"]   # OSPF + MTU-scenario link, 10.1.1.0/31
-    - endpoints: ["core1:e1-2", "host1:eth1"]   # customer LAN, 192.168.100.0/24
+    - endpoints: ["edge1:e1-2", "core1:e1-1"]   # OSPF, 10.1.1.0/31
+    - endpoints: ["core1:e1-2", "host1:eth1"]   # customer LAN + MTU scenario, 192.168.100.0/24

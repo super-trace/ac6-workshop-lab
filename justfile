@@ -27,14 +27,13 @@ lab-up:
     {{clab_run}} deploy -t topology.clab.yml
     @echo ""
     @just lab-status
-    # core1's jumbo MTU (the MTU scenario's healthy baseline) is applied here,
-    # as its own step well after deploy returns, not via containerlab's own
-    # startup-config or exec: mechanisms — doing it from either of those
-    # raced with SR Linux's own boot-time config application and intermittently
-    # corrupted core1's config, repeatably, confirmed independent of this
-    # script's content. A short settle delay first makes that race moot.
+    # See README's "Known quirk" section: under resource pressure / heavy
+    # redeploy churn, core1's startup-config has (rarely, not reliably
+    # reproducible) silently failed to apply. heal-core1.sh detects and
+    # fixes that defensively; it's a fast no-op when nothing's wrong, which
+    # is the common case.
     @sleep 10
-    @./scripts/fix-mtu.sh
+    @./scripts/heal-core1.sh
 
 # tear down the lab
 lab-down:

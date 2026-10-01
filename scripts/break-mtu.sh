@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Drops core1's host1-facing interface back to the 1500 floor (SR Linux won't
-# go lower on this interface type) — mismatched against host1's veth, which
-# defaults to 9500 (containerlab's default). Small pings still succeed;
-# anything bigger silently vanishes with no ICMP error — an L2-level drop,
-# not a router-generated PMTUD response. That's the "subtle" part: nothing
-# in the routing tables or adjacencies looks wrong.
+# Raises host1's own interface MTU above what the WAN link (core1's
+# ethernet-1/2, fixed at SR Linux's 1500 floor) can carry — "someone jumbo-
+# configured the customer box." Small pings still succeed; anything bigger
+# silently vanishes with no ICMP error. That's the "subtle" part: nothing in
+# any routing table or adjacency looks wrong, because nothing router-side
+# changed — this one lives entirely on the customer's own device.
 lab="clab-ac6-workshop"
 
-cat << 'CFG' | docker exec -i "${lab}-core1" sr_cli -ed
-set / interface ethernet-1/2 mtu 1500
-commit now
-CFG
+docker exec "${lab}-host1" ip link set eth1 mtu 9500
 
 echo ""
-echo "Broken: core1's ethernet-1/2 is back to 1500, mismatched with host1."
+echo "Broken: host1's eth1 is back to 9500, mismatched with the 1500 WAN link."
 echo "Check: docker exec ${lab}-host1 ping -c2 -s200 192.168.100.1   (works)"
 echo "       docker exec ${lab}-host1 ping -c2 -s3000 192.168.100.1 (silently fails)"
