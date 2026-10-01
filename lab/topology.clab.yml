@@ -16,14 +16,14 @@ topology:
       image: ghcr.io/nokia/srlinux:25.3.2
       startup-config: configs/spine1.cfg
       labels:
-        graph-level: 2
+        graph-level: 0
         graph-icon: switch
     spine2:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
       startup-config: configs/spine2.cfg
       labels:
-        graph-level: 2
+        graph-level: 0
         graph-icon: switch
 
     # The primary device attendees connect to with stcli: eBGP to isp1
@@ -47,7 +47,7 @@ topology:
       ports:
         - "2402:22"
       labels:
-        graph-level: 3
+        graph-level: 1
         graph-icon: router
 
     # The "upstream ISP" — plain FRRouting on Linux, free/open-source
@@ -61,7 +61,7 @@ topology:
         - configs/isp1-daemons:/etc/frr/daemons
         - configs/isp1-frr.conf:/etc/frr/frr.conf
       labels:
-        graph-level: 0
+        graph-level: 2
         graph-icon: router
 
     # The attendee's own "customer" network — traffic source/sink for the
@@ -70,7 +70,7 @@ topology:
       kind: linux
       image: ghcr.io/srl-labs/network-multitool
       labels:
-        graph-level: 4
+        graph-level: 2
         graph-icon: host
       exec:
         - ip address add 192.168.100.10/24 dev eth1
