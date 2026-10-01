@@ -27,11 +27,10 @@ lab-up:
     {{clab_run}} deploy -t topology.clab.yml
     @echo ""
     @just lab-status
-    # See README's "Known quirk" section: under resource pressure / heavy
-    # redeploy churn, core1's startup-config has (rarely, not reliably
-    # reproducible) silently failed to apply. heal-core1.sh detects and
-    # fixes that defensively; it's a fast no-op when nothing's wrong, which
-    # is the common case.
+    # See README's "Known quirks" section: core1's startup-config has
+    # intermittently, silently failed to apply (root cause not fully pinned
+    # down). heal-core1.sh detects and fixes that defensively; it's a fast
+    # no-op when nothing's wrong, which is the common case.
     @sleep 10
     @./scripts/heal-core1.sh
 
