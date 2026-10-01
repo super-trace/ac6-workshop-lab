@@ -1,0 +1,16 @@
+{
+	"name": "AC6 workshop lab (SR Linux + FRRouting)",
+	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest"
+		}
+	},
+	"privileged": true,
+	"forwardPorts": [2401, 2402],
+	"portsAttributes": {
+		"2401": { "label": "edge1 SSH" },
+		"2402": { "label": "core1 SSH" }
+	},
+	"postCreateCommand": "bash .devcontainer/setup.sh"
+}

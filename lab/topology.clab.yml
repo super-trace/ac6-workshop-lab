@@ -1,0 +1,56 @@
+name: ac6-workshop
+
+# Own mgmt network/subnet so a per-attendee lab doesn't collide with the other
+# labs in this org (3node-lab uses stcli3/172.20.22.0/24, the AutoCon demo lab
+# uses clab/172.20.20.0/24).
+mgmt:
+  network: ac6
+  ipv4-subnet: 172.20.23.0/24
+
+topology:
+  nodes:
+    # The one device attendees connect to with stcli for most of the
+    # workshop: eBGP to isp1, OSPF + the MTU-scenario link to core1.
+    edge1:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
+      startup-config: configs/edge1.cfg
+      ports:
+        - "2401:22"
+
+    # Second stcli-reachable device — OSPF neighbor of edge1, attached to the
+    # "customer LAN" (host1). Used for the OSPF-adjacency menu scenario and as
+    # the other end of the MTU-mismatch link.
+    core1:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
+      startup-config: configs/core1.cfg
+      ports:
+        - "2402:22"
+
+    # The "upstream ISP" — plain FRRouting on Linux, free/open-source
+    # (Apache-2.0), no account or license needed. Not an stcli target: it's
+    # supporting cast, inspected via `docker exec ac6-isp1 vtysh` for
+    # "verify against the device itself" moments.
+    isp1:
+      kind: linux
+      image: frrouting/frr:latest
+      binds:
+        - configs/isp1-daemons:/etc/frr/daemons
+        - configs/isp1-frr.conf:/etc/frr/frr.conf
+
+    # The attendee's own "customer" network — traffic source/sink for the
+    # BGP and MTU scenarios. Not an stcli target; docker exec only.
+    host1:
+      kind: linux
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip address add 192.168.100.10/24 dev eth1
+        # `replace`, not `add`: eth0's mgmt-network default route already
+        # exists and would otherwise win, sending LAN traffic the wrong way.
+        - ip route replace default via 192.168.100.1 dev eth1
+
+  links:
+    - endpoints: ["edge1:e1-1", "isp1:eth1"]    # eBGP, 203.0.113.0/31
+    - endpoints: ["edge1:e1-2", "core1:e1-1"]   # OSPF + MTU-scenario link, 10.1.1.0/31
+    - endpoints: ["core1:e1-2", "host1:eth1"]   # customer LAN, 192.168.100.0/24
