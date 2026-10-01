@@ -313,5 +313,31 @@ commit with a (for once, actually helpful) parsing error.
 
 `.devcontainer/` brings up Docker-in-Docker and installs `just` — nothing
 proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
-to fetch from a release asset. Forward ports 2401-2408 to run `stcli`
-locally against a Codespace-hosted lab.
+to fetch from a release asset.
+
+**`stcli` always runs on your own laptop, never inside the Codespace** — per
+the workshop spec, the only thing attendees install locally is the `stcli`
+binary itself. The Codespace just hosts the lab; its 8 SSH ports need to
+reach back to your machine for `lab/ssh_config`'s `127.0.0.1`-based aliases
+to work.
+
+That means **opening the Codespace in a browser tab is not enough.**
+GitHub's browser-based port forwarding proxies forwarded ports over HTTPS,
+which works for a web app but not for raw SSH. Use one of these instead,
+from a terminal on your own machine:
+
+```sh
+gh codespace ports forward 2401:2401 2402:2402 2403:2403 2404:2404 \
+    2405:2405 2406:2406 2407:2407 2408:2408 -c <codespace-name>
+```
+
+(`gh codespace list` to find `<codespace-name>`.) This holds a real TCP
+tunnel open in the foreground — leave it running in its own terminal tab.
+VS Code Desktop with the GitHub Codespaces extension (not the browser)
+works too, since its port forwarding is a genuine local TCP tunnel rather
+than an HTTPS proxy — but it's an extra install `gh codespace ports
+forward` doesn't need.
+
+Once forwarded, `stcli spine-jfk` etc. work exactly as they do against a
+local Docker/OrbStack-hosted lab — same `lab/ssh_config`, same ports,
+same everything.
