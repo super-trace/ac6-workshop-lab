@@ -1,24 +1,25 @@
 # AC6 workshop lab — Include this file from ~/.ssh/config:
 #   Include /path/to/workshop/lab/ssh_config
-# Then: stcli edge1 / stcli core1
+# Then: stcli leaf1 / stcli leaf2
 #
-# isp1 and host1 are not stcli targets (supporting cast — upstream ISP and
-# customer LAN) — reach them with `just lab-cli isp1` / `just lab-cli host1`.
+# spine1, spine2, isp1, and host1 are not stcli targets (supporting cast —
+# fabric transit, upstream ISP, customer LAN) — reach them with
+# `just lab-cli <node>`.
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
 # these are loopback-only lab nodes, not real network exposure.
 
-Host edge1 core1
+Host leaf1 leaf2
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
-Host edge1
+Host leaf1
     HostName 127.0.0.1
     Port 2401
     User admin
 
-Host core1
+Host leaf2
     HostName 127.0.0.1
     Port 2402
     User admin

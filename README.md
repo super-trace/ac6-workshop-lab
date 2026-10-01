@@ -37,45 +37,53 @@ neither needs anything attendees don't already have.
 
 ## Topology
 
-```mermaid
-flowchart TD
-    isp1["<b>isp1</b> — FRRouting, AS 65020<br/>&quot;the internet&quot;<br/>lo 203.0.113.1<br/>originates 198.51.100.0/24<br/><i>docker exec / vtysh only</i>"]
-    edge1["🎯 <b>edge1</b> — SR Linux, AS 65010<br/>lo 10.0.0.1<br/><b>Scenario 1 (BGP)</b> lives here<br/><i>stcli target #1 · ssh -p 2401</i>"]
-    core1["🎯 <b>core1</b> — SR Linux, AS 65010<br/>lo 10.0.0.2<br/><b>Scenario 3 (OSPF)</b> lives here<br/><i>stcli target #2 · ssh -p 2402</i>"]
-    host1["<b>host1</b> — plain Linux<br/>192.168.100.10<br/><b>Scenario 2 (MTU)</b> lives here<br/><i>docker exec only</i>"]
+A 2-spine/2-leaf fabric: `isp1` (upstream) → `leaf1` → `spine1`/`spine2` →
+`leaf2` → `host1` (customer LAN), with `leaf1` and `leaf2` full-meshed to
+both spines for redundancy.
 
-    isp1 -->|"eBGP, AS 65010 ↔ 65020<br/>203.0.113.0/31"| edge1
-    edge1 -->|"OSPF area 0.0.0.0<br/>10.1.1.0/31"| core1
-    core1 -->|"customer LAN<br/>192.168.100.0/24"| host1
+![AC6 workshop lab topology](lab/topology.clab.png)
 
-    classDef stcliTarget fill:#d4edda,stroke:#28a745,stroke-width:2px
-    classDef supportCast fill:#f0f0f0,stroke:#999999,stroke-width:1px
-    class edge1,core1 stcliTarget
-    class isp1,host1 supportCast
-```
+This image is generated, not hand-drawn — `just lab-diagram` turns the real
+`topology.clab.yml` into it via containerlab's own `graph --drawio` (through
+the [clab-io-draw](https://github.com/srl-labs/clab-io-draw) project, which
+supplies the router/switch/host icons) and
+[rlespinasse/drawio-desktop-headless](https://github.com/rlespinasse/docker-drawio-desktop-headless)
+to render a static PNG, since GitHub doesn't render `.drawio` natively. Run
+it after any topology change — nothing keeps this image in sync
+automatically. The source `lab/topology.clab.drawio` is also committed and
+editable at [app.diagrams.net](https://app.diagrams.net) if you want to
+touch it up by hand. Each node's position in the diagram comes from
+`labels.graph-level`/`graph-icon` in `topology.clab.yml`, not from
+containerlab itself — worth knowing if a node ever lands somewhere odd after
+adding one.
 
-Green boxes are stcli targets; grey boxes are supporting cast
-(`docker exec`/`vtysh` only — see the [node table](#node-roles) below). Both
-SR Linux credentials are `admin` / `NokiaSrl1!` (factory default).
-
-Sanity-check this diagram against the real `topology.clab.yml` any time with
-`just lab-graph` (wraps containerlab's own `graph --dot`, needs `graphviz`
-locally — not needed to run the lab itself).
+For a quick, icon-free structural sanity check instead (does the real
+topology still match what's documented, with no Docker image pulls beyond
+what's already needed to run the lab), use `just lab-graph` — wraps
+containerlab's `graph --dot`, needs `graphviz` locally
+(`brew install graphviz`).
 
 ### Node roles
 
 | Node | Role | Kind | stcli target? | Mgmt SSH port |
 |---|---|---|---|---|
-| `edge1` | primary device attendees connect to; eBGP to `isp1` | SR Linux | **yes** | 2401 |
-| `core1` | second device; OSPF to `edge1`, customer LAN to `host1` | SR Linux | **yes** | 2402 |
+| `leaf1` | primary device attendees connect to; eBGP to `isp1` (AS 65010) | SR Linux | **yes** | 2401 |
+| `leaf2` | second device; customer LAN to `host1` | SR Linux | **yes** | 2402 |
+| `spine1`, `spine2` | fabric transit, pure OSPF, no BGP | SR Linux | no — `sr_cli` only | — |
 | `isp1` | "the internet" — upstream eBGP peer, AS 65020 | FRRouting | no — `vtysh` only | — |
 | `host1` | customer LAN traffic source/sink | plain Linux | no — shell only | — |
 
-`host1`'s subnet (`192.168.100.0/24`) is originated into OSPF by `core1` and
-redistributed into BGP by `edge1` via an **explicit allow-list**
+Both SR Linux credentials are `admin` / `NokiaSrl1!` (factory default).
+
+`host1`'s subnet (`192.168.100.0/24`) is originated into OSPF by `leaf2` and
+redistributed into BGP by `leaf1` via an **explicit allow-list**
 (`routing-policy prefix-set advertised`), not a broad match-everything
 policy — specifically so Scenario 1 can break *one* prefix's advertisement
-with a single config line, not the whole BGP session.
+with a single config line, not the whole BGP session. The route reaches
+`leaf1` by crossing the fabric via OSPF (ECMP across both spines when
+healthy), not via a static default route — unlike the old 4-node version of
+this lab, there's no single "straight-line" path left to hang a static
+route off of.
 
 ## Running it
 
@@ -85,7 +93,7 @@ only — not needed to actually use the lab with `stcli`.
 
 ```sh
 just lab-setup   # pulls clab, srlinux, frr, network-multitool — all free/public
-just lab-up      # deploys, then confirms core1 came up clean (see quirks below)
+just lab-up      # deploys, then confirms every SR Linux node came up clean (see quirks below)
 just verify
 ```
 
@@ -106,13 +114,13 @@ stcli login   # one-time, real backend — nothing to stand up locally
 # add to ~/.ssh/config:
 Include /path/to/this/repo/lab/ssh_config
 
-stcli edge1
-stcli core1
+stcli leaf1
+stcli leaf2
 ```
 
 One device per stcli session — attendees open a second terminal tab for
-`core1` when a scenario needs it (the OSPF fix, for instance, touches
-`core1`, not `edge1`).
+`leaf2` when a scenario needs it (the OSPF fix, for instance, touches
+`leaf1`, not `leaf2`).
 
 ## Scenarios
 
@@ -124,18 +132,18 @@ One device per stcli session — attendees open a second terminal tab for
 
 ### 1. BGP: a prefix stops being advertised (guided)
 
-Removes `192.168.100.0/24` from `edge1`'s export allow-list.
+Removes `192.168.100.0/24` from `leaf1`'s export allow-list.
 
 **Symptom:** `isp1`'s BGP table loses `192.168.100.0/24` (check with
-`just lab-cli isp1` → `show ip bgp`); `10.0.0.2/32` (`core1`'s loopback)
+`just lab-cli isp1` → `show ip bgp`); `10.0.0.2/32` (`leaf2`'s loopback)
 stays advertised, since this is a single allow-list entry, not a
 whole-policy or whole-session break. Diagnosable and fixable entirely from
-`edge1`.
+`leaf1`.
 
 ### 2. MTU: breaks some traffic, not all of it (self-serve)
 
 Raises `host1`'s own interface MTU to 9500, above what the WAN link
-(`core1`'s `ethernet-1/2`, fixed at SR Linux's 1500 floor) can carry — "the
+(`leaf2`'s `ethernet-1/1`, fixed at SR Linux's 1500 floor) can carry — "the
 customer's device has jumbo frames misconfigured."
 
 **Symptom:** `ping -s 200` succeeds, `ping -s 3000` silently vanishes — no
@@ -144,17 +152,24 @@ either router. That's the point: the fault lives entirely on the customer's
 own device, so there's nothing router-side to "discover" except by actually
 testing different packet sizes end to end.
 
-### 3. OSPF: adjacency stuck at Two-Way (menu)
+### 3. OSPF: a fabric link stuck at Two-Way (menu)
 
-Removes the `interface-type point-to-point` override on `edge1`'s side of
-the `edge1`↔`core1` link.
+Removes the `interface-type point-to-point` override on `leaf1`'s side of
+the `leaf1`↔`spine1` link — one of `leaf1`'s two fabric uplinks.
 
-**Symptom:** the adjacency never reaches Full; `show network-instance
-default protocols ospf neighbor` shows `two-way` indefinitely. SR Linux
-treats the link as broadcast-type (needing DR/BDR election) without the
-override, and on a true point-to-point veth with no real election outcome,
-it just never finishes. Hit by accident during development, kept on purpose
-— it's a classic, very real OSPF gotcha with zero error messages anywhere.
+**Symptom:** that one adjacency never reaches Full; `show network-instance
+default protocols ospf neighbor` on `leaf1` shows `ethernet-1/2.0` stuck at
+`two-way` while `ethernet-1/3.0` (to `spine2`) stays `full`. SR Linux treats
+the link as broadcast-type (needing DR/BDR election) without the override,
+and on a true point-to-point veth with no real election outcome, it just
+never finishes. Hit by accident during development, kept on purpose — it's
+a classic, very real OSPF gotcha with zero error messages anywhere.
+
+End-to-end reachability (`host1` → `isp1`) **survives this one** — traffic
+just shifts entirely onto the `spine2` path. That's deliberate: in a
+2-spine fabric, losing one path shouldn't be visible from a ping test, only
+from actually checking both adjacencies. A good prompt for attendees to
+notice this isn't "nothing is broken."
 
 ## Known SR Linux / containerlab quirks
 
@@ -168,16 +183,21 @@ design, so manual CLI changes survive a redeploy. If you've edited a
 `configs/*.cfg` file, `just lab-down && just lab-up` **will not** pick up
 the change; you need `rm -rf lab/clab-ac6-workshop` first.
 
-**`core1`'s startup-config intermittently, silently failed to apply** —
-confirmed repeatable at points during development, independent of file
-content (isolated via a binary search: identical lines succeeded reliably
-split across two smaller commits, failed unpredictably as one big one), and
-independent of host memory pressure (still happened on a freshly-freed
-machine). `edge1`'s comparably-sized startup-config never showed this.
-Root cause not fully pinned down. `just lab-up` now runs
-`scripts/heal-core1.sh` after every deploy, which detects the symptom
-(`network-instance default` missing) and re-applies in two commits if
-needed — a fast no-op the common case, when nothing's wrong.
+**An SR Linux node's startup-config intermittently, silently failed to
+apply — sometimes partially.** Confirmed repeatable at points during
+development, independent of file content (isolated via a binary search:
+identical lines succeeded reliably split across two smaller commits, failed
+unpredictably as one big one), and independent of host memory pressure
+(still happened on a freshly-freed machine). On the old 4-node version of
+this lab it only ever hit `core1` (now `leaf2`), never `edge1` (now
+`leaf1`) despite comparable config size; on the fabric version it also hit
+`leaf1`, but only the *second half* of the file (BGP + routing-policy) —
+interfaces and OSPF came up fine. Root cause not fully pinned down. Rather
+than keep refining a detector for every way this can partially fail,
+`just lab-up` now runs `scripts/heal-fabric.sh` after every deploy, which
+unconditionally re-applies every SR Linux node's config in two commits —
+`set` commands are idempotent, so reapplying something already correct is a
+no-op, not an error.
 
 **SR Linux's physical interface `mtu` and its logical subinterface's
 `ip-mtu` are independent settings.** Raising only the physical interface's
@@ -185,7 +205,7 @@ needed — a fast no-op the common case, when nothing's wrong.
 Changing `ip-mtu` live additionally left the subinterface stuck
 `oper-state: down` in testing. This is why the MTU scenario lives on
 `host1` (plain Linux, one reliable `ip link set mtu` call) instead of on
-`core1`'s SR Linux interface — not worth the fragility when the same
+`leaf2`'s SR Linux interface — not worth the fragility when the same
 mismatch is trivially reproducible from the other end of the link.
 
 **FRR's RFC 8212 enforcement silently discards all routes on a "naked" eBGP

@@ -27,12 +27,12 @@ lab-up:
     {{clab_run}} deploy -t topology.clab.yml
     @echo ""
     @just lab-status
-    # See README's "Known quirks" section: core1's startup-config has
-    # intermittently, silently failed to apply (root cause not fully pinned
-    # down). heal-core1.sh detects and fixes that defensively; it's a fast
-    # no-op when nothing's wrong, which is the common case.
+    # See README's "Known quirks" section: an SR Linux node's startup-config
+    # has intermittently, silently failed to apply (root cause not fully
+    # pinned down). heal-fabric.sh checks all four and fixes defensively;
+    # it's a fast no-op when nothing's wrong, which is the common case.
     @sleep 10
-    @./scripts/heal-core1.sh
+    @./scripts/heal-fabric.sh
 
 # tear down the lab
 lab-down:
@@ -42,14 +42,14 @@ lab-down:
 lab-status:
     {{clab_run}} inspect -t topology.clab.yml
 
-# open a vendor CLI directly on a node: just lab-cli edge1 | core1 | isp1 | host1
-lab-cli NODE='edge1':
+# open a vendor CLI directly on a node: just lab-cli leaf1 | leaf2 | spine1 | spine2 | isp1 | host1
+lab-cli NODE='leaf1':
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{NODE}}" in
-      edge1|core1) docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
-      isp1)        docker exec -it clab-ac6-workshop-isp1 vtysh ;;
-      host1)       docker exec -it clab-ac6-workshop-host1 sh ;;
+      leaf1|leaf2|spine1|spine2) docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
+      isp1)                      docker exec -it clab-ac6-workshop-isp1 vtysh ;;
+      host1)                     docker exec -it clab-ac6-workshop-host1 sh ;;
       *) echo "unknown node {{NODE}}" >&2; exit 1 ;;
     esac
 
@@ -57,13 +57,28 @@ lab-cli NODE='edge1':
 verify:
     ./scripts/verify.sh
 
-# sanity-check the README's Mermaid diagram against the real topology.clab.yml
-# (needs graphviz locally — `brew install graphviz` — not needed to run the lab)
+# quick structural sanity-check: does the real topology.clab.yml still match
+# what the README's diagram claims? (needs graphviz locally —
+# `brew install graphviz` — not needed to run the lab)
 lab-graph:
     {{clab_run}} graph --dot -t topology.clab.yml
     dot -Tsvg lab/clab-ac6-workshop/graph/topology.clab.dot -o /tmp/ac6-workshop.svg
     @echo "Wrote /tmp/ac6-workshop.svg — open it and compare against the README diagram."
     @open /tmp/ac6-workshop.svg 2>/dev/null || true
+
+# regenerate lab/topology.clab.png, the real diagram embedded in the README —
+# run this after any topology.clab.yml change. Two steps: containerlab's own
+# `graph --drawio` (via the clab-io-draw project) turns the topology into a
+# .drawio file with real router/switch/host icons and a hierarchical layout
+# (controlled by each node's `labels.graph-level`/`graph-icon` in
+# topology.clab.yml); rlespinasse/drawio-desktop-headless then renders that
+# to a static PNG, since GitHub doesn't render .drawio natively. Needs
+# Docker only — no local drawio/graphviz install.
+lab-diagram:
+    {{clab_run}} graph --drawio -t topology.clab.yml
+    docker run --rm -v "$(pwd)/lab":/data rlespinasse/drawio-desktop-headless \
+        -x -f png --scale 2 -o /data/topology.clab.png /data/topology.clab.drawio
+    @echo "Wrote lab/topology.clab.png and lab/topology.clab.drawio (editable at app.diagrams.net)."
 
 # break/fix a named scenario: just break bgp | mtu | ospf
 break SCENARIO:

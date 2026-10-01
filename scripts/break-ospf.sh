@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Removes the point-to-point network-type override on edge1's side of the
-# edge1<->core1 link. Without it, SR Linux's OSPF treats the link as
-# broadcast-type and needs DR/BDR election to reach Full — on a point-to-point
-# veth with no real election outcome, it gets stuck at Two-Way indefinitely.
-# A classic, very real OSPF gotcha: no error anywhere, adjacency just never
-# finishes, confirmed live in this project's own dev session before it ever
-# became a scripted scenario.
+# Removes the point-to-point network-type override on leaf1's side of the
+# leaf1<->spine1 link (one of leaf1's two fabric uplinks). Without it, SR
+# Linux's OSPF treats the link as broadcast-type and needs DR/BDR election
+# to reach Full — on a point-to-point veth with no real election outcome, it
+# gets stuck at Two-Way indefinitely. A classic, very real OSPF gotcha: no
+# error anywhere, adjacency just never finishes, confirmed live in this
+# project's own dev session before it ever became a scripted scenario.
+#
+# leaf1<->spine2 stays up, so end-to-end reachability survives this one —
+# only the redundancy is gone, which is the actual point of a 2-spine
+# fabric: losing one path shouldn't be visible from a ping test, only from
+# actually checking both adjacencies.
 lab="clab-ac6-workshop"
 
-cat << 'CFG' | docker exec -i "${lab}-edge1" sr_cli -ed
+cat << 'CFG' | docker exec -i "${lab}-leaf1" sr_cli -ed
 delete / network-instance default protocols ospf instance main area 0.0.0.0 interface ethernet-1/2.0 interface-type
 commit now
 CFG
 
-docker exec "${lab}-edge1" sr_cli "tools network-instance default protocols ospf instance main neighbors clear"
+docker exec "${lab}-leaf1" sr_cli "tools network-instance default protocols ospf instance main neighbors clear"
 
 echo ""
-echo "Broken: edge1<->core1 OSPF will settle at Two-Way, not Full."
-echo "Check: docker exec ${lab}-edge1 sr_cli \"show network-instance default protocols ospf neighbor\""
+echo "Broken: leaf1<->spine1 OSPF will settle at Two-Way, not Full."
+echo "(leaf1<->spine2 is unaffected — reachability survives, redundancy doesn't.)"
+echo "Check: docker exec ${lab}-leaf1 sr_cli \"show network-instance default protocols ospf neighbor\""

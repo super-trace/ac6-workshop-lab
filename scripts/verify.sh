@@ -3,12 +3,13 @@ set -euo pipefail
 
 lab="clab-ac6-workshop"
 
-echo "== OSPF neighbor (edge1 <-> core1, expect Full) =="
-docker exec "${lab}-edge1" sr_cli "show network-instance default protocols ospf neighbor"
+echo "== fabric OSPF neighbors (expect Full on all 4 leaf<->spine adjacencies) =="
+docker exec "${lab}-leaf1" sr_cli "show network-instance default protocols ospf neighbor"
+docker exec "${lab}-leaf2" sr_cli "show network-instance default protocols ospf neighbor"
 
 echo
-echo "== eBGP session (edge1 <-> isp1, expect Established) =="
-docker exec "${lab}-edge1" sr_cli "show network-instance default protocols bgp neighbor"
+echo "== eBGP session (leaf1 <-> isp1, expect Established) =="
+docker exec "${lab}-leaf1" sr_cli "show network-instance default protocols bgp neighbor"
 docker exec "${lab}-isp1" vtysh -c "show ip bgp summary"
 
 echo
@@ -16,7 +17,7 @@ echo "== customer LAN prefix on isp1 (expect 192.168.100.0/24) =="
 docker exec "${lab}-isp1" vtysh -c "show ip bgp"
 
 echo
-echo "== end-to-end: host1 -> isp1 loopback =="
+echo "== end-to-end: host1 -> isp1 loopback (crosses both spines via ECMP) =="
 docker exec "${lab}-host1" ping -c 3 203.0.113.1
 
 echo
@@ -26,7 +27,7 @@ docker exec "${lab}-host1" ping -c 2 -s 3000 192.168.100.1 || true
 
 echo
 echo "== stcli SSH aliases (requires: Include .../workshop/lab/ssh_config) =="
-for node in edge1 core1; do
+for node in leaf1 leaf2; do
     echo "-- ${node} --"
     # -o PubkeyAuthentication=no, PreferredAuthentications=password: SR
     # Linux's sshd doesn't offer keyboard-interactive, and plain `ssh` tries
