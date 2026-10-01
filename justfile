@@ -57,6 +57,14 @@ lab-cli NODE='edge1':
 verify:
     ./scripts/verify.sh
 
+# sanity-check the README's Mermaid diagram against the real topology.clab.yml
+# (needs graphviz locally — `brew install graphviz` — not needed to run the lab)
+lab-graph:
+    {{clab_run}} graph --dot -t topology.clab.yml
+    dot -Tsvg lab/clab-ac6-workshop/graph/topology.clab.dot -o /tmp/ac6-workshop.svg
+    @echo "Wrote /tmp/ac6-workshop.svg — open it and compare against the README diagram."
+    @open /tmp/ac6-workshop.svg 2>/dev/null || true
+
 # break/fix a named scenario: just break bgp | mtu | ospf
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh

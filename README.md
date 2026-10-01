@@ -37,28 +37,32 @@ neither needs anything attendees don't already have.
 
 ## Topology
 
+```mermaid
+flowchart TD
+    isp1["<b>isp1</b> — FRRouting, AS 65020<br/>&quot;the internet&quot;<br/>lo 203.0.113.1<br/>originates 198.51.100.0/24<br/><i>docker exec / vtysh only</i>"]
+    edge1["🎯 <b>edge1</b> — SR Linux, AS 65010<br/>lo 10.0.0.1<br/><b>Scenario 1 (BGP)</b> lives here<br/><i>stcli target #1 · ssh -p 2401</i>"]
+    core1["🎯 <b>core1</b> — SR Linux, AS 65010<br/>lo 10.0.0.2<br/><b>Scenario 3 (OSPF)</b> lives here<br/><i>stcli target #2 · ssh -p 2402</i>"]
+    host1["<b>host1</b> — plain Linux<br/>192.168.100.10<br/><b>Scenario 2 (MTU)</b> lives here<br/><i>docker exec only</i>"]
+
+    isp1 -->|"eBGP, AS 65010 ↔ 65020<br/>203.0.113.0/31"| edge1
+    edge1 -->|"OSPF area 0.0.0.0<br/>10.1.1.0/31"| core1
+    core1 -->|"customer LAN<br/>192.168.100.0/24"| host1
+
+    classDef stcliTarget fill:#d4edda,stroke:#28a745,stroke-width:2px
+    classDef supportCast fill:#f0f0f0,stroke:#999999,stroke-width:1px
+    class edge1,core1 stcliTarget
+    class isp1,host1 supportCast
 ```
-  isp1 — FRRouting, AS 65020 ("the internet")              not an stcli target
-  lo 203.0.113.1, originates 198.51.100.0/24                docker exec / vtysh only
-       │
-       │   eBGP — AS 65010 ↔ AS 65020
-       │   203.0.113.0/31
-       ▼
-  edge1 — SR Linux, AS 65010                                stcli target #1
-  lo 10.0.0.1 — Scenario 1 (BGP) lives here                  ssh -p 2401, admin/NokiaSrl1!
-       │
-       │   OSPF area 0.0.0.0
-       │   10.1.1.0/31
-       ▼
-  core1 — SR Linux, AS 65010                                stcli target #2
-  lo 10.0.0.2 — Scenario 3 (OSPF) lives here                 ssh -p 2402, admin/NokiaSrl1!
-       │
-       │   customer LAN
-       │   192.168.100.0/24
-       ▼
-  host1 — plain Linux                                       not an stcli target
-  192.168.100.10 — Scenario 2 (MTU) lives here                docker exec only
-```
+
+Green boxes are stcli targets; grey boxes are supporting cast
+(`docker exec`/`vtysh` only — see the [node table](#node-roles) below). Both
+SR Linux credentials are `admin` / `NokiaSrl1!` (factory default).
+
+Sanity-check this diagram against the real `topology.clab.yml` any time with
+`just lab-graph` (wraps containerlab's own `graph --dot`, needs `graphviz`
+locally — not needed to run the lab itself).
+
+### Node roles
 
 | Node | Role | Kind | stcli target? | Mgmt SSH port |
 |---|---|---|---|---|
