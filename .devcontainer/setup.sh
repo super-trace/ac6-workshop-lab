@@ -8,6 +8,12 @@ set -euo pipefail
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
     | sudo bash -s -- --to /usr/local/bin
 
+# sshpass — scripts/verify.sh's manual SSH check needs it (not stcli itself,
+# which offers both pubkey and password auth and lets the server pick). The
+# README's local setup gets this from Homebrew; the devcontainer needs its
+# own install.
+sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+
 # Unlike stcli-3node-lab, nothing here is licensed or proprietary — SR Linux
 # and FRRouting are both freely pullable, so there's no GitHub Release asset
 # to fetch and no account an attendee needs beyond ssh.supertrace.ai itself.
