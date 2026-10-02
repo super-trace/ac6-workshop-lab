@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# just — not preinstalled on the base devcontainer image.
+# just — not preinstalled on the base devcontainer image. postCreateCommand
+# runs as the non-root default user (vscode), which can't write to
+# /usr/local/bin directly — sudo (passwordless for this user, standard on
+# devcontainer base images) is required here.
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
-    | bash -s -- --to /usr/local/bin
+    | sudo bash -s -- --to /usr/local/bin
 
 # Unlike stcli-3node-lab, nothing here is licensed or proprietary — SR Linux
 # and FRRouting are both freely pullable, so there's no GitHub Release asset
