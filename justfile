@@ -30,6 +30,11 @@ lab-setup:
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
+    # Every node gets a fresh host key on every deploy. lab/ssh_config points
+    # stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
+    # comment for why); wiping it here is what keeps a redeploy from looking
+    # like a man-in-the-middle to either of them.
+    @rm -f ~/.ac6-workshop-known-hosts
     {{clab_run}} deploy -t topology.clab.yml
     @echo ""
     @just lab-status
@@ -44,6 +49,7 @@ lab-up:
 # tear down the lab
 lab-down:
     {{clab_run}} destroy -t topology.clab.yml
+    @rm -f ~/.ac6-workshop-known-hosts
 
 # table of running lab nodes + their IPs
 lab-status:

@@ -7,11 +7,18 @@
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
-# these are loopback-only lab nodes, not real network exposure.
+# these are loopback-only lab nodes, not real network exposure. A dedicated
+# known_hosts file (wiped by `just lab-up`/`lab-down`, see justfile) rather
+# than /dev/null: stcli's trust-on-first-use flow writes the accepted key
+# back to this file and then re-verifies against it, so it needs somewhere
+# that actually retains what's written — /dev/null discards it, which
+# makes every "trust this host key?" prompt loop forever. Plain `ssh` never
+# notices the difference either way, since StrictHostKeyChecking no skips
+# its own check regardless of what's recorded.
 
 Host spine-jfk leaf-jfk client-jfk spine-iad leaf-iad client-iad rtr-phl rtr-ewr
     StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+    UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
 
 # JFK
