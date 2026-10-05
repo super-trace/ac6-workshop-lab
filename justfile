@@ -53,19 +53,31 @@ install-key:
 # confirmed directly debugging this lab against a Codespace, see README's
 # "Codespaces details". A naive append would eventually land after some
 # Host block the user adds later and quietly stop working with no error.
+#
+# Includes a private copy in ~/.ssh/, not the repo file directly: OpenSSH
+# refuses to read an Include'd file that's writable by anyone but its
+# owner, and a Codespace's /workspaces mount makes the whole repo checkout
+# world-writable (-rw-rw-rw-) regardless of what's committed — confirmed
+# live ("Bad owner or permissions on .../lab/ssh_config"). The copy is
+# re-synced on every run, so a lab/ssh_config change still needs re-running
+# this to take effect — not automatic the way Including the live file
+# would have been, but that only worked on a normal filesystem anyway.
 install-ssh-config:
     #!/usr/bin/env bash
     set -euo pipefail
-    target="$(cd lab && pwd)/ssh_config"
+    staged="$HOME/.ssh/ac6-workshop-ssh-config.conf"
     config="$HOME/.ssh/config"
-    line="Include ${target}"
+    line="Include ${staged}"
 
     mkdir -p "$HOME/.ssh"
+    cp lab/ssh_config "$staged"
+    chmod 600 "$staged"
+
     touch "$config"
     chmod 600 "$config"
 
     if grep -qF "$line" "$config"; then
-        echo "~/.ssh/config already includes ${target}"
+        echo "~/.ssh/config already includes ${staged} (just refreshed its contents)"
         exit 0
     fi
 
