@@ -27,6 +27,22 @@ lab-setup:
     docker pull frrouting/frr:latest
     docker build -t client-ssh:latest lab/images/client-ssh
     docker build -t frr-ssh:latest lab/images/frr-ssh
+    @just install-key
+
+# installs the shared lab keypair to ~/.ssh/ac6-workshop-key — split out of
+# lab-setup because `stcli` needs it on whichever machine it runs from
+# (your laptop), even in Codespace mode, where lab-setup itself runs
+# inside the Codespace instead (see codespace-connect and the README's
+# "Codespaces" section).
+install-key:
+    # lab/ssh_config points stcli's IdentityFile here — a fixed,
+    # home-relative path so it resolves the same regardless of where this
+    # repo is cloned. Not a secret: the matching public key is baked into
+    # every node, and only ever used against these loopback-only lab
+    # containers.
+    @mkdir -p ~/.ssh
+    @cp lab/ac6-workshop-key ~/.ssh/ac6-workshop-key
+    @chmod 600 ~/.ssh/ac6-workshop-key
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
@@ -54,6 +70,58 @@ lab-down:
 # table of running lab nodes + their IPs
 lab-status:
     {{clab_run}} inspect -t topology.clab.yml
+
+# connect stcli (running on your own machine) to a Codespace-hosted lab:
+# just codespace-connect [name]. Local and Codespace-hosted are mutually
+# exclusive on one machine — both use the same canonical ports 2401-2408
+# via the same lab/ssh_config aliases, which is what lets `stcli spine-jfk`
+# etc. work identically either way, but only if whichever one isn't active
+# right now isn't holding those ports. Run `just lab-down` first if you've
+# been running the lab locally.
+#
+# Deliberately gh codespace ports forward, not VS Code's own forwarding:
+# VS Code auto-offsets ports when something else holds them locally
+# (confirmed firsthand — 2401-2408 silently became 2409-2416), which
+# breaks lab/ssh_config's aliases with no clear error. This maps 1:1 or
+# fails loudly, which is what you want from a script.
+#
+# Everything else — lab-setup, lab-up, lab-down, verify, break, fix,
+# lab-cli — talks to Docker directly and only exists inside the Codespace,
+# so those still need to run in the Codespace's own terminal. This recipe
+# only gets stcli (and a human) there; it doesn't run the lab remotely.
+codespace-connect CODESPACE='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name="{{CODESPACE}}"
+    if [ -z "$name" ]; then
+        matches="$(gh codespace list --json name,repository \
+            -q '.[] | select(.repository=="super-trace/ac6-workshop-lab") | .name')"
+        count="$(echo "$matches" | grep -c . || true)"
+        if [ "$count" -eq 0 ]; then
+            echo "no codespace found for super-trace/ac6-workshop-lab — create one first" >&2
+            exit 1
+        elif [ "$count" -gt 1 ]; then
+            echo "more than one codespace found; pass one explicitly:" >&2
+            echo "$matches" >&2
+            exit 1
+        fi
+        name="$matches"
+    fi
+
+    for port in 2401 2402 2403 2404 2405 2406 2407 2408; do
+        if lsof -iTCP:"$port" -sTCP:LISTEN -n -P >/dev/null 2>&1; then
+            echo "port $port is already in use locally — if the local lab is up, run 'just lab-down' first" >&2
+            exit 1
+        fi
+    done
+
+    just install-key
+
+    echo "Forwarding ${name}'s SSH ports to 127.0.0.1:2401-2408 — leave this running, Ctrl-C to stop."
+    gh codespace ports forward \
+        2401:2401 2402:2402 2403:2403 2404:2404 \
+        2405:2405 2406:2406 2407:2407 2408:2408 \
+        -c "$name"
 
 # open a vendor CLI directly on a node: just lab-cli spine-jfk | leaf-jfk | ... | rtr-phl | client-jfk
 lab-cli NODE='spine-jfk':

@@ -105,11 +105,18 @@ everything through the spine's own loopback, which OSPF already carries.
 | `rtr-ewr` | WAN router, path 2 | FRRouting | 65022 | **yes** | 2408 |
 
 Every node is an stcli target — unlike the old single-site version of this
-lab, there's no "supporting cast, `docker exec` only" tier. SR Linux
-credentials are `admin` / `NokiaSrl1!` (factory default); the Linux clients
-and FRR routers are `root` / `admin` (set by `lab/images/*/Dockerfile`, since
-neither a stock Linux container nor the stock `frrouting/frr` image ships an
-SSH server at all).
+lab, there's no "supporting cast, `docker exec` only" tier. Every node also
+accepts key-based login with no password prompt: `just lab-setup` installs
+a shared, non-secret lab keypair (`lab/ac6-workshop-key`) to
+`~/.ssh/ac6-workshop-key`, matched by a public key baked into every node —
+on SR Linux, as a new `stcli` local superuser (`admin` is a reserved
+username there and can't take an `ssh-key`; see `lab/configs/spine-jfk.cfg`
+for how that was found); on the Linux nodes, as `root`'s
+`authorized_keys`, bind-mounted in from the same file. Interactive/manual
+CLI access still falls back to passwords: SR Linux's factory-default
+`admin` / `NokiaSrl1!`, and `root` / `admin` on the Linux clients and FRR
+routers (set by `lab/images/*/Dockerfile`, since neither a stock Linux
+container nor the stock `frrouting/frr` image ships an SSH server at all).
 
 The spine redistributes the leaf's client subnet into its eBGP sessions via
 an **explicit allow-list** (`routing-policy prefix-set advertised`), not a
@@ -122,9 +129,7 @@ above), no redistribution into OSPF needed.
 
 ## Running it
 
-**Prerequisites:** Docker (or OrbStack on macOS), `just`, and `sshpass`
-(macOS: `brew install sshpass`) for `scripts/verify.sh`'s manual SSH check
-only — not needed to actually use the lab with `stcli`.
+**Prerequisites:** Docker (or OrbStack on macOS) and `just`.
 
 A 12-node version of this topology (2 leaves + 2 clients per site) was tried
 first and reliably OOM-killed SR Linux's own forwarding process under a
@@ -309,6 +314,13 @@ lab disables it explicitly (`no bgp ebgp-requires-policy`).
 routing-policy statements — an easy typo that fails the whole startup-config
 commit with a (for once, actually helpful) parsing error.
 
+**SR Linux's built-in `admin` account can't take an `ssh-key`.** `admin` is
+a reserved system username; trying to set one anyway fails the commit with
+`Reserved system usernames cannot be used for configured local users`, even
+under the separate `system aaa authentication admin-user` path. Key-based
+login needs a distinct local user (`stcli`, in this lab's configs) with
+`superuser true`.
+
 ## Codespaces
 
 `.devcontainer/` brings up Docker-in-Docker and installs `just` — nothing
@@ -321,23 +333,42 @@ binary itself. The Codespace just hosts the lab; its 8 SSH ports need to
 reach back to your machine for `lab/ssh_config`'s `127.0.0.1`-based aliases
 to work.
 
-That means **opening the Codespace in a browser tab is not enough.**
-GitHub's browser-based port forwarding proxies forwarded ports over HTTPS,
-which works for a web app but not for raw SSH. Use one of these instead,
-from a terminal on your own machine:
+**Local and Codespace-hosted are mutually exclusive on one machine** — both
+use the same canonical ports 2401-2408 through the same `lab/ssh_config`
+aliases (that's what lets `stcli spine-jfk` etc. work identically either
+way). If you've been running the lab locally, `just lab-down` first.
+
+**Which commands run where** is the other thing to get straight up front:
+`lab-setup`, `lab-up`, `lab-down`, `verify`, `break`, `fix`, and `lab-cli`
+all talk to Docker directly — that only exists inside the Codespace, so
+those run in *the Codespace's own terminal* (VS Code, or `gh codespace
+ssh`). Only `stcli` itself and the `codespace-connect` recipe below run on
+your own machine.
+
+From a terminal on your own machine:
 
 ```sh
-gh codespace ports forward 2401:2401 2402:2402 2403:2403 2404:2404 \
-    2405:2405 2406:2406 2407:2407 2408:2408 -c <codespace-name>
+just codespace-connect            # auto-detects the codespace if there's only one
+just codespace-connect <name>     # or name it explicitly — gh codespace list to find it
 ```
 
-(`gh codespace list` to find `<codespace-name>`.) This holds a real TCP
-tunnel open in the foreground — leave it running in its own terminal tab.
-VS Code Desktop with the GitHub Codespaces extension (not the browser)
-works too, since its port forwarding is a genuine local TCP tunnel rather
-than an HTTPS proxy — but it's an extra install `gh codespace ports
-forward` doesn't need.
+This checks that nothing local is already holding ports 2401-2408 (the
+local lab, almost always — it'll tell you to `just lab-down`), installs
+the shared key locally if it isn't already, and holds open a real TCP
+tunnel (`gh codespace ports forward`, mapping 2401-2408 1:1) in the
+foreground — leave it running in its own terminal tab, Ctrl-C to stop.
 
-Once forwarded, `stcli spine-jfk` etc. work exactly as they do against a
+**Opening the Codespace in a browser tab is not enough** — GitHub's
+browser-based port forwarding proxies forwarded ports over HTTPS, which
+works for a web app but not for raw SSH. **VS Code Desktop's own
+forwarding is also not recommended**, even though it's a genuine local TCP
+tunnel rather than an HTTPS proxy: it silently *auto-offsets* every port
+when something else is already holding them locally — confirmed firsthand,
+2401-2408 became 2409-2416 with no error anywhere, which breaks
+`lab/ssh_config`'s aliases in a way that's genuinely confusing to debug.
+`gh codespace ports forward` (via `just codespace-connect`) doesn't have
+this failure mode: it maps 1:1 or fails loudly.
+
+Once connected, `stcli spine-jfk` etc. work exactly as they do against a
 local Docker/OrbStack-hosted lab — same `lab/ssh_config`, same ports,
 same everything.
