@@ -24,24 +24,25 @@ install the shared key for you (`just install-ssh-config` /
 
 ### Codespaces (recommended — no local Docker needed)
 
+Everything — the lab and `stcli` itself — runs inside the Codespace, in one
+terminal.
+
 1. On GitHub: **Code → Codespaces → Create codespace on main.** Setup runs
    automatically.
-2. In the Codespace's own terminal (VS Code, or `gh codespace ssh`):
+2. Open a terminal inside it, either way:
+   - **In your browser** (simplest — nothing to install locally): the
+     Codespace opens its own in-browser VS Code; Terminal → New Terminal.
+   - **From a terminal on your own machine**: `just codespace-ssh` (needs
+     the `gh` CLI installed and authenticated; gives a native terminal if
+     you prefer one).
+3. In that terminal:
    ```sh
    just lab-up
-   ```
-3. On your own machine, in a terminal you leave running:
-   ```sh
-   just codespace-connect
-   ```
-4. In another terminal on your own machine:
-   ```sh
+   stcli login   # one-time, real backend
    stcli spine-jfk   # or any of the 8 nodes — see Node roles below
    ```
 
-Local and Codespace-hosted can't run at the same time on one machine (same
-ports) — `just lab-down` first if you've been running locally. More on
-why, and on the Codespaces-specific pitfalls, in
+More detail, and the alternate run-`stcli`-locally path, in
 [Codespaces details](#codespaces-details) below.
 
 ### Locally
@@ -343,43 +344,57 @@ Commands for actually running Codespaces mode are in
 proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
 to fetch from a release asset.
 
-**`stcli` always runs on your own laptop, never inside the Codespace** — per
-the workshop spec, the only thing attendees install locally is the `stcli`
-binary itself. The Codespace just hosts the lab; its 8 SSH ports need to
-reach back to your machine for `lab/ssh_config`'s `127.0.0.1`-based aliases
-to work.
+**`stcli` runs inside the Codespace**, not on your own laptop — `lab-setup`
+(already run automatically by `postCreateCommand`) installs it via `just
+install-stcli`, which copies a committed, prebuilt Linux binary
+(`lab/bin/stcli-linux-amd64`) to `/usr/local/bin/stcli`. This is a
+placeholder, not the long-term plan: `stcli` doesn't ship public release
+binaries yet, so this is what stands in until it does — see
+`lab/bin/README.md` for exactly how it was built and when to replace it.
+`install-stcli` only acts when `$CODESPACES` is set, so it's safe to call
+unconditionally from `lab-setup` without risking overwriting a real local
+`stcli` install for local-mode users.
 
-**Local and Codespace-hosted are mutually exclusive on one machine** — both
-use the same canonical ports 2401-2408 through the same `lab/ssh_config`
-aliases (that's what lets `stcli spine-jfk` etc. work identically either
-way). If you've been running the lab locally, `just lab-down` first.
+**Which commands run where**: now, almost everything — `lab-setup`,
+`lab-up`, `verify`, `break`, `fix`, `lab-cli`, and `stcli` itself — runs
+inside the Codespace's own terminal, reached either through the browser or
+`just codespace-ssh`. Only `codespace-ssh` (getting you into that terminal
+in the first place) runs on your own machine.
 
-**Which commands run where**: `lab-setup`, `lab-up`, `lab-down`, `verify`,
-`break`, `fix`, and `lab-cli` all talk to Docker directly — that only
-exists inside the Codespace, so those run in *the Codespace's own
-terminal* (VS Code, or `gh codespace ssh`). Only `stcli` itself and
-`codespace-connect` run on your own machine.
-
-`just codespace-connect` auto-detects the codespace if there's only one
-(`just codespace-connect <name>` to name it explicitly — `gh codespace
-list` to find it), checks that nothing local is already holding ports
-2401-2408 (the local lab, almost always — it'll tell you to `just
-lab-down`), installs the shared key and wires `~/.ssh/config` locally if
-it hasn't already (`install-key`/`install-ssh-config`, both idempotent —
-safe to re-run), and holds open a real TCP tunnel (`gh codespace ports
-forward`, mapping 2401-2408 1:1) in the foreground.
-
-`just install-ssh-config` always prepends its `Include` line at the very
-top of `~/.ssh/config` (backing up the previous version first), never
+`just install-ssh-config` (part of `lab-setup`, so this already happened
+before you ever open a terminal) always prepends its `Include` line at the
+very top of `~/.ssh/config` (backing up the previous version first), never
 appends — confirmed directly that OpenSSH silently treats an `Include` as
 "parse only" (read, never applied) if any `Host` block precedes it
 anywhere earlier in the file. An append that works today would silently
 stop working the day a `Host` block gets added above it later, with no
 error anywhere to point at why.
 
-**Opening the Codespace in a browser tab is not enough** — GitHub's
-browser-based port forwarding proxies forwarded ports over HTTPS, which
-works for a web app but not for raw SSH. **VS Code Desktop's own
+### Alternate: run `stcli` locally against a Codespace-hosted lab
+
+Not the recommended path, but kept available: `just codespace-connect
+[name]` runs `stcli` on your own machine instead, bridged to the
+Codespace-hosted lab by a port forward.
+
+**Local and Codespace-hosted are mutually exclusive on one machine this
+way** — both use the same canonical ports 2401-2408 through the same
+`lab/ssh_config` aliases (that's what lets `stcli spine-jfk` etc. work
+identically either way). If you've been running the lab locally, `just
+lab-down` first. `just codespace-ssh` and running `stcli` inside the
+Codespace (the primary path above) don't have this limitation at all,
+since nothing is forwarded.
+
+`just codespace-connect` auto-detects the codespace if there's only one
+(`just codespace-connect <name>` to name it explicitly — `gh codespace
+list` to find it), checks that nothing local is already holding ports
+2401-2408 (the local lab, almost always — it'll tell you to `just
+lab-down`), installs the shared key and wires `~/.ssh/config` locally if
+it hasn't already, and holds open a real TCP tunnel (`gh codespace ports
+forward`, mapping 2401-2408 1:1) in the foreground.
+
+**Opening the Codespace in a browser tab is not enough for this path** —
+GitHub's browser-based port forwarding proxies forwarded ports over HTTPS,
+which works for a web app but not for raw SSH. **VS Code Desktop's own
 forwarding is also not recommended**, even though it's a genuine local TCP
 tunnel rather than an HTTPS proxy: it silently *auto-offsets* every port
 when something else is already holding them locally — confirmed firsthand,

@@ -29,6 +29,7 @@ lab-setup:
     docker build -t frr-ssh:latest lab/images/frr-ssh
     @just install-key
     @just install-ssh-config
+    @just install-stcli
 
 # installs the shared lab keypair to ~/.ssh/ac6-workshop-key — split out of
 # lab-setup because `stcli` needs it on whichever machine it runs from
@@ -74,6 +75,26 @@ install-ssh-config:
     echo "Added to the top of ~/.ssh/config: ${line}"
     echo "(previous version backed up to ${config}.bak)"
 
+# installs stcli itself into /usr/local/bin — but only inside a Codespace
+# ($CODESPACES, the standard env var every Codespace sets). Without that
+# guard this would be unsafe to call unconditionally from lab-setup: a
+# local-mode user on their own Mac/Linux machine likely already has a real
+# stcli there, and this committed binary is Linux-only (see lab/bin/
+# README.md — it's a placeholder for a real release download, not the
+# long-term plan). The guard is what makes "just works, no extra step"
+# possible for Codespace mode without risking a local install.
+install-stcli:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "${CODESPACES:-}" != "true" ]; then
+        echo "not inside a Codespace — not installing the Linux-only stcli binary here"
+        echo "(install/build stcli for this machine yourself)"
+        exit 0
+    fi
+    sudo cp lab/bin/stcli-linux-amd64 /usr/local/bin/stcli
+    sudo chmod +x /usr/local/bin/stcli
+    echo "Installed stcli to /usr/local/bin/stcli"
+
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
     # Every node gets a fresh host key on every deploy. lab/ssh_config points
@@ -101,25 +122,12 @@ lab-down:
 lab-status:
     {{clab_run}} inspect -t topology.clab.yml
 
-# connect stcli (running on your own machine) to a Codespace-hosted lab:
-# just codespace-connect [name]. Local and Codespace-hosted are mutually
-# exclusive on one machine — both use the same canonical ports 2401-2408
-# via the same lab/ssh_config aliases, which is what lets `stcli spine-jfk`
-# etc. work identically either way, but only if whichever one isn't active
-# right now isn't holding those ports. Run `just lab-down` first if you've
-# been running the lab locally.
-#
-# Deliberately gh codespace ports forward, not VS Code's own forwarding:
-# VS Code auto-offsets ports when something else holds them locally
-# (confirmed firsthand — 2401-2408 silently became 2409-2416), which
-# breaks lab/ssh_config's aliases with no clear error. This maps 1:1 or
-# fails loudly, which is what you want from a script.
-#
-# Everything else — lab-setup, lab-up, lab-down, verify, break, fix,
-# lab-cli — talks to Docker directly and only exists inside the Codespace,
-# so those still need to run in the Codespace's own terminal. This recipe
-# only gets stcli (and a human) there; it doesn't run the lab remotely.
-codespace-connect CODESPACE='':
+# resolves which codespace to use: {{CODESPACE}} if given, otherwise the
+# one codespace on this repo if there's exactly one. Echoes the name on
+# stdout; errors (ambiguous or none found) go to stderr so `name="$(just
+# _codespace-name ...)"` in another recipe doesn't capture them. Prefixed
+# with _ by just's own convention for a helper recipe, not a top-level one.
+_codespace-name CODESPACE='':
     #!/usr/bin/env bash
     set -euo pipefail
     name="{{CODESPACE}}"
@@ -137,6 +145,43 @@ codespace-connect CODESPACE='':
         fi
         name="$matches"
     fi
+    echo "$name"
+
+# the primary way to work the Codespace-hosted lab: just codespace-ssh
+# [name] drops you into a real shell inside it, from your own terminal —
+# everything (lab-up, stcli itself) then runs there, in that one shell. No
+# ports, no tunnels: see codespace-connect below for the alternate,
+# run-stcli-locally-instead path.
+codespace-ssh CODESPACE='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name="$(just _codespace-name {{CODESPACE}})"
+    exec gh codespace ssh -c "$name"
+
+# alternate/advanced path: run stcli on your own machine against a
+# Codespace-hosted lab, bridged by a port forward — just codespace-connect
+# [name]. Local and Codespace-hosted are mutually exclusive on one machine
+# this way — both use the same canonical ports 2401-2408 via the same
+# lab/ssh_config aliases, which is what lets `stcli spine-jfk` etc. work
+# identically either way, but only if whichever one isn't active right now
+# isn't holding those ports. Run `just lab-down` first if you've been
+# running the lab locally. The primary path (just codespace-ssh, above)
+# doesn't have this limitation at all, since nothing is forwarded.
+#
+# Deliberately gh codespace ports forward, not VS Code's own forwarding:
+# VS Code auto-offsets ports when something else holds them locally
+# (confirmed firsthand — 2401-2408 silently became 2409-2416), which
+# breaks lab/ssh_config's aliases with no clear error. This maps 1:1 or
+# fails loudly, which is what you want from a script.
+#
+# Everything else — lab-setup, lab-up, lab-down, verify, break, fix,
+# lab-cli — talks to Docker directly and only exists inside the Codespace,
+# so those still need to run in the Codespace's own terminal. This recipe
+# only gets stcli (and a human) there; it doesn't run the lab remotely.
+codespace-connect CODESPACE='':
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name="$(just _codespace-name {{CODESPACE}})"
 
     for port in 2401 2402 2403 2404 2405 2406 2407 2408; do
         if lsof -iTCP:"$port" -sTCP:LISTEN -n -P >/dev/null 2>&1; then
