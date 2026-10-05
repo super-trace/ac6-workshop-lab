@@ -11,9 +11,10 @@ RUN apk add --no-cache openssh iproute2 iputils bind-tools busybox-extras mtr \
     && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
     && mkdir -p -m 700 /root/.ssh
 
-# /root/.ssh/authorized_keys itself is bind-mounted in from
-# lab/ac6-workshop-key.pub (see topology.clab.yml) rather than baked in
-# here, so it stays a single source of truth shared with the SR Linux
-# nodes' startup-config.
+# The pubkey itself is bind-mounted in from lab/ac6-workshop-key.pub (see
+# topology.clab.yml) to a staging path, not straight to authorized_keys —
+# see docker-start.sh for why.
+COPY docker-start.sh /usr/local/bin/docker-start.sh
+RUN chmod +x /usr/local/bin/docker-start.sh
 
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/local/bin/docker-start.sh"]

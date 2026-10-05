@@ -11,8 +11,9 @@ RUN apk add --no-cache openssh \
     && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
     && mkdir -p -m 700 /root/.ssh
 
-# /root/.ssh/authorized_keys itself is bind-mounted in from
-# lab/ac6-workshop-key.pub (see topology.clab.yml), same as client-ssh.
+# The pubkey itself is bind-mounted in from lab/ac6-workshop-key.pub (see
+# topology.clab.yml) to a staging path, not straight to authorized_keys —
+# see docker-start-with-sshd.sh for why.
 
 COPY docker-start-with-sshd.sh /usr/local/bin/docker-start-with-sshd.sh
 RUN chmod +x /usr/local/bin/docker-start-with-sshd.sh
