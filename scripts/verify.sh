@@ -37,18 +37,9 @@ docker exec "${lab}-client-jfk" ping -c 2 -s 200 192.168.11.1 || true
 docker exec "${lab}-client-jfk" ping -c 2 -s 3000 192.168.11.1 || true
 
 echo
-echo "== stcli SSH aliases (requires: Include .../workshop/lab/ssh_config) =="
+echo "== stcli SSH aliases (requires: just lab-setup, so ~/.ssh/ac6-workshop-key exists) =="
 for node in spine-jfk leaf-jfk rtr-phl client-jfk; do
     echo "-- ${node} --"
-    # -o PubkeyAuthentication=no, PreferredAuthentications=password: a bare
-    # `ssh` tries every local key first, hitting MaxAuthTries before it ever
-    # offers a password. stcli doesn't have this problem
-    # (internal/ssh/auth.go offers both methods and lets the server pick) —
-    # this is purely an artifact of testing with a bare `ssh` command.
-    pw="admin"
-    case "${node}" in spine-jfk|leaf-jfk) pw="NokiaSrl1!" ;; esac
-    sshpass -p "${pw}" ssh -F lab/ssh_config -o PubkeyAuthentication=no \
-        -o PreferredAuthentications=password -o ConnectTimeout=5 \
-        "${node}" "echo ok" \
+    ssh -F lab/ssh_config -o ConnectTimeout=5 "${node}" "echo ok" \
         || echo "!! ${node} ssh check failed" >&2
 done

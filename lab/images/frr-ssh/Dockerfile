@@ -8,7 +8,11 @@ RUN apk add --no-cache openssh \
     && ssh-keygen -A \
     && echo 'root:admin' | chpasswd \
     && sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && mkdir -p -m 700 /root/.ssh
+
+# /root/.ssh/authorized_keys itself is bind-mounted in from
+# lab/ac6-workshop-key.pub (see topology.clab.yml), same as client-ssh.
 
 COPY docker-start-with-sshd.sh /usr/local/bin/docker-start-with-sshd.sh
 RUN chmod +x /usr/local/bin/docker-start-with-sshd.sh

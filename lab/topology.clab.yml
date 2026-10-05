@@ -27,6 +27,8 @@ topology:
       image: client-ssh:latest
       ports: ["2403:22"]
       labels: { graph-level: 3, graph-icon: host }
+      binds:
+        - ac6-workshop-key.pub:/root/.ssh/authorized_keys:ro
       exec:
         - ip address add 192.168.11.10/24 dev eth1
         - ip route replace default via 192.168.11.1 dev eth1
@@ -52,6 +54,8 @@ topology:
       image: client-ssh:latest
       ports: ["2406:22"]
       labels: { graph-level: 3, graph-icon: host }
+      binds:
+        - ac6-workshop-key.pub:/root/.ssh/authorized_keys:ro
       exec:
         - ip address add 192.168.31.10/24 dev eth1
         - ip route replace default via 192.168.31.1 dev eth1
@@ -71,6 +75,7 @@ topology:
       binds:
         - configs/rtr-phl-daemons:/etc/frr/daemons
         - configs/rtr-phl-frr.conf:/etc/frr/frr.conf
+        - ac6-workshop-key.pub:/root/.ssh/authorized_keys:ro
     rtr-ewr:
       kind: linux
       image: frr-ssh:latest
@@ -79,6 +84,7 @@ topology:
       binds:
         - configs/rtr-ewr-daemons:/etc/frr/daemons
         - configs/rtr-ewr-frr.conf:/etc/frr/frr.conf
+        - ac6-workshop-key.pub:/root/.ssh/authorized_keys:ro
 
   links:
     # JFK fabric

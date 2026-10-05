@@ -24,8 +24,8 @@ heal_node() {
         | docker exec -i "${lab}-${node}" sr_cli -ed
     echo "commit now" | docker exec -i "${lab}-${node}" sr_cli -ed
 
-    # Stage 2: everything else (OSPF, BGP, routing-policy).
-    grep -E '^set / (network-instance default protocols|routing-policy)' "${cfg}" \
+    # Stage 2: everything else (OSPF, BGP, routing-policy, the stcli user).
+    grep -E '^set / (network-instance default protocols|routing-policy|system aaa)' "${cfg}" \
         | docker exec -i "${lab}-${node}" sr_cli -ed
     echo "commit now" | docker exec -i "${lab}-${node}" sr_cli -ed
 

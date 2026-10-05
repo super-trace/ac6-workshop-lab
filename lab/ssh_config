@@ -16,18 +16,25 @@
 # notices the difference either way, since StrictHostKeyChecking no skips
 # its own check regardless of what's recorded.
 
+# Key-based login for every node — stcli's own account on SR Linux (admin
+# is a reserved username there and can't take an ssh-key, see
+# lab/configs/spine-jfk.cfg) and root's authorized_keys on the Linux
+# nodes, both seeded from the same shared, non-secret lab key. `just
+# lab-setup` copies it to ~/.ssh/ac6-workshop-key; run that once before
+# first use.
 Host spine-jfk leaf-jfk client-jfk spine-iad leaf-iad client-iad rtr-phl rtr-ewr
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
+    IdentityFile ~/.ssh/ac6-workshop-key
 
 # JFK
 Host spine-jfk
     Port 2401
-    User admin
+    User stcli
 Host leaf-jfk
     Port 2402
-    User admin
+    User stcli
 Host client-jfk
     Port 2403
     User root
@@ -35,10 +42,10 @@ Host client-jfk
 # IAD
 Host spine-iad
     Port 2404
-    User admin
+    User stcli
 Host leaf-iad
     Port 2405
-    User admin
+    User stcli
 Host client-iad
     Port 2406
     User root
