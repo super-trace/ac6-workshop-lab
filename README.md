@@ -8,13 +8,67 @@ faults for the "choose your own" segment.
 
 ## Contents
 
+- [Running the lab](#running-the-lab)
 - [Why SR Linux + FRRouting](#why-sr-linux--frrouting-not-junoscrpd-or-aristaceos)
 - [Topology](#topology)
-- [Running it](#running-it)
-- [Connecting with stcli](#connecting-with-stcli)
 - [Scenarios](#scenarios)
 - [Known SR Linux / containerlab quirks](#known-sr-linux--containerlab-quirks)
-- [Codespaces](#codespaces)
+- [Codespaces details](#codespaces-details)
+
+## Running the lab
+
+One-time, either mode: `stcli login` (real backend, nothing to stand up
+locally), and add this to `~/.ssh/config`:
+
+```
+Include /path/to/this/repo/lab/ssh_config
+```
+
+### Codespaces (recommended — no local Docker needed)
+
+1. On GitHub: **Code → Codespaces → Create codespace on main.** Setup runs
+   automatically.
+2. In the Codespace's own terminal (VS Code, or `gh codespace ssh`):
+   ```sh
+   just lab-up
+   ```
+3. On your own machine, in a terminal you leave running:
+   ```sh
+   just codespace-connect
+   ```
+4. In another terminal on your own machine:
+   ```sh
+   stcli spine-jfk   # or any of the 8 nodes — see Node roles below
+   ```
+
+Local and Codespace-hosted can't run at the same time on one machine (same
+ports) — `just lab-down` first if you've been running locally. More on
+why, and on the Codespaces-specific pitfalls, in
+[Codespaces details](#codespaces-details) below.
+
+### Locally
+
+Needs Docker (or OrbStack on macOS) and `just`.
+
+```sh
+just lab-setup
+just lab-up
+stcli spine-jfk
+```
+
+### Either way
+
+- One device per `stcli` session — open a second terminal tab for another device.
+- `just verify` — the full OSPF/BGP/reachability check.
+- `just lab-cli <node>` — native CLI (`sr_cli`/`vtysh`/`sh`), independent of `stcli`.
+- `just break <scenario>` / `just fix <scenario>` — see [Scenarios](#scenarios).
+- Something looks wrong? `just lab-down && rm -rf lab/clab-ac6-workshop &&
+  just lab-up` — see [Known quirks](#known-sr-linux--containerlab-quirks)
+  for why the `rm -rf` matters.
+- Running locally with a tight memory budget? A 12-node version of this
+  topology OOM-killed SR Linux under a ~12GiB VM limit — see
+  [Known quirks](#known-sr-linux--containerlab-quirks). The current 8-node
+  shape fits comfortably.
 
 ## Why SR Linux + FRRouting, not Junos/cRPD or Arista/cEOS
 
@@ -126,45 +180,6 @@ sites' subnets the other direction, over its iBGP session to the spine —
 the spine's eBGP-learned routes flow straight into that iBGP session with
 their next-hop rewritten to the spine's own loopback (next-hop-self, see
 above), no redistribution into OSPF needed.
-
-## Running it
-
-**Prerequisites:** Docker (or OrbStack on macOS) and `just`.
-
-A 12-node version of this topology (2 leaves + 2 clients per site) was tried
-first and reliably OOM-killed SR Linux's own forwarding process under a
-~12GiB Docker/OrbStack VM limit — see the quirks section below. 8 nodes (1
-leaf + 1 client per site) is the sized-down shape that fits comfortably; if
-your VM has more headroom, scaling back up is architecturally fine, just
-budget real memory for it.
-
-```sh
-just lab-setup   # pulls clab, srlinux, frr; builds client-ssh and frr-ssh locally
-just lab-up      # deploys, then confirms every SR Linux node came up clean (see quirks below)
-just verify
-```
-
-Tear down and start clean with `just lab-down && rm -rf lab/clab-ac6-workshop
-&& just lab-up` any time something looks wrong — see the quirks section below
-for why the `rm -rf` matters.
-
-`just lab-cli <node>` drops into the native CLI (`sr_cli` / `vtysh` / `sh`)
-for direct troubleshooting, independent of stcli.
-
-## Connecting with stcli
-
-```sh
-stcli login   # one-time, real backend — nothing to stand up locally
-
-# add to ~/.ssh/config:
-Include /path/to/this/repo/lab/ssh_config
-
-stcli spine-jfk
-stcli leaf-jfk
-```
-
-One device per stcli session — attendees open a second terminal tab for
-whichever device a scenario needs next.
 
 ## Scenarios
 
@@ -321,7 +336,10 @@ under the separate `system aaa authentication admin-user` path. Key-based
 login needs a distinct local user (`stcli`, in this lab's configs) with
 `superuser true`.
 
-## Codespaces
+## Codespaces details
+
+Commands for actually running Codespaces mode are in
+[Running the lab](#running-the-lab) above — this is the "why" behind them.
 
 `.devcontainer/` brings up Docker-in-Docker and installs `just` — nothing
 proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
@@ -338,25 +356,19 @@ use the same canonical ports 2401-2408 through the same `lab/ssh_config`
 aliases (that's what lets `stcli spine-jfk` etc. work identically either
 way). If you've been running the lab locally, `just lab-down` first.
 
-**Which commands run where** is the other thing to get straight up front:
-`lab-setup`, `lab-up`, `lab-down`, `verify`, `break`, `fix`, and `lab-cli`
-all talk to Docker directly — that only exists inside the Codespace, so
-those run in *the Codespace's own terminal* (VS Code, or `gh codespace
-ssh`). Only `stcli` itself and the `codespace-connect` recipe below run on
-your own machine.
+**Which commands run where**: `lab-setup`, `lab-up`, `lab-down`, `verify`,
+`break`, `fix`, and `lab-cli` all talk to Docker directly — that only
+exists inside the Codespace, so those run in *the Codespace's own
+terminal* (VS Code, or `gh codespace ssh`). Only `stcli` itself and
+`codespace-connect` run on your own machine.
 
-From a terminal on your own machine:
-
-```sh
-just codespace-connect            # auto-detects the codespace if there's only one
-just codespace-connect <name>     # or name it explicitly — gh codespace list to find it
-```
-
-This checks that nothing local is already holding ports 2401-2408 (the
-local lab, almost always — it'll tell you to `just lab-down`), installs
-the shared key locally if it isn't already, and holds open a real TCP
-tunnel (`gh codespace ports forward`, mapping 2401-2408 1:1) in the
-foreground — leave it running in its own terminal tab, Ctrl-C to stop.
+`just codespace-connect` auto-detects the codespace if there's only one
+(`just codespace-connect <name>` to name it explicitly — `gh codespace
+list` to find it), checks that nothing local is already holding ports
+2401-2408 (the local lab, almost always — it'll tell you to `just
+lab-down`), installs the shared key locally if it isn't already, and holds
+open a real TCP tunnel (`gh codespace ports forward`, mapping 2401-2408
+1:1) in the foreground.
 
 **Opening the Codespace in a browser tab is not enough** — GitHub's
 browser-based port forwarding proxies forwarded ports over HTTPS, which
@@ -368,7 +380,3 @@ when something else is already holding them locally — confirmed firsthand,
 `lab/ssh_config`'s aliases in a way that's genuinely confusing to debug.
 `gh codespace ports forward` (via `just codespace-connect`) doesn't have
 this failure mode: it maps 1:1 or fails loudly.
-
-Once connected, `stcli spine-jfk` etc. work exactly as they do against a
-local Docker/OrbStack-hosted lab — same `lab/ssh_config`, same ports,
-same everything.
