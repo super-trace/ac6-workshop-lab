@@ -8,11 +8,15 @@ set -euo pipefail
 curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
     | sudo bash -s -- --to /usr/local/bin
 
-# sshpass — scripts/verify.sh's manual SSH check needs it (not stcli itself,
-# which offers both pubkey and password auth and lets the server pick). The
-# README's local setup gets this from Homebrew; the devcontainer needs its
-# own install.
-sudo apt-get update -qq && sudo apt-get install -y -qq sshpass
+# docker-in-docker's nested dockerd starts in the background and isn't
+# necessarily ready the moment postCreateCommand runs — confirmed live
+# ("failed to connect to the docker API ... no such file or directory" on
+# an otherwise-clean build). Wait for the socket rather than racing it.
+for i in $(seq 1 30); do
+    docker info >/dev/null 2>&1 && break
+    sleep 1
+done
+docker info >/dev/null 2>&1 || { echo "dockerd never became ready" >&2; exit 1; }
 
 # Unlike stcli-3node-lab, nothing here is licensed or proprietary — SR Linux
 # and FRRouting are both freely pullable, so there's no GitHub Release asset
