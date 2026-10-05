@@ -28,6 +28,7 @@ lab-setup:
     docker build -t client-ssh:latest lab/images/client-ssh
     docker build -t frr-ssh:latest lab/images/frr-ssh
     @just install-key
+    @just install-ssh-config
 
 # installs the shared lab keypair to ~/.ssh/ac6-workshop-key — split out of
 # lab-setup because `stcli` needs it on whichever machine it runs from
@@ -43,6 +44,35 @@ install-key:
     @mkdir -p ~/.ssh
     @cp lab/ac6-workshop-key ~/.ssh/ac6-workshop-key
     @chmod 600 ~/.ssh/ac6-workshop-key
+
+# wires lab/ssh_config into ~/.ssh/config via Include — idempotent, safe to
+# re-run. Always prepended at the very top of the file, before any Host
+# block: OpenSSH silently treats an Include as "parse only" (read, never
+# applied) if any Host block precedes it anywhere earlier in the file —
+# confirmed directly debugging this lab against a Codespace, see README's
+# "Codespaces details". A naive append would eventually land after some
+# Host block the user adds later and quietly stop working with no error.
+install-ssh-config:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="$(cd lab && pwd)/ssh_config"
+    config="$HOME/.ssh/config"
+    line="Include ${target}"
+
+    mkdir -p "$HOME/.ssh"
+    touch "$config"
+    chmod 600 "$config"
+
+    if grep -qF "$line" "$config"; then
+        echo "~/.ssh/config already includes ${target}"
+        exit 0
+    fi
+
+    cp "$config" "${config}.bak"
+    { echo "$line"; echo; cat "$config"; } > "${config}.new"
+    mv "${config}.new" "$config"
+    echo "Added to the top of ~/.ssh/config: ${line}"
+    echo "(previous version backed up to ${config}.bak)"
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
@@ -116,6 +146,7 @@ codespace-connect CODESPACE='':
     done
 
     just install-key
+    just install-ssh-config
 
     echo "Forwarding ${name}'s SSH ports to 127.0.0.1:2401-2408 — leave this running, Ctrl-C to stop."
     gh codespace ports forward \

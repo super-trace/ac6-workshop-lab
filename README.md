@@ -17,12 +17,10 @@ faults for the "choose your own" segment.
 
 ## Running the lab
 
-One-time, either mode: `stcli login` (real backend, nothing to stand up
-locally), and add this to `~/.ssh/config`:
-
-```
-Include /path/to/this/repo/lab/ssh_config
-```
+One-time: `stcli login` (real backend, nothing to stand up locally). That's
+the only manual setup step — both paths below wire up `~/.ssh/config` and
+install the shared key for you (`just install-ssh-config` /
+`just install-key`, called automatically), nothing to hand-edit.
 
 ### Codespaces (recommended — no local Docker needed)
 
@@ -366,9 +364,18 @@ terminal* (VS Code, or `gh codespace ssh`). Only `stcli` itself and
 (`just codespace-connect <name>` to name it explicitly — `gh codespace
 list` to find it), checks that nothing local is already holding ports
 2401-2408 (the local lab, almost always — it'll tell you to `just
-lab-down`), installs the shared key locally if it isn't already, and holds
-open a real TCP tunnel (`gh codespace ports forward`, mapping 2401-2408
-1:1) in the foreground.
+lab-down`), installs the shared key and wires `~/.ssh/config` locally if
+it hasn't already (`install-key`/`install-ssh-config`, both idempotent —
+safe to re-run), and holds open a real TCP tunnel (`gh codespace ports
+forward`, mapping 2401-2408 1:1) in the foreground.
+
+`just install-ssh-config` always prepends its `Include` line at the very
+top of `~/.ssh/config` (backing up the previous version first), never
+appends — confirmed directly that OpenSSH silently treats an `Include` as
+"parse only" (read, never applied) if any `Host` block precedes it
+anywhere earlier in the file. An append that works today would silently
+stop working the day a `Host` block gets added above it later, with no
+error anywhere to point at why.
 
 **Opening the Codespace in a browser tab is not enough** — GitHub's
 browser-based port forwarding proxies forwarded ports over HTTPS, which
