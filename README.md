@@ -84,17 +84,18 @@ which the login callback needs; if login hangs after browser sign-in, see
 [Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
 This WSL browser/callback flow still needs live workshop validation.
 
-**All platforms:** authenticate GitHub CLI and configure Git credentials:
+**All platforms:** authenticate GitHub CLI and select SSH as the Git protocol:
 
 ```sh
-gh auth login
-gh auth setup-git
+gh auth login --git-protocol ssh
 ```
 
-Download the workshop repository and enter its folder:
+Use your GitHub SSH key for repository access. If you haven't configured
+one, follow [GitHub's SSH setup guide](https://docs.github.com/en/authentication/connecting-to-github-with-ssh).
+Clone the workshop repository and enter its folder:
 
 ```sh
-git clone https://github.com/super-trace/ac6-workshop-lab.git
+git clone git@github.com:super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
 ```
 
@@ -109,7 +110,7 @@ and build a local binary (requires access to the
 ```sh
 # macOS: brew install go
 # Linux/WSL: install Go 1.26+ using the guide above, then check go version.
-git clone https://github.com/super-trace/stcli.git stcli-source
+git clone git@github.com:super-trace/stcli.git stcli-source
 (cd stcli-source && go build -o ../stcli-local .)
 ```
 
