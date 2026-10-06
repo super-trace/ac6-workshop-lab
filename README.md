@@ -24,6 +24,35 @@ install the shared key for you (`just install-ssh-config` /
 
 ### Codespaces (recommended — no local Docker needed)
 
+**Temporary authentication workaround:** `stcli login` currently fails in
+the Codespace because its browser launcher is unavailable. Log in on your
+Mac and copy the resulting access token with the helper below. It reads
+the credentials saved by `stcli`; it does not intercept the OAuth callback
+or print the token.
+
+```sh
+# On your Mac, from the workshop checkout (requires jq):
+./scripts/login-token.sh /private/tmp/stcli-workshop
+# Or, if stcli is installed on PATH:
+./scripts/login-token.sh
+```
+
+If you need a local binary first, run `go build -o /private/tmp/stcli-workshop .`
+from your local `stcli` source checkout (requires Go).
+After completing browser login, the helper copies the access token to your
+clipboard. Inside the Codespace, replace the `stcli login` step below with:
+
+```sh
+read -rsp 'Paste access token: ' STCLI_TOKEN
+echo
+export STCLI_TOKEN
+```
+
+Paste and press Enter at the prompt. Then run `stcli spine-jfk` normally.
+The override cannot refresh itself; repeat the helper and token entry if
+it expires. Keep the token out of chat, repository files, and shell history.
+This workaround can be removed once headless authentication is available.
+
 Everything — the lab and `stcli` itself — runs inside the Codespace, in one
 terminal.
 
