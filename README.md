@@ -45,10 +45,6 @@ brew install gh jq
 ```sh
 sudo apt update
 sudo apt install git gh jq openssh-client xdg-utils
-# Wayland clipboard:
-sudo apt install wl-clipboard
-# Or, for an X11 desktop:
-# sudo apt install xclip
 ```
 
 For other distributions, install the equivalent packages. If your packaged
@@ -73,13 +69,11 @@ install `wslu` using its
 export BROWSER=wslview
 command -v xdg-open
 command -v wslview
-command -v clip.exe
 xdg-open https://github.com
 ```
 
-Check that a Windows browser opens before attempting login. `clip.exe`
-copies the token to the Windows clipboard; WSL Windows-command integration
-must be enabled. Windows normally reaches WSL services through localhost,
+Check that a Windows browser opens before attempting login. Windows-command
+integration must be enabled for `wslview`. Windows normally reaches WSL services through localhost,
 which the login callback needs; if login hangs after browser sign-in, see
 [Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
 This WSL browser/callback flow still needs live workshop validation.
@@ -144,12 +138,11 @@ Wait for setup to finish before continuing.
 You can also create it on GitHub via **Code → Codespaces → New with
 options**, selecting the same machine size and `main` branch.
 
-#### 3. Log in locally and copy a token
+#### 3. Log in locally and obtain a token
 
 **Temporary workaround:** `stcli login` currently fails inside the
 Codespace because its browser launcher is unavailable. Run the helper on
-your local computer to complete browser login and copy the saved access token to your
-clipboard:
+your local computer to complete browser login and print the saved access token:
 
 ```sh
 # If you built the local binary in step 1:
@@ -158,9 +151,9 @@ clipboard:
 ./scripts/login-token.sh
 ```
 
-Run one of these commands. Expect `Signed in.` and a message that the token
-was copied. The helper uses `pbcopy` on macOS, `clip.exe` on WSL, `wl-copy` on
-Wayland, or `xclip` on X11. It does not print the token.
+Run one of these commands. Expect `Signed in.` followed by the access token
+on its own line. Leave that local terminal open; you will copy the token
+after entering the Codespace prompt in step 5. No clipboard utility is needed.
 
 #### 4. Enter the Codespace and start the lab
 
@@ -204,7 +197,9 @@ Inside the Codespace's Bash shell:
 read -rsp 'Paste access token: ' STCLI_TOKEN
 ```
 
-Paste the token from your local clipboard and press Enter. It will not echo.
+Once that prompt is waiting, return to your local terminal and copy only
+the token line printed by the helper. Paste it into the Codespace prompt
+and press Enter. It will not echo.
 Then run:
 
 ```sh
@@ -217,7 +212,8 @@ Use any of the eight device names in [Node roles](#node-roles).
 The token applies only to this shell and its child processes; repeat token
 entry in another terminal. The override cannot refresh itself: if it
 expires, rerun the local helper and enter the new token. Keep the token out
-of chat, repository files, and shell history. Headless authentication will
+of chat, repository files, and shell history. The helper prints it into
+your local terminal scrollback, so do not share that output. Headless authentication will
 replace this workaround in the future.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.

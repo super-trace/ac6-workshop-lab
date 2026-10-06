@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run locally on macOS, WSL, or desktop Linux; copy a token for Codespaces.
+# Run locally on macOS, WSL, or desktop Linux; print a token for Codespaces.
 set -euo pipefail
 set +x
 
@@ -10,18 +10,6 @@ for dependency in jq; do
         exit 1
     }
 done
-if command -v pbcopy >/dev/null 2>&1; then
-    clipboard=(pbcopy)
-elif command -v clip.exe >/dev/null 2>&1; then
-    clipboard=(clip.exe)
-elif [ -n "${WAYLAND_DISPLAY:-}" ] && command -v wl-copy >/dev/null 2>&1; then
-    clipboard=(wl-copy)
-elif [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
-    clipboard=(xclip -selection clipboard)
-else
-    echo "No clipboard available. Use pbcopy (macOS), clip.exe (WSL), wl-copy (Wayland), or xclip (X11)." >&2
-    exit 1
-fi
 command -v "$cli" >/dev/null 2>&1 || {
     echo "stcli not found. Pass its path: $0 ./stcli-local" >&2
     exit 1
@@ -40,9 +28,11 @@ token="$(jq -er '.access_token | select(type == "string" and length > 0)' "$cred
     echo "Login did not save a usable access token in $credentials" >&2
     exit 1
 }
-printf '%s' "$token" | "${clipboard[@]}"
+echo "Access token (copy the entire line below):"
+printf '%s\n' "$token"
 unset token
-echo "Access token copied to clipboard. In the Codespace, run:"
+echo
+echo "In the Codespace, run this command first, then copy the token above:"
 echo "  read -rsp 'Paste access token: ' STCLI_TOKEN; echo; export STCLI_TOKEN"
 echo "Then paste and press Enter, and run: stcli spine-jfk"
 echo "If the token expires, run this helper again."
