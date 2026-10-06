@@ -1,10 +1,7 @@
 # AC6 workshop lab — "Old Protocol, New Brain"
 
-The containerlab environment for the
-[AC6 workshop spec](https://github.com/super-trace/specs/blob/main/conferences/ac6-workshop-submission.md): every attendee gets
-their own copy of this lab, connects to it with `stcli`, and troubleshoots a
-BGP fault (guided) and an MTU fault (self-serve), with a small menu of extra
-faults for the "choose your own" segment.
+An eight-node network lab for troubleshooting BGP, MTU, OSPF, and WAN
+faults with `stcli`. Run the lab in GitHub Codespaces or locally with Docker.
 
 ## Contents
 
@@ -13,11 +10,9 @@ faults for the "choose your own" segment.
   - [Local `stcli` with a Codespace lab](#alternative-connection-local-stcli--ssh-port-forwarding)
   - [Local lab with Docker](#locally-with-docker)
   - [SSH keys and device aliases](#ssh-keys-and-device-aliases)
-- [Why SR Linux + FRRouting](#why-sr-linux--frrouting-not-junoscrpd-or-aristaceos)
 - [Topology](#topology)
 - [Scenarios](#scenarios)
-- [Known SR Linux / containerlab quirks](#known-sr-linux--containerlab-quirks)
-- [Codespaces details](#codespaces-details)
+- [Troubleshooting](#troubleshooting)
 
 ## Running the lab
 
@@ -77,7 +72,8 @@ xdg-open https://github.com
 ```
 
 Check that a Windows browser opens before attempting login. Windows-command
-integration must be enabled for `wslview`. Windows normally reaches WSL services through localhost,
+integration must be enabled for `wslview`. Windows normally reaches WSL
+services through localhost,
 which the login callback needs; if login hangs after browser sign-in, see
 [Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
 This WSL browser/callback flow still needs live workshop validation.
@@ -109,7 +105,7 @@ and build a local binary (requires access to the
 # macOS: brew install go
 # Linux/WSL: install Go 1.26+ using the guide above, then check go version.
 git clone git@github.com:super-trace/stcli.git stcli-source
-(cd stcli-source && go build -o ../stcli-local .)
+(cd stcli-source && go build -o ../stcli-local .) && echo "Built ./stcli-local"
 ```
 
 This builds for the operating system and architecture of your terminal
@@ -217,8 +213,7 @@ The token applies only to this shell and its child processes; repeat token
 entry in another terminal. The override cannot refresh itself: if it
 expires, rerun the local helper and enter the new token. Keep the token out
 of chat, repository files, and shell history. The helper prints it into
-your local terminal scrollback, so do not share that output. Headless authentication will
-replace this workaround in the future.
+your local terminal scrollback, so do not share that output.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.
 For `stcli` on your computer instead, see
@@ -353,37 +348,22 @@ banner and `ok` without a password. See [Node roles](#node-roles) for the
 other aliases and ports. Keep local SSH/config commands in WSL when using
 WSL; configuring Windows' SSH files will not configure the Linux CLI.
 
-### Either way
+### Lab commands
 
-- One device per `stcli` session — open a second terminal tab for another device.
-- `just verify` — inspect OSPF/BGP/reachability, MTU, and SSH results as described above.
-- `just lab-cli <node>` — native CLI (`sr_cli`/`vtysh`/`sh`), independent of `stcli`.
-- `just break <scenario>` / `just fix <scenario>` — see [Scenarios](#scenarios).
-- Something looks wrong? `just lab-down && rm -rf lab/clab-ac6-workshop &&
-  just lab-up` — see [Known quirks](#known-sr-linux--containerlab-quirks)
-  for why the `rm -rf` matters.
-- Running locally with a tight memory budget? A 12-node version of this
-  topology OOM-killed SR Linux under a ~12GiB VM limit — see
-  [Known quirks](#known-sr-linux--containerlab-quirks). The current 8-node
-  shape fits comfortably.
+Run these where Docker and the lab are running: inside the Codespace or on
+your local computer for the Docker option.
 
-## Why SR Linux + FRRouting, not Junos/cRPD or Arista/cEOS
+| Command | Purpose |
+|---|---|
+| `just lab-up` | Deploy and configure the lab |
+| `just lab-status` | List containers and management addresses |
+| `just verify` | Check routing, pings, and SSH |
+| `just lab-cli <node>` | Open a native device CLI |
+| `just break <scenario>` | Inject a fault: `bgp`, `mtu`, `ospf`, or `wan` |
+| `just fix <scenario>` | Restore that scenario's configuration |
+| `just lab-down` | Tear down the lab |
 
-Attendees need to deploy their own lab without obtaining vendor licenses
-or downloading proprietary images. That ruled out the platforms used in
-this org's other labs:
-
-- **Juniper cRPD** needs a license to run BGP or ISIS at all — confirmed
-  directly (`Idle (LicenseFailure)`, zero packets exchanged) while building
-  the sibling `stcli-3node-lab` repo. Not something a workshop attendee can
-  get themselves.
-- **Arista cEOS** needs a licensed tar file from Arista's site, imported
-  locally per machine. Same problem, worse at scale.
-
-**SR Linux** is a genuinely native container, pullable from a public
-registry with no account. **FRRouting** is Apache-2.0 and plays both WAN
-routers. Both are free, both are fast to boot, and neither needs anything
-attendees don't already have.
+Use one device per `stcli` session; open another terminal for another device.
 
 ## Topology
 
@@ -394,272 +374,158 @@ direct link between the WAN routers for a third form of resilience.
 
 ![AC6 workshop lab topology](lab/topology.clab.png)
 
-This image is generated, not hand-drawn — `just lab-diagram` turns the real
-`topology.clab.yml` into it via containerlab's own `graph --drawio` (through
-the [clab-io-draw](https://github.com/srl-labs/clab-io-draw) project, which
-supplies the router/switch/host icons) and
-[rlespinasse/drawio-desktop-headless](https://github.com/rlespinasse/docker-drawio-desktop-headless)
-to render a static PNG, since GitHub doesn't render `.drawio` natively. Run
-it after any topology change — nothing keeps this image in sync
-automatically. The source `lab/topology.clab.drawio` is also committed and
-editable at [app.diagrams.net](https://app.diagrams.net) if you want to
-touch it up by hand. Each node's position in the diagram comes from
-`labels.graph-level`/`graph-icon` in `topology.clab.yml`, not from
-containerlab itself — worth knowing if a node ever lands somewhere odd after
-adding one.
+SR Linux provides the spines and leaves; FRRouting provides the WAN
+routers. The images are public and require no vendor license downloads.
 
-For a quick, icon-free structural sanity check instead (does the real
-topology still match what's documented, with no Docker image pulls beyond
-what's already needed to run the lab), use `just lab-graph` — wraps
-containerlab's `graph --dot`, needs `graphviz` locally
-(`brew install graphviz`).
+### Routing
 
-### Protocol layering: OSPF underlay, BGP everywhere above it
+- Each site's OSPF area `0.0.0.0` carries the spine–leaf link and loopbacks.
+- Spine and leaf peer iBGP over loopbacks in the site's AS.
+- Each spine peers eBGP with both WAN routers. The WAN routers also peer
+  eBGP with each other.
+- The spine sets `next-hop-self` toward its leaf so WAN routes resolve
+  through the spine's OSPF-reachable loopback.
+- A spine export allow-list controls which local prefixes reach the WAN.
+  The BGP scenario removes one entry from that list.
 
-Each site runs OSPF internally (area 0.0.0.0), carrying only the
-point-to-point link and both devices' loopbacks — no client subnets, no BGP
-routes. On top of that underlay, the spine and leaf peer **iBGP, loopback to
-loopback** (both share the site's AS: 65010 for JFK, 65030 for IAD), and the
-spine peers **eBGP** with both WAN routers. The two WAN routers and the two
-spines sit in four distinct ASes (65010/65021/65022/65030); `rtr-phl` and
-`rtr-ewr` also peer eBGP with each other, not an iBGP mesh with no IGP
-underneath it.
-
-This deliberately doesn't go full eBGP-only per
-[RFC 7938](https://datatracker.ietf.org/doc/html/rfc7938) (the
-Facebook/Microsoft large-DC design, which argues for eBGP absolutely
-everywhere with no IGP at all) — the workshop spec needs an OSPF scenario,
-and an IGP-free fabric would delete the only thing left to break for it.
-What it does borrow from RFC 7938 and real DCI practice is running BGP at
-every tier, including spine-leaf, rather than letting OSPF carry anything
-beyond the underlay.
-
-The spine's iBGP group toward the leaf sets **next-hop-self**, and this one
-*is* load-bearing, not redundant config hygiene: without it, the leaf would
-receive the WAN-learned routes with their original eBGP next-hop (a
-`172.16.x.x` address on a link the leaf has no path to at all), and
-next-hop resolution would fail silently. With it, the leaf resolves
-everything through the spine's own loopback, which OSPF already carries.
+Regenerate the diagram after topology changes with `just lab-diagram`.
+The editable source is `lab/topology.clab.drawio`; node placement comes
+from the graph labels in `lab/topology.clab.yml`. For a simple Graphviz
+view, use `just lab-graph` (requires `graphviz`).
 
 ### Node roles
 
-| Node | Role | Kind | AS | stcli target? | Mgmt SSH port |
-|---|---|---|---|---|---|
-| `spine-jfk` | JFK's only spine; OSPF + iBGP to `leaf-jfk`, eBGP to both WAN routers | SR Linux | 65010 | **yes** | 2401 |
-| `leaf-jfk` | JFK's only leaf; OSPF + iBGP to `spine-jfk`, customer LAN to `client-jfk` | SR Linux | 65010 | **yes** | 2402 |
-| `client-jfk` | JFK customer traffic source/sink | plain Linux | — | **yes** | 2403 |
-| `spine-iad` | IAD's only spine, mirrors `spine-jfk` | SR Linux | 65030 | **yes** | 2404 |
-| `leaf-iad` | IAD's only leaf, mirrors `leaf-jfk` | SR Linux | 65030 | **yes** | 2405 |
-| `client-iad` | IAD customer traffic source/sink | plain Linux | — | **yes** | 2406 |
-| `rtr-phl` | WAN router, path 1 | FRRouting | 65021 | **yes** | 2407 |
-| `rtr-ewr` | WAN router, path 2 | FRRouting | 65022 | **yes** | 2408 |
+| Node | Role | Kind | AS | SSH port |
+|---|---|---|---|---|
+| `spine-jfk` | JFK's only spine; OSPF + iBGP to `leaf-jfk`, eBGP to both WAN routers | SR Linux | 65010 | 2401 |
+| `leaf-jfk` | JFK's only leaf; OSPF + iBGP to `spine-jfk`, customer LAN to `client-jfk` | SR Linux | 65010 | 2402 |
+| `client-jfk` | JFK customer traffic source/sink | plain Linux | — | 2403 |
+| `spine-iad` | IAD's only spine, mirrors `spine-jfk` | SR Linux | 65030 | 2404 |
+| `leaf-iad` | IAD's only leaf, mirrors `leaf-jfk` | SR Linux | 65030 | 2405 |
+| `client-iad` | IAD customer traffic source/sink | plain Linux | — | 2406 |
+| `rtr-phl` | WAN router, path 1 | FRRouting | 65021 | 2407 |
+| `rtr-ewr` | WAN router, path 2 | FRRouting | 65022 | 2408 |
 
-Every node is an stcli target — unlike the old single-site version of this
-lab, there's no "supporting cast, `docker exec` only" tier. Every node also
-accepts key-based login with no password prompt: `just lab-setup` installs
-a shared, non-secret lab keypair (`lab/ac6-workshop-key`) to
-`~/.ssh/ac6-workshop-key`, matched by a public key baked into every node —
-on SR Linux, as a new `stcli` local superuser (`admin` is a reserved
-username there and can't take an `ssh-key`; see `lab/configs/spine-jfk.cfg`
-for how that was found); on the Linux nodes, as `root`'s
-`authorized_keys`, bind-mounted in from the same file. Interactive/manual
-CLI access still falls back to passwords: SR Linux's factory-default
-`admin` / `NokiaSrl1!`, and `root` / `admin` on the Linux clients and FRR
-routers (set by `lab/images/*/Dockerfile`, since neither a stock Linux
-container nor the stock `frrouting/frr` image ships an SSH server at all).
-
-The spine redistributes the leaf's client subnet into its eBGP sessions via
-an **explicit allow-list** (`routing-policy prefix-set advertised`), not a
-broad match-everything policy, specifically so Scenario 1 can break *one*
-prefix's advertisement with a single config line. The leaf learns *remote*
-sites' subnets the other direction, over its iBGP session to the spine —
-the spine's eBGP-learned routes flow straight into that iBGP session with
-their next-hop rewritten to the spine's own loopback (next-hop-self, see
-above), no redistribution into OSPF needed.
+All eight nodes accept `stcli` connections using the shared lab SSH key.
+SR Linux aliases log in as `stcli`; Linux clients and FRR routers use
+`root`. For manual password login, SR Linux uses `admin` / `NokiaSrl1!`,
+and the Linux clients and FRR routers use `root` / `admin`.
 
 ## Scenarios
 
-| # | Name | Pace | Break | Fix |
-|---|---|---|---|---|
-| 1 | BGP: a prefix stops being advertised | guided | `just break bgp` | `just fix bgp` |
-| 2 | MTU: breaks some traffic, not all of it | self-serve | `just break mtu` | `just fix mtu` |
-| 3 | OSPF: adjacency stuck at Two-Way | menu | `just break ospf` | `just fix ospf` |
-| 4 | WAN: one of the two inter-site paths goes down | menu | `just break wan` | `just fix wan` |
+Start from a healthy lab and fix each fault before trying another.
+Run `break` and `fix` where the lab runs; use `stcli` on the device you
+want to investigate.
 
-### 1. BGP: a prefix stops being advertised (guided)
+| Scenario | Segment | Break | Fix |
+|---|---|---|---|
+| BGP prefix advertisement | Guided | `just break bgp` | `just fix bgp` |
+| MTU mismatch | Self-serve | `just break mtu` | `just fix mtu` |
+| OSPF adjacency | Optional | `just break ospf` | `just fix ospf` |
+| WAN path loss | Optional | `just break wan` | `just fix wan` |
 
-Removes `192.168.11.0/24` (`client-jfk`'s subnet) from `spine-jfk`'s export
-allow-list.
+### BGP: missing prefix
 
-**Symptom:** `spine-iad`'s BGP table loses `192.168.11.0/24` (check with
-`just lab-cli spine-iad` → `show network-instance default protocols bgp
-routes ipv4 prefix 192.168.11.0/24`); `leaf-jfk`'s loopback stays advertised,
-since this is a single allow-list entry, not a whole-policy or
-whole-session break. Diagnosable and fixable entirely from `spine-jfk`.
+Removes `192.168.11.0/24` (the JFK client subnet) from `spine-jfk`'s export
+allow-list. BGP sessions remain established, but `spine-iad` loses the
+prefix. Diagnose and repair the advertisement on `spine-jfk`.
 
-### 2. MTU: breaks some traffic, not all of it (self-serve)
+To inspect the route from IAD, run `just lab-cli spine-iad`, then:
 
-Raises `client-jfk`'s own interface MTU to 9500, above what the WAN link
-(`leaf-jfk`'s `ethernet-1/2`, fixed at SR Linux's 1500 floor) can carry —
-"the customer's device has jumbo frames misconfigured."
+```text
+show network-instance default protocols bgp routes ipv4 prefix 192.168.11.0/24
+```
 
-**Symptom:** `ping -s 200` succeeds, `ping -s 3000` silently vanishes — no
-ICMP error, nothing wrong-looking in any routing table or adjacency on
-either router. That's the point: the fault lives entirely on the customer's
-own device, so there's nothing router-side to "discover" except by actually
-testing different packet sizes end to end.
+### MTU: small packets work, large packets fail
 
-### 3. OSPF: a fabric link stuck at Two-Way (menu)
+Raises `client-jfk`'s `eth1` MTU to 9500 while its link to `leaf-jfk` uses
+1500. Routing and adjacencies remain healthy. On `client-jfk`, compare:
 
-Removes the `interface-type point-to-point` override on `leaf-jfk`'s side of
-the `leaf-jfk`↔`spine-jfk` link — the site's only fabric link.
+```sh
+ping -c 2 -s 200 192.168.11.1
+ping -c 2 -s 3000 192.168.11.1
+```
 
-**Symptom:** the adjacency never reaches Full; `show network-instance
-default protocols ospf neighbor` on `leaf-jfk` shows it stuck at `two-way`.
-SR Linux treats the link as broadcast-type (needing DR/BDR election) without
-the override, and on a true point-to-point veth with no real election
-outcome, it just never finishes. Hit by accident during development, kept on
-purpose — it's a classic, very real OSPF gotcha with zero error messages
-anywhere.
+The small ping succeeds; the large ping fails with the fault active.
+The fix returns the client MTU to 1500.
 
-Unlike Scenario 4, this one is a **full outage** for `client-jfk` — this
-site has only one leaf, so there's no second path to fail over to. That's
-deliberate: the "still reachable, just less redundant" story lives at the
-WAN tier instead, where a real 2-path design actually has a second path.
+### OSPF: adjacency stuck at Two-Way
 
-### 4. WAN: one of the two inter-site paths goes down (menu)
+Removes the point-to-point interface-type setting on `leaf-jfk`'s fabric
+link. Its adjacency to `spine-jfk` stays at `two-way`, disrupting the
+loopback path used by iBGP and isolating the JFK client.
 
-Shuts `spine-jfk`'s link to `rtr-phl`.
+On `leaf-jfk`, inspect:
 
-**Symptom:** that BGP session drops to `active`; JFK's traffic shifts
-entirely onto the `rtr-ewr` path. End-to-end reachability **survives this
-one** — a good prompt for attendees to notice "nothing is broken" isn't the
-same question as "is anything still redundant." Check both of `spine-jfk`'s
-eBGP sessions, not just a ping, to see what actually changed.
+```text
+show network-instance default protocols ospf neighbor
+```
 
-## Known SR Linux / containerlab quirks
+### WAN: reduced redundancy
 
-Found and worked around while building this — documented here so the next
-person debugging a "why did this just break" moment doesn't start from zero.
+Disables `spine-jfk`'s link to `rtr-phl`. That BGP session drops, while
+traffic continues through `rtr-ewr`. Check both WAN BGP peers on
+`spine-jfk`; a successful ping alone does not prove redundancy.
 
-**A 12-node version of this lab reliably OOM-killed SR Linux's own
-forwarding process.** The first pass at this topology used 2 leaves + 2
-clients per site (12 nodes total, 6 of them SR Linux). Every node came up
-and `heal-fabric.sh` reported all of them healthy, but every interface
-beyond the management port then reported `is down, reason port-not-present`
-— on every SR Linux node, reproducible across multiple from-scratch
-redeploys. `show system application` showed `xdp_lc_1` (SR Linux's
-forwarding-plane process) in `error` state; the host kernel's own log
-(`dmesg`) showed why: `Out of memory: Killed process ... (sr_xdp_lc)` inside
-that node's container, on a Docker/OrbStack VM capped around 11.7GiB even
-though the host had 24GiB physical RAM. `heal-fabric.sh`'s health check
-(`show network-instance default interfaces` returning non-empty output)
-didn't catch this — it returns content from whatever interfaces *did* come
-up, so a partially-starved node can still look "healthy" by that check while
-individual ports stay down. Fix was architectural, not a bigger timeout:
-trim to 1 leaf + 1 client per site (8 nodes, 4 of them SR Linux). If you
-raise your VM's memory limit well above the 12-node working set, scaling
-back up should work fine — the failure was pure memory pressure, not
-anything specific to node count.
+## Troubleshooting
 
-**SR Linux rejects every received BGP route by default without an explicit
-import-policy — eBGP and iBGP both.** Configuring only an `export-policy` on
-a BGP group (the obvious mirror of FRR's `no bgp ebgp-requires-policy` fix,
-below) is not enough — `show ... bgp neighbor <peer> detail` showed
-`Received routes: 4, Rejected routes: 4` with `Import policies: []`, and the
-route never reached the RIB even though the session was `established` and
-the prefix showed up in `show ... bgp routes ipv4 summary`. Fixed with a
-trivial catch-all policy (`routing-policy policy accept-all default-action
-policy-result accept`) applied as the group's `import-policy` — every BGP
-group in this lab needs one, spine-leaf iBGP included. Easy to miss because
-the session looks completely healthy otherwise — Established, sending and
-receiving updates, no error anywhere.
+### Login fails inside Codespaces
 
-**BGP's default 120s connect-retry timer makes `scripts/break-wan.sh`'s fix
-feel broken.** After the link flaps, both `spine-jfk` and `rtr-phl` can each
-land in the other's "waiting to retry" window at a different point, so
-re-enabling the link doesn't reconnect the session for up to two minutes —
-long enough that it looks like the fix script failed. `scripts/break-wan.sh`
-doesn't touch BGP timers directly, but `lab/configs/spine-jfk.cfg` and
-`spine-iad.cfg` set `timers connect-retry 5` on the WAN BGP group, and
-`lab/configs/rtr-*-frr.conf` set `timers connect 5` per neighbor, so a
-break/fix cycle reconverges in seconds during a live demo instead of
-minutes.
+Use the local login/token helper or the local `stcli` port-forwarding
+option above. `STCLI_TOKEN` cannot refresh itself; if authentication fails
+after token expiry, obtain and enter a new token.
 
-**Config checkpoints persist across `lab-down`/`lab-up`.** Containerlab
-saves each SR Linux node's applied config to `lab/clab-ac6-workshop/<node>/`
-and reuses it on redeploy instead of re-reading `startup-config` — by
-design, so manual CLI changes survive a redeploy. If you've edited a
-`configs/*.cfg` file, `just lab-down && just lab-up` **will not** pick up
-the change; you need `rm -rf lab/clab-ac6-workshop` first.
+### SSH alias fails
 
-**An SR Linux node's startup-config intermittently, silently failed to
-apply — sometimes partially.** Confirmed repeatable at points during
-development, independent of file content (isolated via a binary search:
-identical lines succeeded reliably split across two smaller commits, failed
-unpredictably as one big one) and independent of host memory pressure (seen
-on a freshly-freed machine too, distinct from the OOM failure mode above).
-Root cause not fully pinned down. Rather than keep refining a detector for
-every way this can partially fail, `just lab-up` now runs
-`scripts/heal-fabric.sh` after every deploy, which unconditionally
-re-applies every SR Linux node's config in two commits — `set` commands are
-idempotent, so reapplying something already correct is a no-op, not an
-error.
+On the machine running `stcli`, check `ssh -G spine-jfk` and rerun
+`just install-key` and `just install-ssh-config` from the workshop folder.
+For local `stcli` with a Codespace lab, keep `just codespace-connect`
+running and check that ports 2401–2408 are free before starting it.
 
-**SR Linux's physical interface `mtu` and its logical subinterface's
-`ip-mtu` are independent settings.** Raising only the physical interface's
-`mtu` doesn't raise the MTU actually used for IP forwarding — you need both.
-Changing `ip-mtu` live additionally left the subinterface stuck
-`oper-state: down` in testing. This is why the MTU scenario lives on
-`client-jfk` (plain Linux, one reliable `ip link set mtu` call) instead of
-on `leaf-jfk`'s SR Linux interface — not worth the fragility when the same
-mismatch is trivially reproducible from the other end of the link.
+If a redeployment causes a host-key mismatch, clear only the disposable
+lab's host-key file on the machine running `stcli`:
 
-**FRR's RFC 8212 enforcement silently discards all routes on a "naked" eBGP
-session.** `bgp ebgp-requires-policy` is on by default; without an explicit
-route-map in both directions, FRR accepts the session but drops every
-route, in both directions, with no error — every FRR BGP instance in this
-lab disables it explicitly (`no bgp ebgp-requires-policy`).
+```sh
+rm -f ~/.ac6-workshop-known-hosts
+```
 
-**SR Linux's OSPF `match protocol` value is `ospfv2`, not `ospf`** in
-routing-policy statements — an easy typo that fails the whole startup-config
-commit with a (for once, actually helpful) parsing error.
+### Lab starts but routing or interfaces fail
 
-**SR Linux's built-in `admin` account can't take an `ssh-key`.** `admin` is
-a reserved system username; trying to set one anyway fails the commit with
-`Reserved system usernames cannot be used for configured local users`, even
-under the separate `system aaa authentication admin-user` path. Key-based
-login needs a distinct local user (`stcli`, in this lab's configs) with
-`superuser true`.
+Wait until `just lab-up` finishes its configuration step, then inspect
+`just verify`. `scripts/heal-fabric.sh` reapplies all four SR Linux configs
+in two commits to handle incomplete startup configuration.
 
-## Codespaces details
+Check memory availability and `show system application` on SR Linux if
+ports report `port-not-present` or forwarding fails. A stopped or failed
+`xdp_lc_1` process can indicate memory pressure. Use the 16 GB Codespace
+configuration above; a container being listed as running does not prove
+its forwarding processes are healthy.
 
-Commands for actually running Codespaces mode are in
-[Running the lab](#running-the-lab) above — this is the "why" behind them.
+### Reset saved configuration
 
-`.devcontainer/` brings up Docker-in-Docker and installs `just` — nothing
-proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
-to fetch from a release asset.
+Containerlab retains device state under `lab/clab-ac6-workshop`.
+For a clean reset, run the following **where the lab runs**, from the
+workshop folder. This discards saved lab configuration:
 
-**For the primary connection path, `stcli` runs inside the Codespace** — `lab-setup`
-(already run automatically by `postCreateCommand`) installs it via `just
-install-stcli`, which copies a committed, prebuilt Linux binary
-(`lab/bin/stcli-linux-amd64`) to `/usr/local/bin/stcli`. This is a
-placeholder, not the long-term plan: `stcli` doesn't ship public release
-binaries yet, so this is what stands in until it does — see
-`lab/bin/README.md` for exactly how it was built and when to replace it.
-`install-stcli` only acts when `$CODESPACES` is set, so it's safe to call
-unconditionally from `lab-setup` without risking overwriting a real local
-`stcli` install for local-mode users.
+```sh
+just lab-down
+rm -rf lab/clab-ac6-workshop
+just lab-up
+just verify
+```
 
-**Which commands run where:** `lab-setup`, `lab-up`, `verify`, `break`,
-`fix`, and `lab-cli` run inside the Codespace. Local browser login and the
-token helper run on your computer. `stcli` runs inside the Codespace for the
-primary path, or on your computer for the
-[local connection option](#alternative-connection-local-stcli--ssh-port-forwarding).
+### Editing device configuration
 
-`just install-ssh-config` copies the device aliases into a private file
-under `~/.ssh/` and adds an `Include` at the top of `~/.ssh/config`, backing
-up the previous config first. The private copy avoids permission problems
-with the Codespace's shared repository mount. Rerun `just
-install-ssh-config` after changing `lab/ssh_config`.
+- SR Linux BGP groups need an explicit import policy; the lab uses
+  `accept-all`. Established sessions alone do not prove routes are accepted.
+- FRR configurations use `no bgp ebgp-requires-policy`; preserve it unless
+  you supply explicit inbound and outbound policies.
+- SR Linux physical `mtu` and logical `ip-mtu` are separate settings.
+  The workshop MTU fault is applied to the Linux client.
+- WAN BGP connect-retry timers are set to five seconds for quick recovery.
+- SR Linux key login uses the configured `stcli` account; the reserved
+  `admin` account cannot take the lab's SSH key.
+
+The bundled Codespace binary and its build provenance are documented in
+[lab/bin/README.md](lab/bin/README.md). Automatic setup installs it at
+`/usr/local/bin/stcli`; local users supply their own native binary.
