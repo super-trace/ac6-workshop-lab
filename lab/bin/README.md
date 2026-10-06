@@ -17,10 +17,8 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o lab/bin/stcli
 from the [`super-trace/stcli`](https://github.com/super-trace/stcli) repo.
 Pure Go, no CGO, so this cross-compiles cleanly from any host.
 
-**Built from branch `fix/ssh-merge-publickey-auth-methods`
-([PR #15](https://github.com/super-trace/stcli/pull/15)), not `main`** —
-that fix (merging the ssh-agent and `IdentityFile` key sources into one
-`publickey` auth attempt) is what makes this lab's key-based login actually
-reliable; without it, an unrelated key in the local ssh-agent can exhaust
-the `publickey` method before this lab's own key is ever offered. Rebuild
-from `main` once that PR merges.
+**Built from `main` at commit `0801fb4b85c7` on 2026-10-06.** This includes
+[PR #15](https://github.com/super-trace/stcli/pull/15), which merges the
+ssh-agent and `IdentityFile` key sources into one `publickey` auth attempt.
+Without that fix, an unrelated key in the ssh-agent can exhaust the
+`publickey` method before this lab's own key is offered.
