@@ -5,30 +5,21 @@ faults with `stcli`. Run the lab in GitHub Codespaces or locally with Docker.
 
 ## Contents
 
-- [Running the lab](#running-the-lab)
-  - [Codespaces setup](#codespaces-recommended--no-local-docker-needed)
-  - [Local `stcli` with a Codespace lab](#alternative-connection-local-stcli--ssh-port-forwarding)
-  - [Local lab with Docker](#locally-with-docker)
-  - [SSH keys and device aliases](#ssh-keys-and-device-aliases)
+- [Prepare your computer](#prepare-your-computer)
+- [Codespaces](#codespaces)
+- [Codespace lab + local stcli](#codespace-lab--local-stcli)
+- [Local Docker lab](#local-docker-lab)
+- [SSH setup](#ssh-setup)
+- [Lab commands](#lab-commands)
 - [Topology](#topology)
 - [Scenarios](#scenarios)
 - [Troubleshooting](#troubleshooting)
 
-## Running the lab
+Choose **Codespaces** to run the lab remotely, or **Local Docker lab** to
+run everything locally. A Codespace lab supports either remote `stcli`
+with a token or local `stcli` with port forwarding.
 
-Choose where to run the lab: in a GitHub Codespace or locally with Docker.
-For Codespaces, follow the instructions below to create the environment,
-start the lab, and connect with `stcli`. Until headless authentication is
-available, sign in locally and use the token helper, or run `stcli` locally
-with port forwarding.
-
-### Codespaces (recommended — no local Docker needed)
-
-The lab runs in a Codespace. You can run `stcli` there too, using a token
-from local login, or run it on your computer through port forwarding.
-The steps below use `stcli` inside the Codespace.
-
-#### 1. Prepare your computer (macOS, Linux, or Windows with WSL2)
+## Prepare your computer
 
 You need Git, GitHub CLI (`gh`), `jq`, and a local `stcli` binary for browser
 login. Use the instructions for your operating system below.
@@ -120,7 +111,11 @@ cp lab/bin/stcli-linux-amd64 stcli-local
 chmod +x stcli-local
 ```
 
-#### 2. Create a Codespace
+## Codespaces
+
+This path runs both the lab and `stcli` inside the Codespace.
+
+### 1. Create the environment
 
 From the workshop folder on your computer:
 
@@ -129,33 +124,30 @@ gh codespace create --repo super-trace/ac6-workshop-lab --branch main \
   --machine standardLinux32gb --display-name "AC6 workshop" --status
 ```
 
-This selects **4 cores / 16 GB RAM**, the size validated in rehearsal.
-Codespaces usage counts against your GitHub allowance and may incur charges.
-Automatic setup downloads/builds the lab images, installs `just` and the
-Linux `stcli` binary, and configures the lab SSH key and device aliases.
-Wait for setup to finish before continuing.
+Use **4 cores / 16 GB RAM**, the tested configuration. Automatic setup
+installs the images, `just`, `stcli`, and SSH configuration. Wait for it to
+finish. Codespaces usage counts against your GitHub allowance.
 
 You can also create it on GitHub via **Code → Codespaces → New with
 options**, selecting the same machine size and `main` branch.
 
-#### 3. Log in locally and obtain a token
+### 2. Log in locally
 
 **Temporary workaround:** `stcli login` currently fails inside the
 Codespace because its browser launcher is unavailable. Run the helper on
 your local computer to complete browser login and print the saved access token:
 
 ```sh
-# If you built the local binary in step 1:
+# If you built the local binary in the preparation section:
 ./scripts/login-token.sh ./stcli-local
 # Or, if stcli is already installed on PATH:
 ./scripts/login-token.sh
 ```
 
-Run one of these commands. Expect `Signed in.` followed by the access token
-on its own line. Leave that local terminal open; you will copy the token
-after entering the Codespace prompt in step 5. No clipboard utility is needed.
+Run one command. Expect `Signed in.` and the token on its own line. Keep
+this terminal open; copy the token when the Codespace prompt is ready.
 
-#### 4. Enter the Codespace and start the lab
+### 3. Start and verify the lab
 
 From your local terminal (no local `just` installation needed):
 
@@ -174,9 +166,8 @@ docker info >/dev/null && echo "Docker ready"
 just lab-up
 ```
 
-Both command checks should show installed paths. Wait for `just lab-up`
-to finish completely, including the configuration checks for all four
-SR Linux nodes, before verifying or connecting.
+The command checks should show installed paths. Wait for `just lab-up`
+to finish configuring all four SR Linux nodes before continuing.
 
 ```sh
 just verify
@@ -189,7 +180,7 @@ prints protocol status and masks some MTU/SSH failures, so exit code 0 alone
 does not prove the lab is healthy. If routing is still converging, wait a
 few seconds and repeat the check.
 
-#### 5. Use the token and connect
+### 4. Connect with stcli
 
 Inside the Codespace's Bash shell:
 
@@ -208,23 +199,20 @@ export STCLI_TOKEN
 stcli spine-jfk
 ```
 
-Use any of the eight device names in [Node roles](#node-roles).
-The token applies only to this shell and its child processes; repeat token
-entry in another terminal. The override cannot refresh itself: if it
-expires, rerun the local helper and enter the new token. Keep the token out
-of chat, repository files, and shell history. The helper prints it into
-your local terminal scrollback, so do not share that output.
+Use any device in [Node roles](#node-roles). The token lasts only for this
+shell session and cannot refresh itself. For a new terminal or expired
+token, repeat token entry or local login as needed. Keep the printed token
+and terminal scrollback private.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.
 For `stcli` on your computer instead, see
-[the local `stcli` connection option below](#alternative-connection-local-stcli--ssh-port-forwarding).
+[Codespace lab + local stcli](#codespace-lab--local-stcli).
 
-#### Alternative connection: local `stcli` + SSH port forwarding
+## Codespace lab + local stcli
 
-This keeps browser login and `stcli` on your computer while the lab stays in the
-Codespace. Deploy and verify the lab inside the Codespace first, following
-steps 1, 2, and 4 above. Skip the token helper and token-entry steps;
-local `stcli` handles browser login and credential refresh itself.
+Run the lab in Codespaces and `stcli` locally. Complete
+[preparation](#prepare-your-computer), then Codespaces steps 1 and 3 above.
+Skip the token steps: local `stcli` handles login and refresh.
 
 On your computer, install `just` (`brew install just` on macOS; see the
 [installation guide](https://github.com/casey/just#installation) for Linux/WSL)
@@ -255,30 +243,22 @@ Expect `ok` after the device banner. Then log in and connect:
 # Use stcli instead of ./stcli-local if installed on PATH.
 ```
 
-No token copying is needed for this path. The tunnel recipe installs the
-lab key and SSH aliases on your computer and forwards ports; it does not launch
-`stcli`. Keep lab commands such as `just break bgp` in the Codespace terminal.
-If a fresh deployment causes a host-key mismatch on your computer, remove only
-the disposable lab's saved keys with `rm -f ~/.ac6-workshop-known-hosts`
-and reconnect. Deployment clears that file inside the Codespace, but not
-on your computer.
-Stop the tunnel with Ctrl-C when finished.
+Keep the tunnel running; Ctrl-C stops it. Run `just break`, `just fix`, and
+other lab commands inside the Codespace. The tunnel installs local SSH
+aliases and forwards ports 2401–2408; it does not launch `stcli`.
 
-Both the local lab and this tunnel use ports 2401–2408. The recipe
-refuses to start if any of those ports is already occupied. It selects the
-workshop Codespace automatically if there is only one; otherwise pass its
-name as shown above.
+If several workshop Codespaces exist, pass the name from `gh codespace
+list`. Occupied local ports cause the tunnel to fail. Use this recipe
+instead of browser port URLs or VS Code forwarding to preserve the SSH
+port mappings. For host-key errors after redeployment, see
+[Troubleshooting](#troubleshooting).
 
-Use this recipe for SSH forwarding. Browser port URLs are HTTPS proxies,
-and VS Code Desktop can silently select different local ports when the
-requested ports are occupied. This recipe maps ports 1:1 or fails.
-
-### Locally with Docker
+## Local Docker lab
 
 You need a running Docker engine (Docker Desktop or OrbStack on macOS,
 Docker Engine on Linux, or Docker Desktop with WSL2 integration on Windows),
 `just`, and a local `stcli` binary. Clone the workshop repository and build
-`stcli` as described in step 1 above. On macOS, install `just` with
+`stcli` as described in [preparation](#prepare-your-computer). On macOS, install `just` with
 `brew install just`. On Linux/WSL, install `just` using its
 [installation guide](https://github.com/casey/just#installation). For WSL,
 enable Docker Desktop integration for your Ubuntu distribution and confirm
@@ -308,7 +288,7 @@ using your native binary:
 # If stcli is installed on PATH, use stcli instead of ./stcli-local.
 ```
 
-### SSH keys and device aliases
+## SSH setup
 
 You do not need to edit `~/.ssh/config` by hand. Setup installs the same
 SSH configuration on whichever machine runs `stcli`:
@@ -319,12 +299,13 @@ SSH configuration on whichever machine runs `stcli`:
 | Local `stcli`, Codespace lab | `just codespace-connect` | Your local computer |
 | Local `stcli`, local Docker lab | `just lab-setup` | Your local computer |
 
-These recipes copy the shared, disposable lab key to
-`~/.ssh/ac6-workshop-key` and the device aliases to
-`~/.ssh/ac6-workshop-ssh-config.conf`, both with owner-only permissions.
-They add an `Include` at the top of `~/.ssh/config`; when first adding it,
-they save the previous config as `~/.ssh/config.bak`. Your existing SSH
-configuration is retained.
+Setup installs these owner-only files:
+
+- Key: `~/.ssh/ac6-workshop-key`
+- Aliases: `~/.ssh/ac6-workshop-ssh-config.conf`
+
+It prepends an `Include` to `~/.ssh/config`, preserving existing entries
+and saving the original as `~/.ssh/config.bak`.
 
 To install or refresh just the key and aliases, run these commands from
 the workshop folder **on the machine where `stcli` runs**:
@@ -348,7 +329,7 @@ banner and `ok` without a password. See [Node roles](#node-roles) for the
 other aliases and ports. Keep local SSH/config commands in WSL when using
 WSL; configuring Windows' SSH files will not configure the Linux CLI.
 
-### Lab commands
+## Lab commands
 
 Run these where Docker and the lab are running: inside the Codespace or on
 your local computer for the Docker option.
