@@ -353,7 +353,7 @@ leaf, one client — connected by a small WAN core of two FRR routers
 (`rtr-phl`, `rtr-ewr`) that gives the sites two independent paths, plus a
 direct link between the WAN routers for a third form of resilience.
 
-![AC6 workshop lab topology](lab/topology.clab.png)
+![Routing topology: OSPF within each site, iBGP between spine and leaf loopbacks, and eBGP across the WAN](lab/diagrams/routing-topology.png)
 
 SR Linux provides the spines and leaves; FRRouting provides the WAN
 routers. The images are public and require no vendor license downloads.
@@ -369,10 +369,19 @@ routers. The images are public and require no vendor license downloads.
 - A spine export allow-list controls which local prefixes reach the WAN.
   The BGP scenario removes one entry from that list.
 
-Regenerate the diagram after topology changes with `just lab-diagram`.
-The editable source is `lab/topology.clab.drawio`; node placement comes
-from the graph labels in `lab/topology.clab.yml`. For a simple Graphviz
-view, use `just lab-graph` (requires `graphviz`).
+The routing diagram is rendered by `scripts/routing-diagram.py` (requires
+Python and Pillow). Router IDs and AS numbers come from the device configs;
+update its layout and link labels when changing the topology.
+
+```sh
+python3 -m venv /tmp/ac6-diagram-venv
+/tmp/ac6-diagram-venv/bin/pip install pillow
+/tmp/ac6-diagram-venv/bin/python scripts/routing-diagram.py
+```
+
+For the containerlab physical-link diagram, use `just lab-diagram`; its
+editable source is `lab/topology.clab.drawio`. `just lab-graph` provides a
+simple Graphviz view (requires `graphviz`).
 
 ### Node roles
 
