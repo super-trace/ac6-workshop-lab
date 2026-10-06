@@ -9,6 +9,10 @@ faults for the "choose your own" segment.
 ## Contents
 
 - [Running the lab](#running-the-lab)
+  - [Codespaces setup](#codespaces-recommended--no-local-docker-needed)
+  - [Local `stcli` with a Codespace lab](#alternative-connection-local-stcli--ssh-port-forwarding)
+  - [Local lab with Docker](#locally-with-docker)
+  - [SSH keys and device aliases](#ssh-keys-and-device-aliases)
 - [Why SR Linux + FRRouting](#why-sr-linux--frrouting-not-junoscrpd-or-aristaceos)
 - [Topology](#topology)
 - [Scenarios](#scenarios)
@@ -218,7 +222,61 @@ replace this workaround in the future.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.
 For `stcli` on your computer instead, see
-[the port-forwarding instructions](#alternate-run-stcli-locally-against-a-codespace-hosted-lab).
+[the local `stcli` connection option below](#alternative-connection-local-stcli--ssh-port-forwarding).
+
+#### Alternative connection: local `stcli` + SSH port forwarding
+
+This keeps browser login and `stcli` on your computer while the lab stays in the
+Codespace. Deploy and verify the lab inside the Codespace first, following
+steps 1, 2, and 4 above. Skip the token helper and token-entry steps;
+local `stcli` handles browser login and credential refresh itself.
+
+On your computer, install `just` (`brew install just` on macOS; see the
+[installation guide](https://github.com/casey/just#installation) for Linux/WSL)
+and `lsof` (`sudo apt install lsof` on Ubuntu/Debian). For WSL, run both the
+tunnel and local `stcli` in WSL terminals. From the workshop folder,
+stop any local lab with `just lab-down` first if it is running. Then
+start the tunnel and leave this terminal running:
+
+```sh
+just codespace-connect
+# If you have multiple workshop Codespaces:
+# gh codespace list
+# just codespace-connect <codespace-name>
+```
+
+The tunnel recipe installs your lab SSH key and aliases automatically.
+In a second local terminal, enter the workshop folder and check access:
+
+```sh
+ssh -o BatchMode=yes -o ConnectTimeout=10 spine-jfk 'echo ok'
+```
+
+Expect `ok` after the device banner. Then log in and connect:
+
+```sh
+./stcli-local login
+./stcli-local spine-jfk
+# Use stcli instead of ./stcli-local if installed on PATH.
+```
+
+No token copying is needed for this path. The tunnel recipe installs the
+lab key and SSH aliases on your computer and forwards ports; it does not launch
+`stcli`. Keep lab commands such as `just break bgp` in the Codespace terminal.
+If a fresh deployment causes a host-key mismatch on your computer, remove only
+the disposable lab's saved keys with `rm -f ~/.ac6-workshop-known-hosts`
+and reconnect. Deployment clears that file inside the Codespace, but not
+on your computer.
+Stop the tunnel with Ctrl-C when finished.
+
+Both the local lab and this tunnel use ports 2401–2408. The recipe
+refuses to start if any of those ports is already occupied. It selects the
+workshop Codespace automatically if there is only one; otherwise pass its
+name as shown above.
+
+Use this recipe for SSH forwarding. Browser port URLs are HTTPS proxies,
+and VS Code Desktop can silently select different local ports when the
+requested ports are occupied. This recipe maps ports 1:1 or fails.
 
 ### Locally with Docker
 
@@ -235,10 +293,15 @@ rehearsal used a 16 GB machine.
 From the workshop repository folder on your own machine:
 
 ```sh
+docker info >/dev/null && echo "Docker ready"
 just lab-setup
 just lab-up
 just verify
 ```
+
+Wait for `just lab-up` to finish completely before running `just verify`.
+Check the output against the expected protocol, ping, and SSH results in
+the Codespaces walkthrough above.
 
 Setup installs the lab SSH key and aliases automatically. It does not
 install the bundled Linux `stcli` on your local machine. Log in and connect
@@ -249,6 +312,46 @@ using your native binary:
 ./stcli-local spine-jfk
 # If stcli is installed on PATH, use stcli instead of ./stcli-local.
 ```
+
+### SSH keys and device aliases
+
+You do not need to edit `~/.ssh/config` by hand. Setup installs the same
+SSH configuration on whichever machine runs `stcli`:
+
+| Connection path | What installs SSH configuration | Where it is installed |
+|---|---|---|
+| `stcli` inside Codespaces | Automatic Codespace setup (`just lab-setup`) | Inside the Codespace |
+| Local `stcli`, Codespace lab | `just codespace-connect` | Your local computer |
+| Local `stcli`, local Docker lab | `just lab-setup` | Your local computer |
+
+These recipes copy the shared, disposable lab key to
+`~/.ssh/ac6-workshop-key` and the device aliases to
+`~/.ssh/ac6-workshop-ssh-config.conf`, both with owner-only permissions.
+They add an `Include` at the top of `~/.ssh/config`; when first adding it,
+they save the previous config as `~/.ssh/config.bak`. Your existing SSH
+configuration is retained.
+
+To install or refresh just the key and aliases, run these commands from
+the workshop folder **on the machine where `stcli` runs**:
+
+```sh
+just install-key
+just install-ssh-config
+```
+
+Check an alias and then test connectivity while the lab is running (and,
+for the forwarded path, while the tunnel is open):
+
+```sh
+ssh -G spine-jfk
+ssh -o BatchMode=yes -o ConnectTimeout=10 spine-jfk 'echo ok'
+```
+
+The resolved settings should include `hostname 127.0.0.1`, `port 2401`,
+`user stcli`, and the lab `identityfile`. The connection should print the
+banner and `ok` without a password. See [Node roles](#node-roles) for the
+other aliases and ports. Keep local SSH/config commands in WSL when using
+WSL; configuring Windows' SSH files will not configure the Linux CLI.
 
 ### Either way
 
@@ -538,7 +641,7 @@ Commands for actually running Codespaces mode are in
 proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
 to fetch from a release asset.
 
-**`stcli` runs inside the Codespace**, not on your own computer — `lab-setup`
+**For the primary connection path, `stcli` runs inside the Codespace** — `lab-setup`
 (already run automatically by `postCreateCommand`) installs it via `just
 install-stcli`, which copies a committed, prebuilt Linux binary
 (`lab/bin/stcli-linux-amd64`) to `/usr/local/bin/stcli`. This is a
@@ -552,73 +655,11 @@ unconditionally from `lab-setup` without risking overwriting a real local
 **Which commands run where:** `lab-setup`, `lab-up`, `verify`, `break`,
 `fix`, and `lab-cli` run inside the Codespace. Local browser login and the
 token helper run on your computer. `stcli` runs inside the Codespace for the
-primary path, or on your computer for the port-forwarding path below.
+primary path, or on your computer for the
+[local connection option](#alternative-connection-local-stcli--ssh-port-forwarding).
 
 `just install-ssh-config` copies the device aliases into a private file
 under `~/.ssh/` and adds an `Include` at the top of `~/.ssh/config`, backing
 up the previous config first. The private copy avoids permission problems
 with the Codespace's shared repository mount. Rerun `just
 install-ssh-config` after changing `lab/ssh_config`.
-
-### Alternate: run `stcli` locally against a Codespace-hosted lab
-
-This keeps browser login and `stcli` on your computer while the lab stays in the
-Codespace. Deploy and verify the lab inside the Codespace first, following
-steps 2 and 4 above.
-
-On your computer, install `just` (`brew install just` on macOS; see the
-[installation guide](https://github.com/casey/just#installation) for Linux/WSL)
-and `lsof` (`sudo apt install lsof` on Ubuntu/Debian). For WSL, run both the
-tunnel and local `stcli` in WSL terminals. From the workshop folder,
-start the tunnel and leave this terminal running:
-
-```sh
-just codespace-connect
-# If you have multiple workshop Codespaces:
-# gh codespace list
-# just codespace-connect <codespace-name>
-```
-
-In a second local terminal, enter the workshop folder and run:
-
-```sh
-./stcli-local login
-./stcli-local spine-jfk
-# Use stcli instead of ./stcli-local if installed on PATH.
-```
-
-No token copying is needed for this path. The tunnel recipe installs the
-lab key and SSH aliases on your computer and forwards ports; it does not launch
-`stcli`. Keep lab commands such as `just break bgp` in the Codespace terminal.
-If a fresh deployment causes a host-key mismatch on your computer, remove only
-the disposable lab's saved keys with `rm -f ~/.ac6-workshop-known-hosts`
-and reconnect. Deployment clears that file inside the Codespace, but not
-on your computer.
-Stop the tunnel with Ctrl-C when finished.
-
-**Local and Codespace-hosted are mutually exclusive on one machine this
-way** — both use the same canonical ports 2401-2408 through the same
-`lab/ssh_config` aliases (that's what lets `stcli spine-jfk` etc. work
-identically either way). If you've been running the lab locally, `just
-lab-down` first. `just codespace-ssh` and running `stcli` inside the
-Codespace (the primary path above) don't have this limitation at all,
-since nothing is forwarded.
-
-`just codespace-connect` auto-detects the codespace if there's only one
-(`just codespace-connect <name>` to name it explicitly — `gh codespace
-list` to find it), checks that nothing local is already holding ports
-2401-2408 (the local lab, almost always — it'll tell you to `just
-lab-down`), installs the shared key and wires `~/.ssh/config` locally if
-it hasn't already, and holds open a real TCP tunnel (`gh codespace ports
-forward`, mapping 2401-2408 1:1) in the foreground.
-
-**Opening the Codespace in a browser tab is not enough for this path** —
-GitHub's browser-based port forwarding proxies forwarded ports over HTTPS,
-which works for a web app but not for raw SSH. **VS Code Desktop's own
-forwarding is also not recommended**, even though it's a genuine local TCP
-tunnel rather than an HTTPS proxy: it silently *auto-offsets* every port
-when something else is already holding them locally — confirmed firsthand,
-2401-2408 became 2409-2416 with no error anywhere, which breaks
-`lab/ssh_config`'s aliases in a way that's genuinely confusing to debug.
-`gh codespace ports forward` (via `just codespace-connect`) doesn't have
-this failure mode: it maps 1:1 or fails loudly.
