@@ -26,16 +26,67 @@ with port forwarding.
 ### Codespaces (recommended — no local Docker needed)
 
 The lab runs in a Codespace. You can run `stcli` there too, using a token
-from local login, or run it on your Mac through port forwarding.
+from local login, or run it on your computer through port forwarding.
 The steps below use `stcli` inside the Codespace.
 
-#### 1. Prepare your Mac
+#### 1. Prepare your computer (macOS, Linux, or Windows with WSL2)
 
 You need Git, GitHub CLI (`gh`), `jq`, and a local `stcli` binary for browser
-login. With Homebrew already installed:
+login. Use the instructions for your operating system below.
+
+**macOS**, with Homebrew already installed:
 
 ```sh
 brew install gh jq
+```
+
+**Linux (Ubuntu/Debian desktop):**
+
+```sh
+sudo apt update
+sudo apt install git gh jq openssh-client xdg-utils
+# Wayland clipboard:
+sudo apt install wl-clipboard
+# Or, for an X11 desktop:
+# sudo apt install xclip
+```
+
+For other distributions, install the equivalent packages. If your packaged
+`gh` is too old for Codespaces, use the
+[official GitHub CLI installation instructions](https://github.com/cli/cli/blob/trunk/docs/install_linux.md).
+Local login needs a desktop browser that `xdg-open` can launch; a headless
+Linux SSH session has the same login limitation as the Codespace.
+
+**Windows: use WSL2 with Ubuntu.** If needed, install it from an
+administrator PowerShell terminal with `wsl --install`, restart when
+prompted, and open Ubuntu. Follow Microsoft's
+[WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install).
+Run all remaining local commands in the Ubuntu/WSL terminal, not PowerShell.
+Keep the repository under your Linux home directory (for example `~/labs`)
+so Linux SSH permissions work normally.
+
+Install the Ubuntu/Debian packages above. For login in your Windows browser,
+install `wslu` using its
+[Ubuntu installation instructions](https://wslutiliti.es/wslu/install.html#ubuntu), then:
+
+```sh
+export BROWSER=wslview
+command -v xdg-open
+command -v wslview
+command -v clip.exe
+xdg-open https://github.com
+```
+
+Check that a Windows browser opens before attempting login. `clip.exe`
+copies the token to the Windows clipboard; WSL Windows-command integration
+must be enabled. Windows normally reaches WSL services through localhost,
+which the login callback needs; if login hangs after browser sign-in, see
+[Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
+This WSL browser/callback flow still needs live workshop validation.
+
+**All platforms:** authenticate GitHub CLI and configure Git credentials:
+
+```sh
 gh auth login
 gh auth setup-git
 ```
@@ -48,24 +99,35 @@ cd ac6-workshop-lab
 ```
 
 If you already have the repository, enter its folder and run `git pull
---ff-only` instead. Run the remaining Mac commands from that folder.
+--ff-only` instead. Run the remaining local commands from that folder.
 
-If `stcli` is already installed on your Mac, skip the build below. Otherwise,
-install Go 1.26 or newer and build a local binary (requires access to the
+If `stcli` is already installed on your computer, skip the build below. Otherwise,
+install Go 1.26 or newer ([official installation guide](https://go.dev/doc/install))
+and build a local binary (requires access to the
 `super-trace/stcli` repository):
 
 ```sh
-brew install go
+# macOS: brew install go
+# Linux/WSL: install Go 1.26+ using the guide above, then check go version.
 git clone https://github.com/super-trace/stcli.git stcli-source
 (cd stcli-source && go build -o ../stcli-local .)
 ```
 
-This builds for your Mac. The workshop's bundled `lab/bin/stcli-linux-amd64`
-is for the Codespace and cannot run on macOS.
+This builds for the operating system and architecture of your terminal
+(macOS or Linux/WSL). The bundled `lab/bin/stcli-linux-amd64` cannot run on
+macOS or ARM Linux. On x86-64 Linux/WSL, you can use that bundled binary
+instead of installing Go and building from source:
+
+```sh
+# Only if uname -m prints x86_64:
+uname -m
+cp lab/bin/stcli-linux-amd64 stcli-local
+chmod +x stcli-local
+```
 
 #### 2. Create a Codespace
 
-From the workshop folder on your Mac:
+From the workshop folder on your computer:
 
 ```sh
 gh codespace create --repo super-trace/ac6-workshop-lab --branch main \
@@ -85,7 +147,7 @@ options**, selecting the same machine size and `main` branch.
 
 **Temporary workaround:** `stcli login` currently fails inside the
 Codespace because its browser launcher is unavailable. Run the helper on
-your Mac to complete browser login and copy the saved access token to your
+your local computer to complete browser login and copy the saved access token to your
 clipboard:
 
 ```sh
@@ -96,11 +158,12 @@ clipboard:
 ```
 
 Run one of these commands. Expect `Signed in.` and a message that the token
-was copied. The helper uses macOS `pbcopy`; it does not print the token.
+was copied. The helper uses `pbcopy` on macOS, `clip.exe` on WSL, `wl-copy` on
+Wayland, or `xclip` on X11. It does not print the token.
 
 #### 4. Enter the Codespace and start the lab
 
-From your Mac terminal (no local `just` installation needed):
+From your local terminal (no local `just` installation needed):
 
 ```sh
 gh codespace ssh --repo super-trace/ac6-workshop-lab
@@ -140,7 +203,7 @@ Inside the Codespace's Bash shell:
 read -rsp 'Paste access token: ' STCLI_TOKEN
 ```
 
-Paste the token from your Mac clipboard and press Enter. It will not echo.
+Paste the token from your local clipboard and press Enter. It will not echo.
 Then run:
 
 ```sh
@@ -157,15 +220,19 @@ of chat, repository files, and shell history. Headless authentication will
 replace this workaround in the future.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.
-For `stcli` on your Mac instead, see
+For `stcli` on your computer instead, see
 [the port-forwarding instructions](#alternate-run-stcli-locally-against-a-codespace-hosted-lab).
 
 ### Locally with Docker
 
-You need a running Docker engine (Docker Desktop or OrbStack on macOS),
+You need a running Docker engine (Docker Desktop or OrbStack on macOS,
+Docker Engine on Linux, or Docker Desktop with WSL2 integration on Windows),
 `just`, and a local `stcli` binary. Clone the workshop repository and build
 `stcli` as described in step 1 above. On macOS, install `just` with
-`brew install just`. Allocate enough memory to Docker; the Codespace
+`brew install just`. On Linux/WSL, install `just` using its
+[installation guide](https://github.com/casey/just#installation). For WSL,
+enable Docker Desktop integration for your Ubuntu distribution and confirm
+`docker info` succeeds from Ubuntu. Allocate enough memory to Docker; the Codespace
 rehearsal used a 16 GB machine.
 
 From the workshop repository folder on your own machine:
@@ -474,7 +541,7 @@ Commands for actually running Codespaces mode are in
 proprietary needed (unlike `stcli-3node-lab`), so there's no licensed binary
 to fetch from a release asset.
 
-**`stcli` runs inside the Codespace**, not on your own laptop — `lab-setup`
+**`stcli` runs inside the Codespace**, not on your own computer — `lab-setup`
 (already run automatically by `postCreateCommand`) installs it via `just
 install-stcli`, which copies a committed, prebuilt Linux binary
 (`lab/bin/stcli-linux-amd64`) to `/usr/local/bin/stcli`. This is a
@@ -487,8 +554,8 @@ unconditionally from `lab-setup` without risking overwriting a real local
 
 **Which commands run where:** `lab-setup`, `lab-up`, `verify`, `break`,
 `fix`, and `lab-cli` run inside the Codespace. Local browser login and the
-token helper run on your Mac. `stcli` runs inside the Codespace for the
-primary path, or on your Mac for the port-forwarding path below.
+token helper run on your computer. `stcli` runs inside the Codespace for the
+primary path, or on your computer for the port-forwarding path below.
 
 `just install-ssh-config` copies the device aliases into a private file
 under `~/.ssh/` and adds an `Include` at the top of `~/.ssh/config`, backing
@@ -498,11 +565,14 @@ install-ssh-config` after changing `lab/ssh_config`.
 
 ### Alternate: run `stcli` locally against a Codespace-hosted lab
 
-This keeps browser login and `stcli` on your Mac while the lab stays in the
+This keeps browser login and `stcli` on your computer while the lab stays in the
 Codespace. Deploy and verify the lab inside the Codespace first, following
 steps 2 and 4 above.
 
-On your Mac, install `just` (`brew install just`). From the workshop folder,
+On your computer, install `just` (`brew install just` on macOS; see the
+[installation guide](https://github.com/casey/just#installation) for Linux/WSL)
+and `lsof` (`sudo apt install lsof` on Ubuntu/Debian). For WSL, run both the
+tunnel and local `stcli` in WSL terminals. From the workshop folder,
 start the tunnel and leave this terminal running:
 
 ```sh
@@ -512,7 +582,7 @@ just codespace-connect
 # just codespace-connect <codespace-name>
 ```
 
-In a second Mac terminal, enter the workshop folder and run:
+In a second local terminal, enter the workshop folder and run:
 
 ```sh
 ./stcli-local login
@@ -521,12 +591,12 @@ In a second Mac terminal, enter the workshop folder and run:
 ```
 
 No token copying is needed for this path. The tunnel recipe installs the
-lab key and SSH aliases on your Mac and forwards ports; it does not launch
+lab key and SSH aliases on your computer and forwards ports; it does not launch
 `stcli`. Keep lab commands such as `just break bgp` in the Codespace terminal.
-If a fresh deployment causes a host-key mismatch on your Mac, remove only
+If a fresh deployment causes a host-key mismatch on your computer, remove only
 the disposable lab's saved keys with `rm -f ~/.ac6-workshop-known-hosts`
 and reconnect. Deployment clears that file inside the Codespace, but not
-on your Mac.
+on your computer.
 Stop the tunnel with Ctrl-C when finished.
 
 **Local and Codespace-hosted are mutually exclusive on one machine this
