@@ -31,8 +31,19 @@ Mac and copy the resulting access token with the helper below. It reads
 the credentials saved by `stcli`; it does not intercept the OAuth callback
 or print the token.
 
+On your Mac, open a terminal. If you don't already have the workshop
+repository on your machine, download it with Git:
+
 ```sh
-# On your Mac, from the workshop checkout (requires jq):
+git clone https://github.com/super-trace/ac6-workshop-lab.git
+cd ac6-workshop-lab
+```
+
+If you already have it, use `cd` to enter that repository's folder instead.
+Run the helper from that folder (requires `jq`, available on macOS with
+`brew install jq`):
+
+```sh
 ./scripts/login-token.sh /private/tmp/stcli-workshop
 # Or, if stcli is installed on PATH:
 ./scripts/login-token.sh
