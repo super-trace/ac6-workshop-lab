@@ -1,7 +1,7 @@
 # AC6 workshop lab — "Old Protocol, New Brain"
 
-The containerlab environment for the AC6 workshop spec
-(`../../specs/conferences/ac6-workshop-submission.md`): every attendee gets
+The containerlab environment for the
+[AC6 workshop spec](https://github.com/super-trace/specs/blob/main/conferences/ac6-workshop-submission.md): every attendee gets
 their own copy of this lab, connects to it with `stcli`, and troubleshoots a
 BGP fault (guided) and an MTU fault (self-serve), with a small menu of extra
 faults for the "choose your own" segment.
@@ -25,81 +25,171 @@ with port forwarding.
 
 ### Codespaces (recommended — no local Docker needed)
 
-**Temporary authentication workaround:** `stcli login` currently fails in
-the Codespace because its browser launcher is unavailable. Log in on your
-Mac and copy the resulting access token with the helper below. It reads
-the credentials saved by `stcli`; it does not intercept the OAuth callback
-or print the token.
+The lab runs in a Codespace. You can run `stcli` there too, using a token
+from local login, or run it on your Mac through port forwarding.
+The steps below use `stcli` inside the Codespace.
 
-On your Mac, open a terminal. If you don't already have the workshop
-repository on your machine, download it with Git:
+#### 1. Prepare your Mac
+
+You need Git, GitHub CLI (`gh`), `jq`, and a local `stcli` binary for browser
+login. With Homebrew already installed:
+
+```sh
+brew install gh jq
+gh auth login
+gh auth setup-git
+```
+
+Download the workshop repository and enter its folder:
 
 ```sh
 git clone https://github.com/super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
 ```
 
-If you already have it, use `cd` to enter that repository's folder instead.
-Run the helper from that folder (requires `jq`, available on macOS with
-`brew install jq`):
+If you already have the repository, enter its folder and run `git pull
+--ff-only` instead. Run the remaining Mac commands from that folder.
+
+If `stcli` is already installed on your Mac, skip the build below. Otherwise,
+install Go 1.26 or newer and build a local binary (requires access to the
+`super-trace/stcli` repository):
 
 ```sh
-./scripts/login-token.sh /private/tmp/stcli-workshop
-# Or, if stcli is installed on PATH:
+brew install go
+git clone https://github.com/super-trace/stcli.git stcli-source
+(cd stcli-source && go build -o ../stcli-local .)
+```
+
+This builds for your Mac. The workshop's bundled `lab/bin/stcli-linux-amd64`
+is for the Codespace and cannot run on macOS.
+
+#### 2. Create a Codespace
+
+From the workshop folder on your Mac:
+
+```sh
+gh codespace create --repo super-trace/ac6-workshop-lab --branch main \
+  --machine standardLinux32gb --display-name "AC6 workshop" --status
+```
+
+This selects **4 cores / 16 GB RAM**, the size validated in rehearsal.
+Codespaces usage counts against your GitHub allowance and may incur charges.
+Automatic setup downloads/builds the lab images, installs `just` and the
+Linux `stcli` binary, and configures the lab SSH key and device aliases.
+Wait for setup to finish before continuing.
+
+You can also create it on GitHub via **Code → Codespaces → New with
+options**, selecting the same machine size and `main` branch.
+
+#### 3. Log in locally and copy a token
+
+**Temporary workaround:** `stcli login` currently fails inside the
+Codespace because its browser launcher is unavailable. Run the helper on
+your Mac to complete browser login and copy the saved access token to your
+clipboard:
+
+```sh
+# If you built the local binary in step 1:
+./scripts/login-token.sh ./stcli-local
+# Or, if stcli is already installed on PATH:
 ./scripts/login-token.sh
 ```
 
-If you need a local binary first, run `go build -o /private/tmp/stcli-workshop .`
-from your local `stcli` source checkout (requires Go).
-After completing browser login, the helper copies the access token to your
-clipboard. Inside the Codespace, replace the `stcli login` step below with:
+Run one of these commands. Expect `Signed in.` and a message that the token
+was copied. The helper uses macOS `pbcopy`; it does not print the token.
+
+#### 4. Enter the Codespace and start the lab
+
+From your Mac terminal (no local `just` installation needed):
+
+```sh
+gh codespace ssh --repo super-trace/ac6-workshop-lab
+```
+
+Choose the workshop Codespace if prompted. **The following commands run
+inside the Codespace:**
+
+```sh
+cd /workspaces/ac6-workshop-lab
+command -v just
+command -v stcli
+docker info >/dev/null && echo "Docker ready"
+just lab-up
+```
+
+Both command checks should show installed paths. Wait for `just lab-up`
+to finish completely, including the configuration checks for all four
+SR Linux nodes, before verifying or connecting.
+
+```sh
+just verify
+```
+
+Expect OSPF neighbors `full`, all three BGP peers established on each spine
+and WAN router, the JFK client prefix visible at IAD, successful end-to-end
+and both MTU pings, and SSH checks showing `ok`. Read the output: this script
+prints protocol status and masks some MTU/SSH failures, so exit code 0 alone
+does not prove the lab is healthy. If routing is still converging, wait a
+few seconds and repeat the check.
+
+#### 5. Use the token and connect
+
+Inside the Codespace's Bash shell:
 
 ```sh
 read -rsp 'Paste access token: ' STCLI_TOKEN
-echo
-export STCLI_TOKEN
 ```
 
-Paste and press Enter at the prompt. Then run `stcli spine-jfk` normally.
-The override cannot refresh itself; repeat the helper and token entry if
-it expires. Keep the token out of chat, repository files, and shell history.
-This workaround can be removed once headless authentication is available.
+Paste the token from your Mac clipboard and press Enter. It will not echo.
+Then run:
 
-Everything — the lab and `stcli` itself — runs inside the Codespace, in one
-terminal.
+```sh
+echo
+export STCLI_TOKEN
+stcli spine-jfk
+```
 
-1. On GitHub: **Code → Codespaces → Create codespace on main.** Setup runs
-   automatically.
-2. Open a terminal inside it, either way:
-   - **In your browser** (simplest — nothing to install locally): the
-     Codespace opens its own in-browser VS Code; Terminal → New Terminal.
-   - **From a terminal on your own machine**: `just codespace-ssh` (needs
-     the `gh` CLI installed and authenticated; gives a native terminal if
-     you prefer one).
-3. In that terminal:
-   ```sh
-   just lab-up
-   stcli login   # one-time, real backend
-   stcli spine-jfk   # or any of the 8 nodes — see Node roles below
-   ```
+Use any of the eight device names in [Node roles](#node-roles).
+The token applies only to this shell and its child processes; repeat token
+entry in another terminal. The override cannot refresh itself: if it
+expires, rerun the local helper and enter the new token. Keep the token out
+of chat, repository files, and shell history. Headless authentication will
+replace this workaround in the future.
 
-More detail, and the alternate run-`stcli`-locally path, in
-[Codespaces details](#codespaces-details) below.
+For native access without `stcli`, use `just lab-cli spine-jfk`.
+For `stcli` on your Mac instead, see
+[the port-forwarding instructions](#alternate-run-stcli-locally-against-a-codespace-hosted-lab).
 
-### Locally
+### Locally with Docker
 
-Needs Docker (or OrbStack on macOS) and `just`.
+You need a running Docker engine (Docker Desktop or OrbStack on macOS),
+`just`, and a local `stcli` binary. Clone the workshop repository and build
+`stcli` as described in step 1 above. On macOS, install `just` with
+`brew install just`. Allocate enough memory to Docker; the Codespace
+rehearsal used a 16 GB machine.
+
+From the workshop repository folder on your own machine:
 
 ```sh
 just lab-setup
 just lab-up
-stcli spine-jfk
+just verify
+```
+
+Setup installs the lab SSH key and aliases automatically. It does not
+install the bundled Linux `stcli` on your local machine. Log in and connect
+using your native binary:
+
+```sh
+./stcli-local login
+./stcli-local spine-jfk
+# If stcli is installed on PATH, use stcli instead of ./stcli-local.
 ```
 
 ### Either way
 
 - One device per `stcli` session — open a second terminal tab for another device.
-- `just verify` — the full OSPF/BGP/reachability check.
+- `just verify` — inspect OSPF/BGP/reachability, MTU, and SSH results as described above.
 - `just lab-cli <node>` — native CLI (`sr_cli`/`vtysh`/`sh`), independent of `stcli`.
 - `just break <scenario>` / `just fix <scenario>` — see [Scenarios](#scenarios).
 - Something looks wrong? `just lab-down && rm -rf lab/clab-ac6-workshop &&
@@ -112,10 +202,9 @@ stcli spine-jfk
 
 ## Why SR Linux + FRRouting, not Junos/cRPD or Arista/cEOS
 
-This has to work for an unknown number of strangers spinning up their own
-environment with no sales process and no account beyond a free one on
-`ssh.supertrace.ai`. That ruled out the platforms used in this org's other
-labs:
+Attendees need to deploy their own lab without obtaining vendor licenses
+or downloading proprietary images. That ruled out the platforms used in
+this org's other labs:
 
 - **Juniper cRPD** needs a license to run BGP or ISIS at all — confirmed
   directly (`Idle (LicenseFailure)`, zero packets exchanged) while building
@@ -396,26 +485,49 @@ binaries yet, so this is what stands in until it does — see
 unconditionally from `lab-setup` without risking overwriting a real local
 `stcli` install for local-mode users.
 
-**Which commands run where**: now, almost everything — `lab-setup`,
-`lab-up`, `verify`, `break`, `fix`, `lab-cli`, and `stcli` itself — runs
-inside the Codespace's own terminal, reached either through the browser or
-`just codespace-ssh`. Only `codespace-ssh` (getting you into that terminal
-in the first place) runs on your own machine.
+**Which commands run where:** `lab-setup`, `lab-up`, `verify`, `break`,
+`fix`, and `lab-cli` run inside the Codespace. Local browser login and the
+token helper run on your Mac. `stcli` runs inside the Codespace for the
+primary path, or on your Mac for the port-forwarding path below.
 
-`just install-ssh-config` (part of `lab-setup`, so this already happened
-before you ever open a terminal) always prepends its `Include` line at the
-very top of `~/.ssh/config` (backing up the previous version first), never
-appends — confirmed directly that OpenSSH silently treats an `Include` as
-"parse only" (read, never applied) if any `Host` block precedes it
-anywhere earlier in the file. An append that works today would silently
-stop working the day a `Host` block gets added above it later, with no
-error anywhere to point at why.
+`just install-ssh-config` copies the device aliases into a private file
+under `~/.ssh/` and adds an `Include` at the top of `~/.ssh/config`, backing
+up the previous config first. The private copy avoids permission problems
+with the Codespace's shared repository mount. Rerun `just
+install-ssh-config` after changing `lab/ssh_config`.
 
 ### Alternate: run `stcli` locally against a Codespace-hosted lab
 
-Not the recommended path, but kept available: `just codespace-connect
-[name]` runs `stcli` on your own machine instead, bridged to the
-Codespace-hosted lab by a port forward.
+This keeps browser login and `stcli` on your Mac while the lab stays in the
+Codespace. Deploy and verify the lab inside the Codespace first, following
+steps 2 and 4 above.
+
+On your Mac, install `just` (`brew install just`). From the workshop folder,
+start the tunnel and leave this terminal running:
+
+```sh
+just codespace-connect
+# If you have multiple workshop Codespaces:
+# gh codespace list
+# just codespace-connect <codespace-name>
+```
+
+In a second Mac terminal, enter the workshop folder and run:
+
+```sh
+./stcli-local login
+./stcli-local spine-jfk
+# Use stcli instead of ./stcli-local if installed on PATH.
+```
+
+No token copying is needed for this path. The tunnel recipe installs the
+lab key and SSH aliases on your Mac and forwards ports; it does not launch
+`stcli`. Keep lab commands such as `just break bgp` in the Codespace terminal.
+If a fresh deployment causes a host-key mismatch on your Mac, remove only
+the disposable lab's saved keys with `rm -f ~/.ac6-workshop-known-hosts`
+and reconnect. Deployment clears that file inside the Codespace, but not
+on your Mac.
+Stop the tunnel with Ctrl-C when finished.
 
 **Local and Codespace-hosted are mutually exclusive on one machine this
 way** — both use the same canonical ports 2401-2408 through the same
