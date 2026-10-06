@@ -17,10 +17,11 @@ faults for the "choose your own" segment.
 
 ## Running the lab
 
-One-time: `stcli login` (real backend, nothing to stand up locally). That's
-the only manual setup step — both paths below wire up `~/.ssh/config` and
-install the shared key for you (`just install-ssh-config` /
-`just install-key`, called automatically), nothing to hand-edit.
+Choose where to run the lab: in a GitHub Codespace or locally with Docker.
+For Codespaces, follow the instructions below to create the environment,
+start the lab, and connect with `stcli`. Until headless authentication is
+available, sign in locally and use the token helper, or run `stcli` locally
+with port forwarding.
 
 ### Codespaces (recommended — no local Docker needed)
 
