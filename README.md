@@ -16,14 +16,18 @@ faults with `stcli`. Run the lab in GitHub Codespaces or locally with Docker.
 - [Scenarios](#scenarios)
 - [Troubleshooting](#troubleshooting)
 
-Choose **Codespaces** to run the lab remotely, or **Local Docker lab** to
-run everything locally. A Codespace lab supports either remote `stcli`
-with a token or local `stcli` with port forwarding.
+Choose a setup path:
+
+| Lab location | `stcli` location | Authentication |
+|---|---|---|
+| [Codespaces](#codespaces) | Codespace | Local login, then paste a token |
+| [Codespaces + local stcli](#codespace-lab--local-stcli) | Your computer | Local browser login |
+| [Local Docker](#local-docker-lab) | Your computer | Local browser login |
 
 ## Prepare your computer
 
-You need Git, GitHub CLI (`gh`), `jq`, and a local `stcli` binary for browser
-login. Use the instructions for your operating system below.
+All paths need Git, SSH, a local `stcli` binary, and a browser for login.
+Codespaces also needs GitHub CLI (`gh`); its token helper needs `jq`.
 
 **macOS**, with Homebrew already installed:
 
@@ -63,14 +67,11 @@ command -v wslview
 xdg-open https://github.com
 ```
 
-Check that a Windows browser opens before attempting login. Windows-command
-integration must be enabled for `wslview`. Windows normally reaches WSL
-services through localhost,
-which the login callback needs; if login hangs after browser sign-in, see
-[Microsoft's WSL networking guide](https://learn.microsoft.com/en-us/windows/wsl/networking).
-This WSL browser/callback flow still needs live workshop validation.
+Check that the Windows browser opens. If sign-in completes but the CLI
+waits for its callback, check [WSL localhost networking](https://learn.microsoft.com/en-us/windows/wsl/networking).
+The WSL login flow has not yet been tested end to end in this workshop.
 
-**All platforms:** authenticate GitHub CLI and select SSH as the Git protocol:
+**For Codespaces:** authenticate GitHub CLI using SSH:
 
 ```sh
 gh auth login --git-protocol ssh
@@ -174,12 +175,7 @@ to finish configuring all four SR Linux nodes before continuing.
 just verify
 ```
 
-Expect OSPF neighbors `full`, all three BGP peers established on each spine
-and WAN router, the JFK client prefix visible at IAD, successful end-to-end
-and both MTU pings, and SSH checks showing `ok`. Read the output: this script
-prints protocol status and masks some MTU/SSH failures, so exit code 0 alone
-does not prove the lab is healthy. If routing is still converging, wait a
-few seconds and repeat the check.
+Check the [healthy baseline](#healthy-baseline) before connecting.
 
 ### 4. Connect with stcli
 
@@ -200,10 +196,9 @@ export STCLI_TOKEN
 stcli spine-jfk
 ```
 
-Use any device in [Node roles](#node-roles). The token lasts only for this
-shell session and cannot refresh itself. For a new terminal or expired
-token, repeat token entry or local login as needed. Keep the printed token
-and terminal scrollback private.
+Use any device in [Node roles](#node-roles). `STCLI_TOKEN` is set only in
+this shell and cannot refresh itself. Enter it again in new terminals;
+rerun local login when it expires. Keep the token and scrollback private.
 
 For native access without `stcli`, use `just lab-cli spine-jfk`.
 For `stcli` on your computer instead, see
@@ -227,9 +222,8 @@ gh codespace list
 gh codespace delete --codespace <codespace-name>
 ```
 
-If you used local `stcli` with port forwarding, remove the SSH setup on
-your local computer afterward with `just cleanup-ssh` from the workshop
-folder. Deleting the Codespace removes its own SSH files automatically.
+For local port forwarding, also run `just cleanup-ssh` in the local
+workshop folder. Deleting the Codespace removes its own SSH files.
 
 Replace `<codespace-name>` with the workshop environment's name from the
 list. Deletion removes its files and saved lab state; save any work you
@@ -294,15 +288,16 @@ The lab images support **Linux AMD64 and ARM64**, including Apple Silicon.
 engine's native architecture. FRR uses the pinned multi-platform image
 `quay.io/frrouting/frr:10.7.1`.
 
-You need a running Docker engine (Docker Desktop or OrbStack on macOS,
-Docker Engine on Linux, or Docker Desktop with WSL2 integration on Windows),
-`just`, and a local `stcli` binary. Clone the workshop repository and build
-`stcli` as described in [preparation](#prepare-your-computer). On macOS, install `just` with
-`brew install just`. On Linux/WSL, install `just` using its
-[installation guide](https://github.com/casey/just#installation). For WSL,
-enable Docker Desktop integration for your Ubuntu distribution and confirm
-`docker info` succeeds from Ubuntu. Allocate enough memory to Docker; the Codespace
-rehearsal used a 16 GB machine.
+Complete [preparation](#prepare-your-computer), then install:
+
+- **Docker:** Docker Desktop or OrbStack on macOS, Docker Engine on Linux,
+  or Docker Desktop with Ubuntu/WSL2 integration on Windows.
+- **just:** `brew install just` on macOS, or follow the
+  [Linux/WSL installation guide](https://github.com/casey/just#installation).
+
+Use a Docker VM with enough memory for four SR Linux nodes; 16 GB is the
+tested Codespace allocation. Stop any Codespace port-forwarding tunnel so
+local ports 2401–2408 are free.
 
 From the workshop repository folder on your own machine:
 
@@ -313,13 +308,10 @@ just lab-up
 just verify
 ```
 
-Wait for `just lab-up` to finish completely before running `just verify`.
-Check the output against the expected protocol, ping, and SSH results in
-the Codespaces walkthrough above.
+Wait for `just lab-up` to finish before verifying. Check the
+[healthy baseline](#healthy-baseline).
 
-Setup installs the lab SSH key and aliases automatically. It does not
-install the bundled Linux `stcli` on your local machine. Log in and connect
-using your native binary:
+Setup installs the lab SSH key and aliases. Use your local binary to connect:
 
 ```sh
 ./stcli-local login
@@ -329,8 +321,7 @@ using your native binary:
 
 ## SSH setup
 
-You do not need to edit `~/.ssh/config` by hand. Setup installs the same
-SSH configuration on whichever machine runs `stcli`:
+SSH setup is automatic on the machine running `stcli`:
 
 | Connection path | What installs SSH configuration | Where it is installed |
 |---|---|---|
@@ -346,8 +337,7 @@ Setup installs these owner-only files:
 It prepends an `Include` to `~/.ssh/config`, preserving existing entries
 and saving the original as `~/.ssh/config.bak`.
 
-To install or refresh just the key and aliases, run these commands from
-the workshop folder **on the machine where `stcli` runs**:
+To refresh SSH setup, run from that machine's workshop folder:
 
 ```sh
 just install-key
@@ -362,11 +352,9 @@ ssh -G spine-jfk
 ssh -o BatchMode=yes -o ConnectTimeout=10 spine-jfk 'echo ok'
 ```
 
-The resolved settings should include `hostname 127.0.0.1`, `port 2401`,
-`user stcli`, and the lab `identityfile`. The connection should print the
-banner and `ok` without a password. See [Node roles](#node-roles) for the
-other aliases and ports. Keep local SSH/config commands in WSL when using
-WSL; configuring Windows' SSH files will not configure the Linux CLI.
+Expect `hostname 127.0.0.1`, `port 2401`, `user stcli`, and the lab
+`identityfile`, followed by a banner and `ok` without a password.
+For WSL, configure SSH inside WSL, not in Windows.
 
 ## Lab commands
 
@@ -382,8 +370,23 @@ your local computer for the Docker option.
 | `just break <scenario>` | Inject a fault: `bgp`, `mtu`, `ospf`, or `wan` |
 | `just fix <scenario>` | Restore that scenario's configuration |
 | `just lab-down` | Tear down the lab |
+| `just cleanup-ssh` | Remove workshop SSH setup on the local CLI machine |
 
 Use one device per `stcli` session; open another terminal for another device.
+
+### Healthy baseline
+
+Read the output of `just verify` and check:
+
+- OSPF neighbors are `full` at both sites.
+- Each spine and WAN router has three established BGP peers.
+- IAD sees the JFK prefix `192.168.11.0/24`.
+- End-to-end, small-packet, and large-packet pings succeed.
+- SSH checks return `ok`.
+
+The script masks some MTU/SSH failures and only prints protocol states;
+exit code 0 alone is insufficient. If routing is still converging, wait a
+few seconds and repeat.
 
 ## Teardown
 
@@ -444,19 +447,9 @@ routers. The images are public and require no vendor license downloads.
 - A spine export allow-list controls which local prefixes reach the WAN.
   The BGP scenario removes one entry from that list.
 
-The routing diagram is rendered by `scripts/routing-diagram.py` (requires
-Python and Pillow). Router IDs and AS numbers come from the device configs;
-update its layout and link labels when changing the topology.
-
-```sh
-python3 -m venv /tmp/ac6-diagram-venv
-/tmp/ac6-diagram-venv/bin/pip install pillow
-/tmp/ac6-diagram-venv/bin/python scripts/routing-diagram.py
-```
-
-For the containerlab physical-link diagram, use `just lab-diagram`; its
-editable source is `lab/topology.clab.drawio`. `just lab-graph` provides a
-simple Graphviz view (requires `graphviz`).
+To update the routing image, see [diagram generation](lab/diagrams/README.md).
+`just lab-diagram` generates the physical-link diagram;
+`just lab-graph` provides a Graphviz view (requires `graphviz`).
 
 ### Node roles
 
@@ -547,7 +540,7 @@ On the machine running `stcli`, check `ssh -G spine-jfk` and rerun
 For local `stcli` with a Codespace lab, keep `just codespace-connect`
 running and check that ports 2401–2408 are free before starting it.
 
-If a redeployment causes a host-key mismatch, clear only the disposable
+For a host-key mismatch after redeployment, clear the disposable
 lab's host-key file on the machine running `stcli`:
 
 ```sh
