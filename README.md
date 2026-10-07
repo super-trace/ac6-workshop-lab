@@ -11,6 +11,7 @@ faults with `stcli`. Run the lab in GitHub Codespaces or locally with Docker.
 - [Local Docker lab](#local-docker-lab)
 - [SSH setup](#ssh-setup)
 - [Lab commands](#lab-commands)
+- [Teardown](#teardown)
 - [Topology](#topology)
 - [Scenarios](#scenarios)
 - [Troubleshooting](#troubleshooting)
@@ -350,6 +351,50 @@ your local computer for the Docker option.
 | `just lab-down` | Tear down the lab |
 
 Use one device per `stcli` session; open another terminal for another device.
+
+## Teardown
+
+Exit your `stcli` sessions first. If using local port forwarding, press
+**Ctrl-C** in the terminal running `just codespace-connect`.
+
+### Local Docker lab
+
+From the local workshop folder:
+
+```sh
+just lab-down
+```
+
+This removes the lab containers and management network and clears the
+local lab host-key file. Images, SSH configuration, and saved device
+configuration remain available for the next run. For a clean reset, see
+[Reset saved configuration](#reset-saved-configuration).
+
+### Codespace lab
+
+Inside the Codespace, from `/workspaces/ac6-workshop-lab`:
+
+```sh
+just lab-down
+unset STCLI_TOKEN
+exit
+```
+
+Then, from your local terminal, find its name and stop it:
+
+```sh
+gh codespace list
+gh codespace stop --codespace <codespace-name>
+```
+
+Stopping preserves the Codespace for reuse. To permanently remove it
+instead, save any work you need and run:
+
+```sh
+gh codespace delete --codespace <codespace-name>
+```
+
+`just lab-down` removes the lab; it does not stop or delete the Codespace.
 
 ## Topology
 
