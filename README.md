@@ -209,6 +209,34 @@ For native access without `stcli`, use `just lab-cli spine-jfk`.
 For `stcli` on your computer instead, see
 [Codespace lab + local stcli](#codespace-lab--local-stcli).
 
+### 5. Finish and remove the Codespace
+
+Exit `stcli`. Inside the Codespace, from the workshop folder:
+
+```sh
+just lab-down
+unset STCLI_TOKEN
+exit
+```
+
+Back in your **local terminal**, stop any `just codespace-connect` tunnel
+with Ctrl-C. Find the Codespace name and delete that environment:
+
+```sh
+gh codespace list
+gh codespace delete --codespace <codespace-name>
+```
+
+Replace `<codespace-name>` with the workshop environment's name from the
+list. Deletion removes its files and saved lab state; save any work you
+want to keep first. `just lab-down` alone does not remove the Codespace.
+
+To keep the environment for another session, stop it instead of deleting:
+
+```sh
+gh codespace stop --codespace <codespace-name>
+```
+
 ## Codespace lab + local stcli
 
 Run the lab in Codespaces and `stcli` locally. Complete
@@ -252,7 +280,8 @@ If several workshop Codespaces exist, pass the name from `gh codespace
 list`. Occupied local ports cause the tunnel to fail. Use this recipe
 instead of browser port URLs or VS Code forwarding to preserve the SSH
 port mappings. For host-key errors after redeployment, see
-[Troubleshooting](#troubleshooting).
+[Troubleshooting](#troubleshooting). When finished, follow
+[Codespace teardown](#5-finish-and-remove-the-codespace).
 
 ## Local Docker lab
 
@@ -370,31 +399,8 @@ local lab host-key file. Images, SSH configuration, and saved device
 configuration remain available for the next run. For a clean reset, see
 [Reset saved configuration](#reset-saved-configuration).
 
-### Codespace lab
-
-Inside the Codespace, from `/workspaces/ac6-workshop-lab`:
-
-```sh
-just lab-down
-unset STCLI_TOKEN
-exit
-```
-
-Then, from your local terminal, find its name and stop it:
-
-```sh
-gh codespace list
-gh codespace stop --codespace <codespace-name>
-```
-
-Stopping preserves the Codespace for reuse. To permanently remove it
-instead, save any work you need and run:
-
-```sh
-gh codespace delete --codespace <codespace-name>
-```
-
-`just lab-down` removes the lab; it does not stop or delete the Codespace.
+For Codespaces, follow [Finish and remove the Codespace](#5-finish-and-remove-the-codespace)
+in the walkthrough above.
 
 ## Topology
 
