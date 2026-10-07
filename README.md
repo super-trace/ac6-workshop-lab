@@ -255,6 +255,11 @@ port mappings. For host-key errors after redeployment, see
 
 ## Local Docker lab
 
+The lab images support **Linux AMD64 and ARM64**, including Apple Silicon.
+`just lab-setup` builds the client and FRR SSH images for your Docker
+engine's native architecture. FRR uses the pinned multi-platform image
+`quay.io/frrouting/frr:10.7.1`.
+
 You need a running Docker engine (Docker Desktop or OrbStack on macOS,
 Docker Engine on Linux, or Docker Desktop with WSL2 integration on Windows),
 `just`, and a local `stcli` binary. Clone the workshop repository and build

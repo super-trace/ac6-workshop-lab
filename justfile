@@ -19,12 +19,12 @@ default:
 
 # pre-pull/build images — everything here is free/public, no accounts or
 # licenses, but client-ssh and frr-ssh are built locally, not pulled: every
-# node in this lab is an stcli target, and neither a plain Linux host nor
-# the stock frrouting/frr image ships an SSH server.
+# node in this lab is an stcli target. Multi-architecture bases select the
+# Docker engine's native platform for both amd64 and arm64 hosts.
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    docker pull frrouting/frr:latest
+    docker pull quay.io/frrouting/frr:10.7.1
     docker build -t client-ssh:latest lab/images/client-ssh
     docker build -t frr-ssh:latest lab/images/frr-ssh
     @just install-key
