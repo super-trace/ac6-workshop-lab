@@ -227,6 +227,10 @@ gh codespace list
 gh codespace delete --codespace <codespace-name>
 ```
 
+If you used local `stcli` with port forwarding, remove the SSH setup on
+your local computer afterward with `just cleanup-ssh` from the workshop
+folder. Deleting the Codespace removes its own SSH files automatically.
+
 Replace `<codespace-name>` with the workshop environment's name from the
 list. Deletion removes its files and saved lab state; save any work you
 want to keep first. `just lab-down` alone does not remove the Codespace.
@@ -401,6 +405,21 @@ configuration remain available for the next run. For a clean reset, see
 
 For Codespaces, follow [Finish and remove the Codespace](#5-finish-and-remove-the-codespace)
 in the walkthrough above.
+
+### Remove local SSH setup
+
+After stopping the lab or port-forwarding tunnel, run this from the local
+workshop folder if you no longer need the device aliases:
+
+```sh
+just cleanup-ssh
+```
+
+It removes the workshop `Include` from `~/.ssh/config`, the shared lab key,
+the alias file, and the lab host-key file. Other SSH entries and edits are
+preserved; the current config is backed up before changing it. It does not
+restore the old setup backup. Rerun `just install-key` and
+`just install-ssh-config` to use the lab again.
 
 ## Topology
 

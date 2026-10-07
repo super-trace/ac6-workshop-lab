@@ -87,6 +87,10 @@ install-ssh-config:
     echo "Added to the top of ~/.ssh/config: ${line}"
     echo "(previous version backed up to ${config}.bak)"
 
+# removes only workshop SSH configuration and keys; run after stopping the lab/tunnel.
+cleanup-ssh:
+    bash ./scripts/cleanup-ssh.sh
+
 # installs stcli itself into /usr/local/bin — but only inside a Codespace
 # ($CODESPACES, the standard env var every Codespace sets). Without that
 # guard this would be unsafe to call unconditionally from lab-setup: a
