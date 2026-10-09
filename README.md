@@ -4,6 +4,11 @@ An eight-node network lab for troubleshooting with `stcli`, running entirely
 in GitHub Codespaces. JFK uses SR Linux; IAD uses Arista cEOS. The WAN
 routers are cEOS (`rtr-phl`) and SR Linux (`rtr-ewr`); both clients use Linux.
 
+> **Public launch:** This repository and `super-trace/stcli-releases` will both
+> become public. When that happens, update both READMEs: replace the authenticated
+> `gh api` installer download below with the public `curl` command, remove
+> private-repository access requirements, and test installation without GitHub login.
+
 ![Routing topology](lab/diagrams/routing-topology.png)
 
 ## 1. Create a Codespace
