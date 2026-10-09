@@ -29,11 +29,26 @@ and end-to-end client pings to succeed. Check the output for SSH failures.
 
 ## 3. Connect
 
-On your computer, with `gh`, `stcli`, and `jq` installed, get the login
-helper and sign in through your browser:
+On your computer (macOS, Linux, or WSL), install `gh` and `jq`, then install
+`stcli`. The release repository currently requires GitHub access:
 
 ```sh
-gh repo clone super-trace/ac6-workshop-lab
+gh auth login
+gh api repos/super-trace/stcli-releases/contents/install.sh \
+  --jq .content | base64 --decode > /tmp/stcli-install.sh
+bash /tmp/stcli-install.sh
+export PATH="$HOME/.local/bin:$PATH"
+stcli --help
+```
+
+The installer selects the latest macOS or Linux binary; WSL uses the Linux
+binary. No Go build is needed. Add `~/.local/bin` to your shell's PATH to keep
+it available in new terminals.
+
+Get the login helper and sign in through your browser:
+
+```sh
+git clone git@github.com:super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
 ./scripts/login-token.sh
 ```
