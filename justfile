@@ -18,7 +18,7 @@ default:
     @just --list
 
 # Pull the lab images and build the SSH-enabled Linux clients.
-# The private cEOS image is published for linux/amd64 Codespaces.
+# The private cEOS image supports native AMD64 and ARM64 Docker engines.
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2

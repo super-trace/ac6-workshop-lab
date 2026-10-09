@@ -9,7 +9,8 @@ routers are cEOS (`rtr-phl`) and SR Linux (`rtr-ewr`); both clients use Linux.
 ## 1. Create a Codespace
 
 Open this repository on GitHub and select **Code → Codespaces → New with
-options**. Choose **4 cores / 16 GB RAM** and create the Codespace.
+options**. Choose the **4-core / 16 GB RAM** machine and create the Codespace.
+Use this machine size for the workshop lab.
 
 Wait for automatic setup to finish. It installs the lab images, `just`,
 `stcli`, and SSH configuration.
