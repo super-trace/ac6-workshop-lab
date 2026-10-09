@@ -38,14 +38,14 @@ topology:
 
     # ---------------------------------------------------------------- IAD --
     spine-iad:
-      kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:25.3.2
+      kind: arista_ceos
+      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
       startup-config: configs/spine-iad.cfg
       ports: ["2404:22"]
       labels: { graph-level: 1, graph-icon: router }
     leaf-iad:
-      kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:25.3.2
+      kind: arista_ceos
+      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
       startup-config: configs/leaf-iad.cfg
       ports: ["2405:22"]
       labels: { graph-level: 2, graph-icon: router }
@@ -72,8 +72,8 @@ topology:
       ports: ["2407:22"]
       labels: { graph-level: 0, graph-icon: router }
     rtr-ewr:
-      kind: arista_ceos
-      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
       startup-config: configs/rtr-ewr.cfg
       ports: ["2408:22"]
       labels: { graph-level: 0, graph-icon: router }
@@ -84,12 +84,12 @@ topology:
     - endpoints: ["leaf-jfk:e1-2", "client-jfk:eth1"]    # 192.168.11.0/24 — Scenarios 1 & 2
 
     # IAD fabric
-    - endpoints: ["spine-iad:e1-1", "leaf-iad:e1-1"]     # OSPF, 10.30.1.0/31
-    - endpoints: ["leaf-iad:e1-2", "client-iad:eth1"]    # 192.168.31.0/24
+    - endpoints: ["spine-iad:eth1", "leaf-iad:eth1"]     # OSPF, 10.30.1.0/31
+    - endpoints: ["leaf-iad:eth2", "client-iad:eth1"]    # 192.168.31.0/24
 
     # WAN — 2 paths between sites + 1 direct link between the WAN routers
     - endpoints: ["spine-jfk:e1-3", "rtr-phl:eth1"]      # eBGP, 172.16.1.0/31 — Scenario 4
-    - endpoints: ["spine-jfk:e1-4", "rtr-ewr:eth1"]      # eBGP, 172.16.2.0/31
-    - endpoints: ["spine-iad:e1-3", "rtr-phl:eth2"]      # eBGP, 172.16.3.0/31
-    - endpoints: ["spine-iad:e1-4", "rtr-ewr:eth2"]      # eBGP, 172.16.4.0/31
-    - endpoints: ["rtr-phl:eth3", "rtr-ewr:eth3"]        # eBGP, 172.16.5.0/31
+    - endpoints: ["spine-jfk:e1-4", "rtr-ewr:e1-1"]      # eBGP, 172.16.2.0/31
+    - endpoints: ["spine-iad:eth3", "rtr-phl:eth2"]      # eBGP, 172.16.3.0/31
+    - endpoints: ["spine-iad:eth4", "rtr-ewr:e1-2"]      # eBGP, 172.16.4.0/31
+    - endpoints: ["rtr-phl:eth3", "rtr-ewr:e1-3"]        # eBGP, 172.16.5.0/31

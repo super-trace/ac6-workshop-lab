@@ -38,7 +38,7 @@ heal_node() {
 }
 
 status=0
-for node in spine-jfk leaf-jfk spine-iad leaf-iad; do
+for node in spine-jfk leaf-jfk rtr-ewr; do
     heal_node "${node}" || status=1
 done
 exit "${status}"

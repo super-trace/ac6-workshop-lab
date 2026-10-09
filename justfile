@@ -11,7 +11,7 @@ set positional-arguments
 clab_image := "ghcr.io/srl-labs/clab:latest"
 clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
 
-srl_nodes := "spine-jfk leaf-jfk spine-iad leaf-iad"
+srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 
 # default: list recipes
 default:
@@ -120,7 +120,7 @@ lab-up:
     @just lab-status
     # An SR Linux node's startup-config
     # has intermittently, silently failed to apply (root cause not fully
-    # pinned down). heal-fabric.sh checks all six and fixes defensively;
+    # pinned down). heal-fabric.sh checks all SR Linux nodes and fixes defensively;
     # it's a fast no-op when nothing's wrong, which is the common case.
     @sleep 10
     @./scripts/heal-fabric.sh
@@ -217,9 +217,9 @@ lab-cli NODE='spine-jfk':
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{NODE}}" in
-      spine-jfk|leaf-jfk|spine-iad|leaf-iad)
+      spine-jfk|leaf-jfk|rtr-ewr)
         docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
-      rtr-phl|rtr-ewr)
+      spine-iad|leaf-iad|rtr-phl)
         docker exec -it clab-ac6-workshop-{{NODE}} Cli -p 15 ;;
       client-jfk|client-iad)
         docker exec -it clab-ac6-workshop-{{NODE}} sh ;;

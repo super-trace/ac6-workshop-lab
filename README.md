@@ -1,8 +1,8 @@
 # AC6 workshop lab
 
 An eight-node network lab for troubleshooting with `stcli`, running entirely
-in GitHub Codespaces. SR Linux provides the site fabrics, Arista cEOS the
-WAN routers, and Linux the clients.
+in GitHub Codespaces. JFK uses SR Linux; IAD uses Arista cEOS. The WAN
+routers are cEOS (`rtr-phl`) and SR Linux (`rtr-ewr`); both clients use Linux.
 
 ![Routing topology](lab/diagrams/routing-topology.png)
 

@@ -96,11 +96,11 @@ for x,site,prefix in [(280,"jfk","10.10"),(1320,"iad","10.30")]:
     box((x-160,825,x+160,925),"#ffffff","#ccd6e3")
     text(x,852,f"client-{site}",26,bold=True)
     text(x,886,f"{subnet}.10  ·  gateway .1",18,MUTED)
-    router(x,370,f"spine-{site}","SR Linux")
-    router(x,680,f"leaf-{site}","SR Linux")
+    router(x,370,f"spine-{site}","SR Linux" if site=="jfk" else "Arista cEOS")
+    router(x,680,f"leaf-{site}","SR Linux" if site=="jfk" else "Arista cEOS")
 
 router(800,250,"rtr-phl","Arista cEOS")
-router(800,530,"rtr-ewr","Arista cEOS")
+router(800,530,"rtr-ewr","SR Linux")
 box((565,660,1035,895),"#ffffff","#dce3ed")
 text(800,695,"How routes flow",24,bold=True)
 for y,label in [(741,"OSPF carries site links + loopbacks."),
