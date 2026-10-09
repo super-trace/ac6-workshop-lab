@@ -125,6 +125,7 @@ lab-up:
     @sleep 10
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
+    @printf '\n\033[1;32m╔══════════════════════════════════════╗\n║                                      ║\n║              LAB IS UP               ║\n║                                      ║\n╚══════════════════════════════════════╝\033[0m\n'
 
 # tear down the lab
 lab-down:
