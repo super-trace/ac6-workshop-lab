@@ -18,9 +18,7 @@ for i in $(seq 1 30); do
 done
 docker info >/dev/null 2>&1 || { echo "dockerd never became ready" >&2; exit 1; }
 
-# Unlike stcli-3node-lab, nothing here is licensed or proprietary — SR Linux
-# and FRRouting are both freely pullable, so there's no GitHub Release asset
-# to fetch and no account an attendee needs beyond ssh.supertrace.ai itself.
+# Codespaces supplies registry credentials for this repository's private package.
 cd "$(dirname "$0")/.."
 just lab-setup
 

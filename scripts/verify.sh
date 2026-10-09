@@ -20,8 +20,8 @@ docker exec "${lab}-spine-iad" sr_cli "show network-instance default protocols b
 
 echo
 echo "== WAN core: rtr-phl and rtr-ewr eBGP sessions (expect 3 Established each) =="
-docker exec "${lab}-rtr-phl" vtysh -c "show ip bgp summary"
-docker exec "${lab}-rtr-ewr" vtysh -c "show ip bgp summary"
+docker exec "${lab}-rtr-phl" Cli -p 15 -c "show bgp summary"
+docker exec "${lab}-rtr-ewr" Cli -p 15 -c "show bgp summary"
 
 echo
 echo "== JFK's client1 subnet, as seen from IAD's spine (proves cross-WAN advertisement) =="
@@ -38,8 +38,10 @@ docker exec "${lab}-client-jfk" ping -c 2 -s 3000 192.168.11.1 || true
 
 echo
 echo "== stcli SSH aliases (requires: just lab-setup, so ~/.ssh/ac6-workshop-key exists) =="
-for node in spine-jfk leaf-jfk rtr-phl client-jfk; do
+for node in spine-jfk leaf-jfk spine-iad leaf-iad rtr-phl rtr-ewr client-jfk client-iad; do
     echo "-- ${node} --"
-    ssh -F lab/ssh_config -o ConnectTimeout=5 "${node}" "echo ok" \
+    command="show version"
+    case "$node" in client-*) command="echo ok" ;; esac
+    ssh -F lab/ssh_config -o ConnectTimeout=5 "${node}" "${command}" \
         || echo "!! ${node} ssh check failed" >&2
 done

@@ -17,16 +17,13 @@ srl_nodes := "spine-jfk leaf-jfk spine-iad leaf-iad"
 default:
     @just --list
 
-# pre-pull/build images — everything here is free/public, no accounts or
-# licenses, but client-ssh and frr-ssh are built locally, not pulled: every
-# node in this lab is an stcli target. Multi-architecture bases select the
-# Docker engine's native platform for both amd64 and arm64 hosts.
+# Pull the lab images and build the SSH-enabled Linux clients.
+# The private cEOS image is published for linux/amd64 Codespaces.
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    docker pull quay.io/frrouting/frr:10.7.1
+    docker pull ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
     docker build -t client-ssh:latest lab/images/client-ssh
-    docker build -t frr-ssh:latest lab/images/frr-ssh
     @just install-key
     @just install-ssh-config
     @just install-stcli
@@ -121,7 +118,7 @@ lab-up:
     {{clab_run}} deploy -t topology.clab.yml
     @echo ""
     @just lab-status
-    # See README's "Known quirks" section: an SR Linux node's startup-config
+    # An SR Linux node's startup-config
     # has intermittently, silently failed to apply (root cause not fully
     # pinned down). heal-fabric.sh checks all six and fixes defensively;
     # it's a fast no-op when nothing's wrong, which is the common case.
@@ -223,7 +220,7 @@ lab-cli NODE='spine-jfk':
       spine-jfk|leaf-jfk|spine-iad|leaf-iad)
         docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
       rtr-phl|rtr-ewr)
-        docker exec -it clab-ac6-workshop-{{NODE}} vtysh ;;
+        docker exec -it clab-ac6-workshop-{{NODE}} Cli -p 15 ;;
       client-jfk|client-iad)
         docker exec -it clab-ac6-workshop-{{NODE}} sh ;;
       *) echo "unknown node {{NODE}}" >&2; exit 1 ;;
@@ -242,7 +239,7 @@ lab-graph:
     @echo "Wrote /tmp/ac6-workshop.svg — open it and compare against the README diagram."
     @open /tmp/ac6-workshop.svg 2>/dev/null || true
 
-# regenerate lab/topology.clab.png, the real diagram embedded in the README —
+# regenerate the physical-link diagram lab/topology.clab.png —
 # run this after any topology.clab.yml change. Two steps: containerlab's own
 # `graph --drawio` (via the clab-io-draw project) turns the topology into a
 # .drawio file with real router/switch/host icons and a hierarchical layout

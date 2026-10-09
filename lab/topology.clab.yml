@@ -64,27 +64,19 @@ topology:
     # ------------------------------------------------------------ WAN core --
     # Two independent paths between the sites (rtr-phl, rtr-ewr) plus a
     # direct link between them for a third form of resilience. eBGP
-    # everywhere here, distinct AS per router — see README's "Why eBGP,
-    # not an iBGP mesh" for the design rationale (RFC 7938 + real DCI
-    # practice).
+    # everywhere here, distinct AS per router.
     rtr-phl:
-      kind: linux
-      image: frr-ssh:latest
+      kind: arista_ceos
+      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+      startup-config: configs/rtr-phl.cfg
       ports: ["2407:22"]
-      labels: { graph-level: 0, graph-icon: switch }
-      binds:
-        - configs/rtr-phl-daemons:/etc/frr/daemons
-        - configs/rtr-phl-frr.conf:/etc/frr/frr.conf
-        - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
+      labels: { graph-level: 0, graph-icon: router }
     rtr-ewr:
-      kind: linux
-      image: frr-ssh:latest
+      kind: arista_ceos
+      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+      startup-config: configs/rtr-ewr.cfg
       ports: ["2408:22"]
-      labels: { graph-level: 0, graph-icon: switch }
-      binds:
-        - configs/rtr-ewr-daemons:/etc/frr/daemons
-        - configs/rtr-ewr-frr.conf:/etc/frr/frr.conf
-        - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
+      labels: { graph-level: 0, graph-icon: router }
 
   links:
     # JFK fabric

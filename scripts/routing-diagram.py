@@ -48,7 +48,7 @@ def pill(x,y,label,color,size=18):
     text(x,y,label,size,color)
 
 def config(node):
-    suffix = ".cfg" if node.startswith(("spine","leaf")) else "-frr.conf"
+    suffix = ".cfg"
     return (ROOT/"lab/configs"/(node+suffix)).read_text()
 
 def router(x,y,node,kind):
@@ -99,8 +99,8 @@ for x,site,prefix in [(280,"jfk","10.10"),(1320,"iad","10.30")]:
     router(x,370,f"spine-{site}","SR Linux")
     router(x,680,f"leaf-{site}","SR Linux")
 
-router(800,250,"rtr-phl","FRRouting")
-router(800,530,"rtr-ewr","FRRouting")
+router(800,250,"rtr-phl","Arista cEOS")
+router(800,530,"rtr-ewr","Arista cEOS")
 box((565,660,1035,895),"#ffffff","#dce3ed")
 text(800,695,"How routes flow",24,bold=True)
 for y,label in [(741,"OSPF carries site links + loopbacks."),

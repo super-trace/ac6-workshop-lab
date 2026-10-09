@@ -18,5 +18,5 @@ docker exec "${lab}-spine-jfk" sr_cli "tools network-instance default protocols 
 
 echo ""
 echo "Broken: spine-jfk no longer advertises 192.168.11.0/24 (client-jfk) to the WAN."
-echo "Check from rtr-phl: docker exec ${lab}-rtr-phl vtysh -c 'show ip bgp'"
+echo "Check from rtr-phl: docker exec ${lab}-rtr-phl Cli -p 15 -c 'show ip bgp'"
 echo "Check from spine-iad: docker exec ${lab}-spine-iad sr_cli \"show network-instance default protocols bgp routes ipv4 prefix 192.168.11.0/24\""

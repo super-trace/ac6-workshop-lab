@@ -32,7 +32,7 @@ heal_node() {
     if [ -n "$(docker exec "${lab}-${node}" sr_cli 'show network-instance default interfaces' 2>/dev/null)" ]; then
         echo "${node}: confirmed healthy."
     else
-        echo "${node}: still missing network-instance default after re-applying — see README's 'Known SR Linux / containerlab quirks' section." >&2
+        echo "${node}: still missing network-instance default after re-applying — inspect device logs and memory availability." >&2
         return 1
     fi
 }

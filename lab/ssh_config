@@ -18,8 +18,8 @@
 
 # Key-based login for every node — stcli's own account on SR Linux (admin
 # is a reserved username there and can't take an ssh-key, see
-# lab/configs/spine-jfk.cfg) and root's authorized_keys on the Linux
-# nodes, both seeded from the same shared, non-secret lab key. `just
+# lab/configs/spine-jfk.cfg), the stcli account on cEOS, and root on Linux
+# clients, all seeded from the same shared, non-secret lab key. `just
 # lab-setup` copies it to ~/.ssh/ac6-workshop-key; run that once before
 # first use.
 Host spine-jfk leaf-jfk client-jfk spine-iad leaf-iad client-iad rtr-phl rtr-ewr
@@ -53,7 +53,7 @@ Host client-iad
 # WAN core
 Host rtr-phl
     Port 2407
-    User root
+    User stcli
 Host rtr-ewr
     Port 2408
-    User root
+    User stcli
