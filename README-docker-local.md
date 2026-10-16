@@ -19,7 +19,7 @@ and its private container package:
 ```sh
 gh auth login
 gh auth refresh --scopes read:packages
-gh repo clone super-trace/ac6-workshop-lab
+git clone git@github.com:super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
 gh auth token | docker login ghcr.io -u "$(gh api user --jq .login)" --password-stdin
 just lab-setup
@@ -43,10 +43,28 @@ nodes. Initial image downloads and device startup can take several minutes.
 
 ## Connect
 
+Install the native CLI on your computer (macOS, Linux, or WSL). While the
+release repository is private, use your authenticated GitHub CLI:
+
+```sh
+gh api repos/super-trace/stcli-releases/contents/install.sh \
+  --jq .content | base64 --decode > /tmp/stcli-install.sh
+bash /tmp/stcli-install.sh
+export PATH="$HOME/.local/bin:$PATH"
+stcli --version
+```
+
+Then sign in and connect:
+
 ```sh
 stcli login
 stcli spine-jfk
 ```
+
+If the machine has no browser, use `stcli login --headless` and complete the
+verification link and code in a browser on another machine. This requires a
+CLI version that supports headless login. Add `~/.local/bin` to your shell's
+PATH to keep the installed CLI available in new terminals.
 
 Other targets: `leaf-jfk`, `client-jfk`, `spine-iad`, `leaf-iad`,
 `client-iad`, `rtr-phl`, and `rtr-ewr`. For a native CLI, run

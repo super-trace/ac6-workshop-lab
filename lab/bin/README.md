@@ -1,24 +1,23 @@
-# `stcli-linux-amd64`
+# Bundled stcli for Codespaces
 
-A placeholder, not the long-term distribution mechanism: `stcli` doesn't
-ship public release binaries yet, so this is a prebuilt, committed one —
-installed into a Codespace automatically by `just install-stcli` (called
-from `lab-setup`, guarded to only act when `$CODESPACES` is set — see the
-justfile). Once `stcli` has real GitHub Releases, this file and the
-install step that copies it should be replaced with a `curl`-the-release
-download instead.
+`stcli-linux-amd64` is a static Linux x86-64 executable. `just lab-setup`
+installs it automatically inside Codespaces via `just install-stcli`. It is
+committed temporarily so Codespaces can run without downloading a release.
+Replace this copy step with a release download when distribution is public.
 
-Built with:
+Built from a clean `main` checkout at commit
+`c94b8645d430e448cd57383ced60cdf80a7f0075` on **2026-10-16**.
+Includes headless device login (`stcli login --headless`) and `stcli --version`.
+The build embeds its source revision; `vcs.modified` must be `false`.
+
+Run from the CLI source directory, with `WORKSHOP_DIR` set to the workshop path:
 
 ```sh
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o lab/bin/stcli-linux-amd64 .
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' \
+  -o "$WORKSHOP_DIR/lab/bin/stcli-linux-amd64" .
 ```
 
-from the [`super-trace/stcli`](https://github.com/super-trace/stcli) repo.
-Pure Go, no CGO, so this cross-compiles cleanly from any host.
+Check the binary with `file` and `go version -m`; run `stcli --version` and
+`stcli login --help` on Linux to confirm the revision and headless flag.
 
-**Built from `main` at commit `0801fb4b85c7` on 2026-10-06.** This includes
-[PR #15](https://github.com/super-trace/stcli/pull/15), which merges the
-ssh-agent and `IdentityFile` key sources into one `publickey` auth attempt.
-Without that fix, an unrelated key in the ssh-agent can exhaust the
-`publickey` method before this lab's own key is offered.
+SHA-256: `18419530650f85a5de195be6c08eb2ea9d2efe03c86341b9a192bffca12cc2d4`

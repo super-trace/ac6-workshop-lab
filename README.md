@@ -4,10 +4,11 @@ An eight-node network lab for troubleshooting with `stcli`, running entirely
 in GitHub Codespaces. JFK uses SR Linux; IAD uses Arista cEOS. The WAN
 routers are cEOS (`rtr-phl`) and SR Linux (`rtr-ewr`); both clients use Linux.
 
+For local Docker, follow [the local setup guide](README-docker-local.md).
+
 > **Public launch:** This repository and `super-trace/stcli-releases` will both
-> become public. When that happens, update both READMEs: replace the authenticated
-> `gh api` installer download below with the public `curl` command, remove
-> private-repository access requirements, and test installation without GitHub login.
+> become public. At launch, update both READMEs, remove private-access requirements
+> from the local-install instructions, and test downloads without GitHub login.
 
 ![Routing topology](lab/diagrams/routing-topology.png)
 
@@ -34,41 +35,30 @@ and end-to-end client pings to succeed. Check the output for SSH failures.
 
 ## 3. Connect
 
-On your computer (macOS, Linux, or WSL), install `gh` and `jq`, then install
-`stcli`. The release repository currently requires GitHub access:
+In the **Codespace terminal**, sign in and connect:
 
 ```sh
-gh auth login
-gh api repos/super-trace/stcli-releases/contents/install.sh \
-  --jq .content | base64 --decode > /tmp/stcli-install.sh
-bash /tmp/stcli-install.sh
-export PATH="$HOME/.local/bin:$PATH"
-stcli --help
-```
-
-The installer selects the latest macOS or Linux binary; WSL uses the Linux
-binary. No Go build is needed. Add `~/.local/bin` to your shell's PATH to keep
-it available in new terminals.
-
-Get the login helper and sign in through your browser:
-
-```sh
-git clone git@github.com:super-trace/ac6-workshop-lab.git
-cd ac6-workshop-lab
-./scripts/login-token.sh
-```
-
-Copy the access token it prints. In the Codespace terminal:
-
-```sh
-read -rsp 'Paste access token: ' STCLI_TOKEN; echo
-export STCLI_TOKEN
+stcli login --headless
 stcli spine-jfk
+```
+
+Open the verification link printed by `stcli` in your computer's browser and
+enter the one-time code. Complete sign-in, then wait for **Signed in.** in the
+Codespace terminal before connecting. Credentials are saved in the Codespace
+and refreshed automatically; no local CLI installation or token copying is needed.
+
+If you previously exported a token, run `unset STCLI_TOKEN` before signing in
+so the saved credentials are used. In an existing Codespace, update the bundled
+binary first:
+
+```sh
+git pull
+just install-stcli
+stcli --version
 ```
 
 Choose any node: `spine-jfk`, `leaf-jfk`, `client-jfk`, `spine-iad`,
 `leaf-iad`, `client-iad`, `rtr-phl`, or `rtr-ewr`.
-The token lasts for this shell; run the helper again when it expires.
 For a native device CLI, use `just lab-cli rtr-phl`.
 
 ## 4. Finish
