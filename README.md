@@ -45,11 +45,9 @@ stcli spine-jfk
 Open the verification link printed by `stcli` in your computer's browser and
 enter the one-time code. Complete sign-in, then wait for **Signed in.** in the
 Codespace terminal before connecting. Credentials are saved in the Codespace
-and refreshed automatically; no local CLI installation or token copying is needed.
+and refreshed automatically.
 
-If you previously exported a token, run `unset STCLI_TOKEN` before signing in
-so the saved credentials are used. In an existing Codespace, update the bundled
-binary first:
+In an existing Codespace, update the bundled binary first:
 
 ```sh
 git pull
