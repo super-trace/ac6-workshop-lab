@@ -1,0 +1,20 @@
+---
+# Sites: select one with @jfk, @iad or @wan.
+jfk:
+  data:
+    site: jfk
+iad:
+  data:
+    site: iad
+wan:
+  data:
+    site: wan
+    role: wan
+
+# Platforms: select one with @arista_ceos, @nokia_srlinux or @linux.
+arista_ceos:
+  platform: arista_ceos
+nokia_srlinux:
+  platform: nokia_srlinux
+linux:
+  platform: linux
