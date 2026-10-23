@@ -1,5 +1,10 @@
 # Bundled stcli for Codespaces
 
+> **TODO before the workshop:** this binary predates multi-device sessions
+> (protocol 3.0, device tabs, `-i` inventory picker) and cannot talk to a 3.0
+> backend. Replace it with the 3.0 release build, and update the commit, date
+> and SHA-256 below.
+
 `stcli-linux-amd64` is a static Linux x86-64 executable. `just lab-setup`
 installs it automatically inside Codespaces via `just install-stcli`. It is
 committed temporarily so Codespaces can run without downloading a release.

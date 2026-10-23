@@ -16,7 +16,6 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
 
 Open this repository on GitHub and select **Code → Codespaces → New with
 options**. Choose the **4-core / 16 GB RAM** machine and create the Codespace.
-Use this machine size for the workshop lab.
 
 Wait for automatic setup to finish. It installs the lab images, `just`,
 `stcli`, and SSH configuration.
@@ -33,19 +32,15 @@ just verify
 Expect OSPF neighbors to be Full, all WAN BGP peers to be Established,
 and end-to-end client pings to succeed. Check the output for SSH failures.
 
-## 3. Connect
-
-In the **Codespace terminal**, sign in and connect:
+## 3. Sign in
 
 ```sh
 stcli login --headless
-stcli spine-jfk
 ```
 
-Open the verification link printed by `stcli` in your computer's browser and
-enter the one-time code. Complete sign-in, then wait for **Signed in.** in the
-Codespace terminal before connecting. Credentials are saved in the Codespace
-and refreshed automatically.
+Open the verification link in your computer's browser, enter the one-time
+code, and wait for **Signed in.** in the Codespace terminal. Credentials are
+saved in the Codespace and refreshed automatically.
 
 In an existing Codespace, update the bundled binary first:
 
@@ -55,11 +50,66 @@ just install-stcli
 stcli --version
 ```
 
-Choose any node: `spine-jfk`, `leaf-jfk`, `client-jfk`, `spine-iad`,
-`leaf-iad`, `client-iad`, `rtr-phl`, or `rtr-ewr`.
-For a native device CLI, use `just lab-cli rtr-phl`.
+## 4. Connect to the network
 
-## 4. Finish
+Pick devices from the lab inventory:
+
+```sh
+stcli -i lab/inventory/hosts.yaml
+```
+
+The picker lists every device with its site, platform and groups. Type to
+filter by name or `key=value` (`site=iad`, `platform=arista_ceos`,
+`role=spine`), press **space** to select a device, **ctrl+a** to select every
+device shown, and **enter** to connect. You can also skip the picker:
+
+```sh
+stcli spine-iad rtr-phl rtr-ewr spine-jfk          # by name
+stcli -i lab/inventory/hosts.yaml @wan @iad         # by group
+stcli -i lab/inventory/hosts.yaml --filter role=spine
+```
+
+Devices: `spine-jfk`, `leaf-jfk`, `client-jfk`, `spine-iad`, `leaf-iad`,
+`client-iad`, `rtr-phl`, `rtr-ewr`. Groups: `jfk`, `iad`, `wan`,
+`arista_ceos`, `nokia_srlinux`, `linux`. For a router's native CLI outside
+`stcli`, run `just lab-cli rtr-phl`.
+
+## 5. Use stcli
+
+- **Conversation (tab 1).** Ask in plain language — "client-iad can't reach
+  192.168.11.0/24". One agent works across every connected device and names
+  the device on every command it runs.
+- **Approvals.** Read-only commands run straight away. Anything that changes
+  a device stops for you, and the dialog names the router: **Approve on
+  rtr-phl?**. Destructive commands need a typed confirmation.
+- **Device tabs (tab 2 onward).** One per router, styled like a terminal on
+  that router: its prompt, every command run there (the agent's are marked
+  `· agent`) and the raw output. Type a command to run it on that router
+  yourself; typing it is your approval, but destructive commands still ask
+  for the typed confirmation.
+  <!-- TODO(alex): confirm `?` and tab (ask the router for help/completion)
+  have shipped in the bundled binary before advertising them here. -->
+- **Switch tabs** with `shift+←/→`, with `←/→` when the input is empty, or
+  with `/switch`.
+- In the conversation, `!rtr-phl: show ip route` runs a command yourself on
+  one router without asking the agent.
+
+## 6. Troubleshooting scenarios
+
+Break something, then ask `stcli` to find it. Each scenario has a matching
+fix (`just fix <name>`) if you get stuck.
+
+| Scenario | Break | What you'll notice |
+| --- | --- | --- |
+| Hidden path | `just break path` | IAD reaches JFK's clients over one path |
+| BGP | `just break bgp` | JFK's client subnet disappears from the WAN |
+| MTU | `just break mtu` | Small pings work, larger transfers fail |
+| OSPF | `just break ospf` | `client-jfk` loses reachability |
+| WAN | `just break wan` | Traffic still flows, redundancy doesn't |
+
+Describe the symptom, not the cause, and let the agent walk the network.
+
+## 7. Finish
 
 ```sh
 just lab-down

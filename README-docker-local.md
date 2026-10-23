@@ -58,17 +58,20 @@ Then sign in and connect:
 
 ```sh
 stcli login
-stcli spine-jfk
+stcli -i lab/inventory/hosts.yaml
 ```
 
-If the machine has no browser, use `stcli login --headless` and complete the
-verification link and code in a browser on another machine. This requires a
-CLI version that supports headless login. Add `~/.local/bin` to your shell's
-PATH to keep the installed CLI available in new terminals.
+The picker lists the lab devices: type to filter (`site=iad`,
+`platform=arista_ceos`), **space** to select, **enter** to connect. Or name
+them directly: `stcli spine-iad rtr-phl rtr-ewr spine-jfk`. Several devices
+open one conversation plus a tab per router; the main
+[README](README.md#5-use-stcli) explains the tabs and the scenarios.
 
-Other targets: `leaf-jfk`, `client-jfk`, `spine-iad`, `leaf-iad`,
-`client-iad`, `rtr-phl`, and `rtr-ewr`. For a native CLI, run
-`just lab-cli rtr-ewr`. List all commands with `just --list`.
+If the machine has no browser, use `stcli login --headless` and complete the
+verification link and code in a browser on another machine. Add
+`~/.local/bin` to your shell's PATH to keep the installed CLI available in
+new terminals. For a router's native CLI, run `just lab-cli rtr-ewr`. List
+all commands with `just --list`.
 
 ## Finish
 
