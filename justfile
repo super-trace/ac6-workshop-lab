@@ -254,7 +254,7 @@ lab-diagram:
         -x -f png --scale 2 -o /data/topology.clab.png /data/topology.clab.drawio
     @echo "Wrote lab/topology.clab.png and lab/topology.clab.drawio (editable at app.diagrams.net)."
 
-# break/fix a named scenario: just break bgp | mtu | ospf | wan
+# break/fix a named scenario: just break path | bgp | mtu | ospf | wan
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh
 
