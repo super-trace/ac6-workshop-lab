@@ -31,7 +31,7 @@ topology:
         - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
       exec:
         - ip address add 192.168.11.10/24 dev eth1
-        - ip link set eth1 alias "UPLINK: leaf-jfk e1-2"
+        - 'ip link set eth1 alias "UPLINK: leaf-jfk e1-2"'
         - ip route replace default via 192.168.11.1 dev eth1
         # No MTU baseline here — this is Scenario 2's target, see
         # scripts/fix-mtu.sh for the healthy-state 1500 this normally runs
@@ -59,7 +59,7 @@ topology:
         - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
       exec:
         - ip address add 192.168.31.10/24 dev eth1
-        - ip link set eth1 alias "UPLINK: leaf-iad Et2"
+        - 'ip link set eth1 alias "UPLINK: leaf-iad Et2"'
         - ip route replace default via 192.168.31.1 dev eth1
         - ip link set eth1 mtu 1500
 
