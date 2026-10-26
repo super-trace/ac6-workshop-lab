@@ -4,29 +4,56 @@ set -euo pipefail
 lab="clab-ac6-workshop"
 checks_failed=0
 
+# expect OUTPUT PATTERN COUNT WHAT: fails the run unless at least COUNT lines
+# of OUTPUT match the extended regex PATTERN.
+expect() {
+    local got
+    got="$(grep -cE -- "$2" <<<"$1" || true)"
+    if (( got < $3 )); then
+        echo "!! expected ${4} (${3}), found ${got}" >&2
+        checks_failed=1
+    fi
+}
+
 echo "== JFK intra-site OSPF (expect Full on the leaf link) =="
-docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols ospf neighbor"
+out="$(docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols ospf neighbor")"
+echo "$out"
+expect "$out" ' full ' 1 "spine-jfk OSPF neighbor Full"
 
 echo
 echo "== IAD intra-site OSPF (expect Full on the leaf link) =="
-docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip ospf neighbor"
+out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip ospf neighbor")"
+echo "$out"
+expect "$out" ' FULL ' 1 "spine-iad OSPF neighbor Full"
 
 echo
 echo "== spine-jfk eBGP (expect Established to both rtr-phl and rtr-ewr) =="
-docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols bgp neighbor"
+out="$(docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols bgp neighbor")"
+echo "$out"
+expect "$out" ' wan .* established ' 2 "spine-jfk eBGP sessions established"
 
 echo
 echo "== spine-iad eBGP (expect Established to both rtr-phl and rtr-ewr) =="
-docker exec "${lab}-spine-iad" Cli -p 15 -c "show bgp summary"
+out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show bgp summary")"
+echo "$out"
+expect "$out" '^172\.16\..* Established' 2 "spine-iad eBGP sessions Established"
 
 echo
 echo "== WAN core: rtr-phl and rtr-ewr eBGP sessions (expect 3 Established each) =="
-docker exec "${lab}-rtr-phl" Cli -p 15 -c "show bgp summary"
-docker exec "${lab}-rtr-ewr" sr_cli "show network-instance default protocols bgp neighbor"
+out="$(docker exec "${lab}-rtr-phl" Cli -p 15 -c "show bgp summary")"
+echo "$out"
+expect "$out" ' Established ' 3 "rtr-phl eBGP sessions Established"
+out="$(docker exec "${lab}-rtr-ewr" sr_cli "show network-instance default protocols bgp neighbor")"
+echo "$out"
+expect "$out" ' established ' 3 "rtr-ewr eBGP sessions established"
 
 echo
 echo "== JFK's client1 subnet, as seen from IAD's spine (proves cross-WAN advertisement) =="
-docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip bgp 192.168.11.0/24"
+out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip bgp 192.168.11.0/24")"
+echo "$out"
+# Both WAN paths, not just reachability: one path alone is the wan or path
+# scenario still broken.
+expect "$out" 'Paths: 2 available' 1 "192.168.11.0/24 at spine-iad via both rtr-phl and rtr-ewr"
 
 echo
 echo "== end-to-end: client-jfk -> client-iad, full stack (leaf->spine->WAN->spine->leaf) =="
