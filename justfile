@@ -34,11 +34,11 @@ lab-setup:
 # inside the Codespace instead (see codespace-connect and the README's
 # "Codespaces" section).
 install-key:
-    # lab/ssh_config points stcli's IdentityFile here — a fixed,
-    # home-relative path so it resolves the same regardless of where this
-    # repo is cloned. Not a secret: the matching public key is baked into
-    # every node, and only ever used against these loopback-only lab
-    # containers.
+    @# lab/ssh_config points stcli's IdentityFile here — a fixed,
+    @# home-relative path so it resolves the same regardless of where this
+    @# repo is cloned. Not a secret: the matching public key is baked into
+    @# every node, and only ever used against these loopback-only lab
+    @# containers.
     @mkdir -p ~/.ssh
     @cp lab/ac6-workshop-key ~/.ssh/ac6-workshop-key
     @chmod 600 ~/.ssh/ac6-workshop-key
@@ -110,18 +110,21 @@ install-stcli:
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
-    # Every node gets a fresh host key on every deploy. lab/ssh_config points
-    # stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
-    # comment for why); wiping it here is what keeps a redeploy from looking
-    # like a man-in-the-middle to either of them.
+    @# Every node gets a fresh host key on every deploy. lab/ssh_config points
+    @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
+    @# comment for why); wiping it here is what keeps a redeploy from looking
+    @# like a man-in-the-middle to either of them.
     @rm -f ~/.ac6-workshop-known-hosts
-    {{clab_run}} deploy -t topology.clab.yml
+    @# --reconfigure: start every node from lab/configs/. Without it cEOS boots
+    @# from the config it saved in its lab directory last time, so config
+    @# changes (and any scenario left broken) silently survive a redeploy.
+    {{clab_run}} deploy --reconfigure -t topology.clab.yml
     @echo ""
     @just lab-status
-    # An SR Linux node's startup-config
-    # has intermittently, silently failed to apply (root cause not fully
-    # pinned down). heal-fabric.sh checks all SR Linux nodes and fixes defensively;
-    # it's a fast no-op when nothing's wrong, which is the common case.
+    @# An SR Linux node's startup-config
+    @# has intermittently, silently failed to apply (root cause not fully
+    @# pinned down). heal-fabric.sh checks all SR Linux nodes and fixes defensively;
+    @# it's a fast no-op when nothing's wrong, which is the common case.
     @sleep 10
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
@@ -230,15 +233,6 @@ lab-cli NODE='spine-jfk':
 # run the infra verification checks (OSPF + BGP + prefix reachability)
 verify:
     ./scripts/verify.sh
-
-# quick structural sanity-check: does the real topology.clab.yml still match
-# what the README's diagram claims? (needs graphviz locally —
-# `brew install graphviz` — not needed to run the lab)
-lab-graph:
-    {{clab_run}} graph --dot -t topology.clab.yml
-    dot -Tsvg lab/clab-ac6-workshop/graph/topology.clab.dot -o /tmp/ac6-workshop.svg
-    @echo "Wrote /tmp/ac6-workshop.svg — open it and compare against the README diagram."
-    @open /tmp/ac6-workshop.svg 2>/dev/null || true
 
 # regenerate the physical-link diagram lab/topology.clab.png —
 # run this after any topology.clab.yml change. Two steps: containerlab's own
