@@ -15,7 +15,12 @@ set positional-arguments
 # macOS the daemon runs in a VM, so that host path isn't the daemon's.
 clab_image := "ghcr.io/srl-labs/clab:latest"
 clab_containers_mount := if os() == "linux" { "-v /var/lib/docker/containers:/var/lib/docker/containers " } else { "" }
-clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock " + clab_containers_mount + "-v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
+#
+# containerlab colors its log and tables only on a terminal, so give it one
+# (-it) when just runs in one. -t alone isn't enough: containerlab queries the
+# terminal's colors, and without -i the replies spill into the shell. The test
+# checks stderr, not stdout: inside $(...), stdout is the substitution's pipe.
+clab_run := "docker run --rm $([ -t 0 ] && [ -t 2 ] && echo -it) --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock " + clab_containers_mount + "-v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
 
 srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 
@@ -157,7 +162,7 @@ lab-up:
     @# --reconfigure: start every node from lab/configs/. Without it cEOS boots
     @# from the config it saved in its lab directory last time, so config
     @# changes (and any scenario left broken) silently survive a redeploy.
-    {{clab_run}} deploy --reconfigure -t topology.clab.yml
+    @{{clab_run}} deploy --reconfigure -t topology.clab.yml
     @echo ""
     @just lab-status
     @# An SR Linux node's startup-config
@@ -168,15 +173,17 @@ lab-up:
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
     @printf '\n\033[1;32m╔══════════════════════════════════════════════════════════════════════════╗\n║                                                                          ║\n║                                LAB IS UP                                 ║\n║                                                                          ║\n╚══════════════════════════════════════════════════════════════════════════╝\033[0m\n'
+    @printf '{{dim}}containerlab WARN lines above are expected in this lab and safe to ignore.{{reset}}\n'
 
 # tear down the lab
 lab-down:
-    {{clab_run}} destroy -t topology.clab.yml
+    @{{clab_run}} destroy -t topology.clab.yml
+    @printf '\n{{red}}╔══════════════════════════════════════════════════════════════════════════╗\n║                                                                          ║\n║                               LAB IS DOWN                                ║\n║                                                                          ║\n╚══════════════════════════════════════════════════════════════════════════╝{{reset}}\n'
     @rm -f ~/.ac6-workshop-known-hosts
 
 # table of running lab nodes + their IPs
 lab-status:
-    {{clab_run}} inspect -t topology.clab.yml
+    @{{clab_run}} inspect -t topology.clab.yml
 
 # resolves which codespace to use: {{CODESPACE}} if given, otherwise the
 # one codespace on this repo if there's exactly one. Echoes the name on
