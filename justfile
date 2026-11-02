@@ -19,6 +19,19 @@ clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/
 
 srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 
+# ANSI colors for the recipe intros; raw strings, so printf expands the escapes.
+# Vendors keep one color each: SR Linux blue, cEOS magenta, Linux green.
+reset := '\033[0m'
+bold := '\033[1m'
+dim := '\033[2m'
+cyan := '\033[1;36m'
+yellow := '\033[1;33m'
+green := '\033[1;32m'
+red := '\033[1;31m'
+srl := '\033[94m'
+ceos := '\033[95m'
+linux := '\033[92m'
+
 # default: list recipes
 default:
     @just --list
@@ -116,15 +129,15 @@ install-stcli:
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
-    @printf '\033[1;36m==> Welcome to the workshop! This command will provision multiple containers\n'
-    @printf '    to simulate a network. Expect this to take ~2–5 minutes.\033[0m\n'
-    @printf '    JFK  spine-jfk, leaf-jfk (Nokia SR Linux) + client-jfk (Linux)\n'
-    @printf '    IAD  spine-iad, leaf-iad (Arista cEOS) + client-iad (Linux)\n'
-    @printf '    WAN  rtr-phl (Arista cEOS), rtr-ewr (Nokia SR Linux); eBGP between the sites\n'
-    @printf '    Every node boots fresh from lab/configs/; changes made inside a node are discarded.\n'
+    @printf '{{cyan}}==> Welcome to the workshop! This command will provision multiple containers\n'
+    @printf '    to simulate a network. Expect this to take ~2–5 minutes.{{reset}}\n\n'
+    @printf '    {{bold}}JFK{{reset}}  spine-jfk, leaf-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}IAD{{reset}}  spine-iad, leaf-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}}, rtr-ewr {{srl}}(Nokia SR Linux){{reset}}; eBGP between the sites\n\n'
+    @printf '{{dim}}    Every node boots fresh from lab/configs/; changes made inside a node are discarded.\n'
     @printf '    Afterwards it lists the nodes, re-applies the SR Linux configs in two smaller\n'
-    @printf '    commits (one big commit sometimes partly fails), and sets client-jfk MTU back to 1500.\n'
-    @printf '    Next: just verify\n\n'
+    @printf '    commits (one big commit sometimes partly fails), and sets client-jfk MTU back to 1500.{{reset}}\n'
+    @printf '    Next: {{yellow}}just verify{{reset}}\n\n'
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
     @# comment for why); wiping it here is what keeps a redeploy from looking
@@ -247,15 +260,15 @@ lab-cli NODE='spine-jfk':
 
 # run the infra verification checks (OSPF + BGP + prefix reachability)
 verify:
-    @printf '\033[1;36m==> This command checks that the lab network is healthy before you start\n'
-    @printf '    breaking things. Expect this to take ~20 seconds.\033[0m\n'
-    @printf '    1. OSPF: each spine has a Full neighbor to its leaf\n'
-    @printf '    2. eBGP: both spines and both WAN routers have every session Established\n'
-    @printf '    3. Routing: spine-iad learns JFK client subnet 192.168.11.0/24 over both WAN paths\n'
-    @printf '    4. Reachability: client-jfk pings client-iad end to end\n'
-    @printf '    5. MTU: small (200 B) and large (3000 B) pings from client-jfk to its gateway both succeed\n'
-    @printf '    6. SSH: every node answers on its lab alias, the same way stcli connects\n'
-    @printf '    Ends with LAB IS VERIFIED, or LAB VERIFICATION FAILED with the failing checks above it.\n\n'
+    @printf '{{cyan}}==> This command checks that the lab network is healthy before you start\n'
+    @printf '    breaking things. Expect this to take ~20 seconds.{{reset}}\n\n'
+    @printf '    {{yellow}}1. OSPF{{reset}}          each spine has a Full neighbor to its leaf\n'
+    @printf '    {{yellow}}2. eBGP{{reset}}          both spines and both WAN routers have every session Established\n'
+    @printf '    {{yellow}}3. Routing{{reset}}       spine-iad learns JFK client subnet 192.168.11.0/24 over both WAN paths\n'
+    @printf '    {{yellow}}4. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
+    @printf '    {{yellow}}5. MTU{{reset}}           small (200 B) and large (3000 B) pings from client-jfk to its gateway\n'
+    @printf '    {{yellow}}6. SSH{{reset}}           every node answers on its lab alias, the same way stcli connects\n\n'
+    @printf '{{dim}}    Ends with {{reset}}{{green}}LAB IS VERIFIED{{reset}}{{dim}}, or {{reset}}{{red}}LAB VERIFICATION FAILED{{reset}}{{dim}} with the failing checks above it.{{reset}}\n\n'
     @./scripts/verify.sh
 
 # regenerate the physical-link diagram lab/topology.clab.png —
