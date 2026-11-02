@@ -23,7 +23,7 @@ lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
     docker pull ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
-    docker build -t client-ssh:latest lab/images/client-ssh
+    docker build --progress=plain -t client-ssh:latest lab/images/client-ssh
     @just install-key
     @just install-ssh-config
     @just install-stcli
