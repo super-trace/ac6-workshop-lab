@@ -247,7 +247,8 @@ lab-cli NODE='spine-jfk':
 
 # run the infra verification checks (OSPF + BGP + prefix reachability)
 verify:
-    @printf '\033[1;36m==> just verify: checking the lab is healthy before you break anything\033[0m\n'
+    @printf '\033[1;36m==> This command checks that the lab network is healthy before you start\n'
+    @printf '    breaking things. Expect this to take ~20 seconds.\033[0m\n'
     @printf '    1. OSPF: each spine has a Full neighbor to its leaf\n'
     @printf '    2. eBGP: both spines and both WAN routers have every session Established\n'
     @printf '    3. Routing: spine-iad learns JFK client subnet 192.168.11.0/24 over both WAN paths\n'
