@@ -8,8 +8,14 @@ set positional-arguments
 # privileged container as on the host. containerlab generates per-node config
 # files and asks the docker daemon to bind-mount them into the lab nodes; the
 # daemon only sees host filesystem paths, so the paths must mirror.
+#
+# containerlab also writes each SR Linux node's hosts file through the
+# daemon's own path, /var/lib/docker/containers/<id>/hosts; without that
+# directory mounted, lab-up warns "Unable to populate hosts". Linux only: on
+# macOS the daemon runs in a VM, so that host path isn't the daemon's.
 clab_image := "ghcr.io/srl-labs/clab:latest"
-clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
+clab_containers_mount := if os() == "linux" { "-v /var/lib/docker/containers:/var/lib/docker/containers " } else { "" }
+clab_run := "docker run --rm --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock " + clab_containers_mount + "-v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
 
 srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 
