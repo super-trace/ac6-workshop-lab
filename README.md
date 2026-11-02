@@ -43,31 +43,12 @@ Open the verification link in your computer's browser (the one-time code is
 already filled in) and wait for **Signed in.** in the Codespace terminal. Credentials are
 saved in the Codespace and refreshed automatically.
 
-In an existing Codespace, update the bundled binary first:
-
-```sh
-git pull
-just install-stcli
-stcli --version
-```
-
 ## 4. Connect to the network
-
-Pick devices from the lab inventory:
-
-```sh
-stcli -i lab/inventory/hosts.yaml
-```
-
-The picker lists every device with its site, platform and groups. Type to
-filter by name or `key=value` (`site=iad`, `platform=arista_ceos`,
-`role=spine`), press **space** to select a device, **ctrl+a** to select every
-device shown, and **enter** to connect. You can also skip the picker:
+Either open stcli without any arguments or feed it a device as an argument.
 
 ```sh
-stcli spine-iad rtr-phl rtr-ewr spine-jfk          # by name
-stcli -i lab/inventory/hosts.yaml @wan @iad         # by group
-stcli -i lab/inventory/hosts.yaml --filter role=spine
+stcli
+stcli spine-iad     # by name
 ```
 
 Devices: `spine-jfk`, `leaf-jfk`, `client-jfk`, `spine-iad`, `leaf-iad`,
