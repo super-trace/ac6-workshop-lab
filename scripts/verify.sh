@@ -75,7 +75,7 @@ docker exec "${lab}-client-jfk" ping -c 2 -s 3000 192.168.11.1 || fail "client-j
 echo
 heading "stcli SSH aliases (requires: just lab-setup, so ~/.ssh/ac6-workshop-key exists)"
 for node in spine-jfk leaf-jfk spine-iad leaf-iad rtr-phl rtr-ewr client-jfk client-iad; do
-    printf '\033[2m-- %s --\033[0m\n' "${node}"
+    echo "-- ${node} --"
     command="show version"
     case "$node" in client-*) command="echo ok" ;; esac
     ssh -F lab/ssh_config -o ConnectTimeout=5 "${node}" "${command}" \

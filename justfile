@@ -28,7 +28,6 @@ srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 # Vendors keep one color each: SR Linux blue, cEOS magenta, Linux green.
 reset := '\033[0m'
 bold := '\033[1m'
-dim := '\033[2m'
 banner := '\033[32m'
 banner_title := '\033[1;92m'
 banner_text := '\033[92m'
@@ -138,7 +137,7 @@ install-stcli:
 lab-up:
     @printf '{{banner}}╔══════════════════════════════════════════════════════════════════════════╗{{reset}}\n'
     @printf '{{banner}}║{{reset}}                                                                          {{banner}}║{{reset}}\n'
-    @printf '{{banner}}║{{reset}}   {{banner_title}}AC6 WORKSHOP LAB{{reset}}                                         {{dim}}just lab-up{{reset}}   {{banner}}║{{reset}}\n'
+    @printf '{{banner}}║{{reset}}   {{banner_title}}AC6 WORKSHOP LAB{{reset}}                                         {{banner_text}}just lab-up{{reset}}   {{banner}}║{{reset}}\n'
     @printf '{{banner}}╟──────────────────────────────────────────────────────────────────────────╢{{reset}}\n'
     @printf '{{banner}}║{{reset}}                                                                          {{banner}}║{{reset}}\n'
     @printf '{{banner}}║{{reset}}   {{banner_text}}Welcome to the workshop! This command will provision multiple{{reset}}          {{banner}}║{{reset}}\n'
@@ -149,10 +148,10 @@ lab-up:
     @printf '    {{bold}}JFK{{reset}}  spine-jfk, leaf-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
     @printf '    {{bold}}IAD{{reset}}  spine-iad, leaf-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
     @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n\n'
-    @printf '{{dim}}    Every node boots fresh from lab/configs/; changes made inside a node are\n'
+    @printf '    Every node boots fresh from lab/configs/; changes made inside a node are\n'
     @printf '    discarded. Afterwards it lists the nodes, re-applies the SR Linux\n'
     @printf '    configs in two smaller commits (one big commit sometimes partly fails),\n'
-    @printf '    and sets client-jfk MTU back to 1500.{{reset}}\n'
+    @printf '    and sets client-jfk MTU back to 1500.\n'
     @printf '    Next: {{green}}just verify{{reset}}\n\n'
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
@@ -173,7 +172,7 @@ lab-up:
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
     @printf '\n\033[1;32m╔══════════════════════════════════════════════════════════════════════════╗\n║                                                                          ║\n║                                LAB IS UP                                 ║\n║                                                                          ║\n╚══════════════════════════════════════════════════════════════════════════╝\033[0m\n'
-    @printf '{{dim}}containerlab WARN lines above are expected in this lab and safe to ignore.{{reset}}\n'
+    @printf '{{banner_text}}containerlab WARN lines above are expected in this lab and safe to ignore.{{reset}}\n'
 
 # tear down the lab
 lab-down:
@@ -280,7 +279,7 @@ lab-cli NODE='spine-jfk':
 verify:
     @printf '{{banner}}╔══════════════════════════════════════════════════════════════════════════╗{{reset}}\n'
     @printf '{{banner}}║{{reset}}                                                                          {{banner}}║{{reset}}\n'
-    @printf '{{banner}}║{{reset}}   {{banner_title}}AC6 WORKSHOP LAB{{reset}}                                         {{dim}}just verify{{reset}}   {{banner}}║{{reset}}\n'
+    @printf '{{banner}}║{{reset}}   {{banner_title}}AC6 WORKSHOP LAB{{reset}}                                         {{banner_text}}just verify{{reset}}   {{banner}}║{{reset}}\n'
     @printf '{{banner}}╟──────────────────────────────────────────────────────────────────────────╢{{reset}}\n'
     @printf '{{banner}}║{{reset}}                                                                          {{banner}}║{{reset}}\n'
     @printf '{{banner}}║{{reset}}   {{banner_text}}This command checks that the lab network is healthy before you{{reset}}         {{banner}}║{{reset}}\n'
@@ -294,8 +293,8 @@ verify:
     @printf '    {{yellow}}4. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
     @printf '    {{yellow}}5. MTU{{reset}}           200 B and 3000 B pings from client-jfk to its gateway\n'
     @printf '    {{yellow}}6. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n\n'
-    @printf '{{dim}}    Ends with {{reset}}{{green}}LAB IS VERIFIED{{reset}}{{dim}}, or {{reset}}{{red}}LAB VERIFICATION FAILED{{reset}}{{dim}} with each failed\n'
-    @printf '    check printed in red above it.{{reset}}\n\n'
+    @printf '    Ends with {{green}}LAB IS VERIFIED{{reset}}, or {{red}}LAB VERIFICATION FAILED{{reset}} with each failed\n'
+    @printf '    check printed in red above it.\n\n'
     @./scripts/verify.sh
 
 # regenerate the physical-link diagram lab/topology.clab.png —
