@@ -36,11 +36,11 @@ and end-to-end client pings to succeed. Check the output for SSH failures.
 ## 3. Sign in
 
 ```sh
-stcli login --headless
+stcli login
 ```
 
-Open the verification link in your computer's browser, enter the one-time
-code, and wait for **Signed in.** in the Codespace terminal. Credentials are
+Open the verification link in your computer's browser (the one-time code is
+already filled in) and wait for **Signed in.** in the Codespace terminal. Credentials are
 saved in the Codespace and refreshed automatically.
 
 In an existing Codespace, update the bundled binary first:
