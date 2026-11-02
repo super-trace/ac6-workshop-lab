@@ -1,26 +1,8 @@
 set positional-arguments
 
-# containerlab via Docker-on-Docker (works on macOS + OrbStack, and on a
-# Codespace's nested dockerd): a privileged sidecar shares the engine kernel
-# and manages bridge interfaces.
-#
-# IMPORTANT: the project's lab dir is mounted at the SAME path inside the
-# privileged container as on the host. containerlab generates per-node config
-# files and asks the docker daemon to bind-mount them into the lab nodes; the
-# daemon only sees host filesystem paths, so the paths must mirror.
-#
-# containerlab also writes each SR Linux node's hosts file through the
-# daemon's own path, /var/lib/docker/containers/<id>/hosts; without that
-# directory mounted, lab-up warns "Unable to populate hosts". Linux only: on
-# macOS the daemon runs in a VM, so that host path isn't the daemon's.
+# containerlab runs in a sidecar container; scripts/clab.sh explains how.
 clab_image := "ghcr.io/srl-labs/clab:latest"
-clab_containers_mount := if os() == "linux" { "-v /var/lib/docker/containers:/var/lib/docker/containers " } else { "" }
-#
-# containerlab colors its log and tables only on a terminal, so give it one
-# (-it) when just runs in one. -t alone isn't enough: containerlab queries the
-# terminal's colors, and without -i the replies spill into the shell. The test
-# checks stderr, not stdout: inside $(...), stdout is the substitution's pipe.
-clab_run := "docker run --rm $([ -t 0 ] && [ -t 2 ] && echo -it) --privileged --pid=host --network=host -v /var/run/docker.sock:/var/run/docker.sock " + clab_containers_mount + "-v $(pwd)/lab:$(pwd)/lab -w $(pwd)/lab --entrypoint containerlab " + clab_image
+clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 srl_nodes := "spine-jfk leaf-jfk rtr-ewr"
 
