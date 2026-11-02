@@ -172,7 +172,10 @@ lab-up:
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
     @printf '\n\033[1;32m╔══════════════════════════════════════════════════════════════════════════╗\n║                                                                          ║\n║                                LAB IS UP                                 ║\n║                                                                          ║\n╚══════════════════════════════════════════════════════════════════════════╝\033[0m\n'
-    @printf '{{banner_text}}containerlab WARN lines above are expected in this lab and safe to ignore.{{reset}}\n'
+    @printf '\n{{banner_text}}Expected warnings: containerlab may print these WARN lines for the SR Linux\n'
+    @printf 'nodes (spine-jfk, leaf-jfk, rtr-ewr). They are harmless; ignore them.{{reset}}\n'
+    @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node <node>: ...\n'
+    @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "<node>": ...\n'
 
 # tear down the lab
 lab-down:
