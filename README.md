@@ -14,8 +14,9 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
 
 ## 1. Create a Codespace
 
-Open this repository on GitHub and select **Code → Codespaces → New with
-options**. Choose the **4-core / 16 GB RAM** machine and create the Codespace.
+Open this repository on GitHub and select **Code → Codespaces → Create
+codespace on main**. The repository requires a **4-core / 16 GB RAM**
+machine, so smaller machine types aren't offered.
 
 Wait for automatic setup to finish. It installs the lab images, `just`,
 `stcli`, and SSH configuration.

@@ -9,6 +9,10 @@
 			"version": "latest"
 		}
 	},
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "16gb"
+	},
 	"privileged": true,
 	"forwardPorts": [2401, 2402, 2403, 2404, 2405, 2406, 2407, 2408],
 	"portsAttributes": {
