@@ -116,6 +116,15 @@ install-stcli:
 
 # bring up the lab (creates the ac6 mgmt network)
 lab-up:
+    @printf '\033[1;36m==> Welcome to the workshop! This command will provision multiple containers\n'
+    @printf '    to simulate a network. Expect this to take ~2–5 minutes.\033[0m\n'
+    @printf '    JFK  spine-jfk, leaf-jfk (Nokia SR Linux) + client-jfk (Linux)\n'
+    @printf '    IAD  spine-iad, leaf-iad (Arista cEOS) + client-iad (Linux)\n'
+    @printf '    WAN  rtr-phl (Arista cEOS), rtr-ewr (Nokia SR Linux); eBGP between the sites\n'
+    @printf '    Every node boots fresh from lab/configs/; changes made inside a node are discarded.\n'
+    @printf '    Afterwards it lists the nodes, re-applies the SR Linux configs in two smaller\n'
+    @printf '    commits (one big commit sometimes partly fails), and sets client-jfk MTU back to 1500.\n'
+    @printf '    Next: just verify\n\n'
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
     @# comment for why); wiping it here is what keeps a redeploy from looking
@@ -238,7 +247,15 @@ lab-cli NODE='spine-jfk':
 
 # run the infra verification checks (OSPF + BGP + prefix reachability)
 verify:
-    ./scripts/verify.sh
+    @printf '\033[1;36m==> just verify: checking the lab is healthy before you break anything\033[0m\n'
+    @printf '    1. OSPF: each spine has a Full neighbor to its leaf\n'
+    @printf '    2. eBGP: both spines and both WAN routers have every session Established\n'
+    @printf '    3. Routing: spine-iad learns JFK client subnet 192.168.11.0/24 over both WAN paths\n'
+    @printf '    4. Reachability: client-jfk pings client-iad end to end\n'
+    @printf '    5. MTU: small (200 B) and large (3000 B) pings from client-jfk to its gateway both succeed\n'
+    @printf '    6. SSH: every node answers on its lab alias, the same way stcli connects\n'
+    @printf '    Ends with LAB IS VERIFIED, or LAB VERIFICATION FAILED with the failing checks above it.\n\n'
+    @./scripts/verify.sh
 
 # regenerate the physical-link diagram lab/topology.clab.png —
 # run this after any topology.clab.yml change. Two steps: containerlab's own
