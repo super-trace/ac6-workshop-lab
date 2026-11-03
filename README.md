@@ -20,7 +20,8 @@ codespace on main**. The repository requires a **4-core / 16 GB RAM**
 machine, so smaller machine types aren't offered.
 
 Wait for automatic setup to finish. It installs the lab images, `just`,
-`stcli`, and SSH configuration.
+`stcli`, and SSH configuration; any terminal you open meanwhile shows its
+progress and tells you when it's done.
 
 ## 2. Start and verify
 

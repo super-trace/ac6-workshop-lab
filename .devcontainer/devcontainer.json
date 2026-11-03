@@ -23,5 +23,6 @@
 		"2405": { "label": "rtr-phl SSH" },
 		"2406": { "label": "rtr-ewr SSH" }
 	},
+	"onCreateCommand": "bash .devcontainer/on-create.sh",
 	"postCreateCommand": "bash .devcontainer/setup.sh"
 }
