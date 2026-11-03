@@ -20,8 +20,10 @@ codespace on main**. The repository requires a **4-core / 16 GB RAM**
 machine, so smaller machine types aren't offered.
 
 Wait for automatic setup to finish. It installs the lab images, `just`,
-`stcli`, and SSH configuration; any terminal you open meanwhile shows its
-progress and tells you when it's done.
+`stcli`, and SSH configuration. The **GitHub Codespaces** terminal that opens
+first shows only a pointer to the creation log; to watch setup live, click
+**+** in the terminal panel (or pick the **bash** terminal in the list). That
+terminal follows setup step by step and says when it's done.
 
 ## 2. Start and verify
 
