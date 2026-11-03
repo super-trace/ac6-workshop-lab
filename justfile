@@ -26,14 +26,6 @@ lab-up:
         "Welcome to the workshop! This command will provision multiple" \
         "containers to simulate a network. Expect this to take ~2–5 minutes."
     @printf '\n'
-    @printf '    {{bold}}JFK{{reset}}  sw-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
-    @printf '    {{bold}}IAD{{reset}}  sw-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
-    @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n\n'
-    @printf '    Every node boots fresh from lab/configs/; changes made inside a node are\n'
-    @printf '    discarded. Afterwards it lists the nodes, re-applies the SR Linux\n'
-    @printf '    configs in two smaller commits (one big commit sometimes partly fails),\n'
-    @printf '    and sets client-jfk MTU back to 1500.\n'
-    @printf '    Next: {{green}}just verify{{reset}}\n\n'
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
     @# comment for why); wiping it here is what keeps a redeploy from looking
@@ -54,10 +46,19 @@ lab-up:
     @./scripts/fix-mtu.sh
     @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
+    @printf '\n'
+    @printf '    {{bold}}JFK{{reset}}  sw-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}IAD{{reset}}  sw-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n\n'
+    @printf '    Every node booted fresh from lab/configs/, so changes made inside a node\n'
+    @printf '    last until the next lab-up. The SR Linux configs were re-applied in two\n'
+    @printf '    smaller commits (one big commit sometimes partly fails), and client-jfk\n'
+    @printf '    is back at MTU 1500.\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for the SR Linux\n'
     @printf 'nodes (sw-jfk, rtr-ewr). They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node <node>: ...\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "<node>": ...\n'
+    @printf '\n    Next: {{green}}just verify{{reset}}\n'
 
 # check BGP, routing, reachability, MTU and SSH on every node (~20 seconds)
 [group('lab')]
