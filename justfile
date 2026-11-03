@@ -67,14 +67,23 @@ verify:
         "This command checks that the lab network is healthy before you" \
         "start breaking things. Expect this to take ~20 seconds."
     @printf '\n'
+    @just _verify-checks
+    @printf '\n'
+    @printf '    Ends with {{green}}LAB IS VERIFIED{{reset}}, or {{red}}LAB VERIFICATION FAILED{{reset}} with each failed\n'
+    @printf '    check printed in red above it.\n\n'
+    @sleep 3
+    @# The list repeats after the result, failed or not; the exit status is
+    @# kept so a failed verify still fails.
+    @./scripts/verify.sh; status=$?; printf '\n'; just _verify-checks; exit $status
+
+# The five checks verify runs, printed before and after them.
+[private]
+_verify-checks:
     @printf '    {{yellow}}1. eBGP{{reset}}          switches and WAN routers have every session Established\n'
     @printf '    {{yellow}}2. Routing{{reset}}       sw-iad learns 192.168.11.0/24 over both WAN paths\n'
     @printf '    {{yellow}}3. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
     @printf '    {{yellow}}4. MTU{{reset}}           200 B and 3000 B pings from client-jfk to its gateway\n'
-    @printf '    {{yellow}}5. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n\n'
-    @printf '    Ends with {{green}}LAB IS VERIFIED{{reset}}, or {{red}}LAB VERIFICATION FAILED{{reset}} with each failed\n'
-    @printf '    check printed in red above it.\n\n'
-    @./scripts/verify.sh
+    @printf '    {{yellow}}5. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n'
 
 # list the running lab nodes and their addresses
 [group('lab')]
