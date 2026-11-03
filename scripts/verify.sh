@@ -88,10 +88,4 @@ if (( checks_failed )); then
     exit 1
 fi
 
-printf '\033[1;32m'
-printf '╔══════════════════════════════════════════════════════════════════════════╗\n'
-printf '║                                                                          ║\n'
-printf '║                             LAB IS VERIFIED                              ║\n'
-printf '║                                                                          ║\n'
-printf '╚══════════════════════════════════════════════════════════════════════════╝\n'
-printf '\033[0m'
+./scripts/banner.sh green "LAB IS VERIFIED"

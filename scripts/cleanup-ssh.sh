@@ -11,7 +11,7 @@ if [ -f "$config" ] && grep -qxF "$include" "$config"; then
     cp -p "$config" "$backup"
     temporary="$(mktemp "${config}.ac6-cleanup.XXXXXX")"
     trap 'rm -f "$temporary"' EXIT
-    # Also drop the blank line install-ssh-config writes after the Include.
+    # Also drop the blank line install-ssh.sh writes after the Include.
     awk -v include="$include" '
         $0 == include { skip_blank = 1; next }
         skip_blank && $0 == "" { skip_blank = 0; next }

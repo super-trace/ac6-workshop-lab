@@ -6,7 +6,7 @@
 > update the commit, date and SHA-256 below.
 
 `stcli-linux-amd64` is a static Linux x86-64 executable. `just lab-setup`
-installs it automatically inside Codespaces via `just install-stcli`. It is
+installs it automatically inside Codespaces via `scripts/install-stcli.sh`. It is
 committed temporarily so Codespaces can run without downloading a release.
 Replace this copy step with a release download when distribution is public.
 
