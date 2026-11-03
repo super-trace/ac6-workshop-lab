@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Hidden-along-the-path fault: rtr-phl quietly stops passing JFK's client
-# prefix on to spine-iad. spine-jfk still advertises it, rtr-ewr still carries
+# prefix on to sw-iad. sw-jfk still advertises it, rtr-ewr still carries
 # it, so IAD keeps reachability via EWR only — the PHL path is silently gone.
 set -euo pipefail
 
@@ -17,6 +17,6 @@ end
 clear ip bgp 172.16.3.0 soft out"
 
 echo ""
-echo "Broken: rtr-phl filters 192.168.11.0/24 (client-jfk) toward spine-iad."
+echo "Broken: rtr-phl filters 192.168.11.0/24 (client-jfk) toward sw-iad."
 echo "IAD now reaches JFK only via rtr-ewr."
-echo "Check from spine-iad: docker exec ${lab}-spine-iad Cli -p 15 -c \"show ip bgp 192.168.11.0/24\""
+echo "Check from sw-iad: docker exec ${lab}-sw-iad Cli -p 15 -c \"show ip bgp 192.168.11.0/24\""

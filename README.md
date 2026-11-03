@@ -1,8 +1,9 @@
 # AC6 workshop lab
 
-An eight-node network lab for troubleshooting with `stcli`, running entirely
-in GitHub Codespaces. JFK uses SR Linux; IAD uses Arista cEOS. The WAN
-routers are cEOS (`rtr-phl`) and SR Linux (`rtr-ewr`); both clients use Linux.
+A six-node network lab for troubleshooting with `stcli`, running entirely
+in GitHub Codespaces: four routers speaking eBGP and two Linux clients. Each
+site has one router, SR Linux at JFK (`sw-jfk`) and Arista cEOS at IAD
+(`sw-iad`), joined by two WAN routers, cEOS `rtr-phl` and SR Linux `rtr-ewr`.
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
@@ -30,8 +31,8 @@ just lab-up
 just verify
 ```
 
-Expect OSPF neighbors to be Full, all WAN BGP peers to be Established,
-and end-to-end client pings to succeed. Check the output for SSH failures.
+Expect every BGP session to be Established and end-to-end client pings
+to succeed. Check the output for SSH failures.
 
 ## 3. Sign in
 
@@ -48,11 +49,11 @@ Either open stcli without any arguments or feed it a device as an argument.
 
 ```sh
 stcli
-stcli spine-iad     # by name
+stcli sw-iad        # by name
 ```
 
-Devices: `spine-jfk`, `leaf-jfk`, `client-jfk`, `spine-iad`, `leaf-iad`,
-`client-iad`, `rtr-phl`, `rtr-ewr`. Groups: `jfk`, `iad`, `wan`,
+Devices: `sw-jfk`, `client-jfk`, `sw-iad`, `client-iad`, `rtr-phl`,
+`rtr-ewr`. Groups: `jfk`, `iad`, `wan`,
 `arista_ceos`, `nokia_srlinux`, `linux`. For a router's native CLI outside
 `stcli`, run `just lab-cli rtr-phl`.
 
@@ -86,7 +87,6 @@ fix (`just fix <name>`) if you get stuck.
 | Hidden path | `just break path` | IAD reaches JFK's clients over one path |
 | BGP | `just break bgp` | JFK's client subnet disappears from the WAN |
 | MTU | `just break mtu` | Small pings work, larger transfers fail |
-| OSPF | `just break ospf` | `client-jfk` loses reachability |
 | WAN | `just break wan` | Traffic still flows, redundancy doesn't |
 
 Describe the symptom, not the cause, and let the agent walk the network.

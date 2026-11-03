@@ -24,7 +24,7 @@ heal_node() {
         | docker exec -i "${lab}-${node}" sr_cli -ed
     echo "commit now" | docker exec -i "${lab}-${node}" sr_cli -ed
 
-    # Stage 2: everything else (OSPF, BGP, routing-policy, the stcli user).
+    # Stage 2: everything else (BGP, routing-policy, the stcli user).
     grep -E '^set / (network-instance default protocols|routing-policy|system aaa)' "${cfg}" \
         | docker exec -i "${lab}-${node}" sr_cli -ed
     echo "commit now" | docker exec -i "${lab}-${node}" sr_cli -ed
@@ -38,7 +38,7 @@ heal_node() {
 }
 
 status=0
-for node in spine-jfk leaf-jfk rtr-ewr; do
+for node in sw-jfk rtr-ewr; do
     heal_node "${node}" || status=1
 done
 exit "${status}"

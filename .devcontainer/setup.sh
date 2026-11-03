@@ -52,6 +52,6 @@ df -h / | tail -1
 
 echo ""
 echo "Setup complete. Run: just lab-up    then: just verify"
-echo "SSH ports 2401-2408 (spine-jfk, leaf-jfk, client-jfk, spine-iad, leaf-iad,"
-echo "client-iad, rtr-phl, rtr-ewr) auto-forward — VS Code Ports tab, or"
+echo "SSH ports 2401-2406 (sw-jfk, client-jfk, sw-iad, client-iad, rtr-phl,"
+echo "rtr-ewr) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."

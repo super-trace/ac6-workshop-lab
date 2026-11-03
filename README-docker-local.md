@@ -1,7 +1,8 @@
 # Run the workshop locally with Docker
 
-The same eight-node topology runs locally: SR Linux at JFK and `rtr-ewr`,
-cEOS at IAD and `rtr-phl`, and Linux clients at both sites.
+The same six-node topology runs locally: SR Linux at JFK (`sw-jfk`) and
+`rtr-ewr`, cEOS at IAD (`sw-iad`) and `rtr-phl`, and Linux clients at both
+sites.
 
 ![Routing topology](lab/diagrams/routing-topology.png)
 
@@ -37,9 +38,9 @@ just lab-up
 just verify
 ```
 
-Wait for startup configuration to finish. Expect Full OSPF neighbors,
-Established BGP sessions, successful client pings, and SSH access to all
-nodes. Initial image downloads and device startup can take several minutes.
+Wait for startup configuration to finish. Expect Established BGP sessions,
+successful client pings, and SSH access to all nodes. Initial image
+downloads and device startup can take several minutes.
 
 ## Connect
 
@@ -63,7 +64,7 @@ stcli -i lab/inventory/hosts.yaml
 
 The picker lists the lab devices: type to filter (`site=iad`,
 `platform=arista_ceos`), **space** to select, **enter** to connect. Or name
-them directly: `stcli spine-iad rtr-phl rtr-ewr spine-jfk`. Several devices
+them directly: `stcli sw-iad rtr-phl rtr-ewr sw-jfk`. Several devices
 open one conversation plus a tab per router; the main
 [README](README.md#5-use-stcli) explains the tabs and the scenarios.
 
@@ -81,4 +82,4 @@ just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2408 on your computer.
+running: both use SSH ports 2401–2406 on your computer.

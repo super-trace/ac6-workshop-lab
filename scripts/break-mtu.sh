@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Raises client-jfk's own interface MTU above what the WAN link
-# (leaf-jfk's ethernet-1/2, fixed at SR Linux's 1500 floor) can carry —
+# (sw-jfk's ethernet-1/1, fixed at SR Linux's 1500 floor) can carry —
 # "someone jumbo-configured the customer box." Small pings still succeed;
 # anything bigger silently vanishes with no ICMP error. That's the subtle
 # part: nothing in any routing table or adjacency looks wrong, because

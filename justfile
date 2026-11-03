@@ -26,8 +26,8 @@ lab-up:
         "Welcome to the workshop! This command will provision multiple" \
         "containers to simulate a network. Expect this to take ~2–5 minutes."
     @printf '\n'
-    @printf '    {{bold}}JFK{{reset}}  spine-jfk, leaf-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
-    @printf '    {{bold}}IAD{{reset}}  spine-iad, leaf-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}JFK{{reset}}  sw-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
+    @printf '    {{bold}}IAD{{reset}}  sw-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
     @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n\n'
     @printf '    Every node boots fresh from lab/configs/; changes made inside a node are\n'
     @printf '    discarded. Afterwards it lists the nodes, re-applies the SR Linux\n'
@@ -55,23 +55,22 @@ lab-up:
     @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for the SR Linux\n'
-    @printf 'nodes (spine-jfk, leaf-jfk, rtr-ewr). They are harmless; ignore them.{{reset}}\n'
+    @printf 'nodes (sw-jfk, rtr-ewr). They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node <node>: ...\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "<node>": ...\n'
 
-# check routing, reachability, MTU and SSH on every node (~20 seconds)
+# check BGP, routing, reachability, MTU and SSH on every node (~20 seconds)
 [group('lab')]
 verify:
     @./scripts/banner.sh intro "just verify" \
         "This command checks that the lab network is healthy before you" \
         "start breaking things. Expect this to take ~20 seconds."
     @printf '\n'
-    @printf '    {{yellow}}1. OSPF{{reset}}          each spine has a Full neighbor to its leaf\n'
-    @printf '    {{yellow}}2. eBGP{{reset}}          spines and WAN routers have every session Established\n'
-    @printf '    {{yellow}}3. Routing{{reset}}       spine-iad learns 192.168.11.0/24 over both WAN paths\n'
-    @printf '    {{yellow}}4. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
-    @printf '    {{yellow}}5. MTU{{reset}}           200 B and 3000 B pings from client-jfk to its gateway\n'
-    @printf '    {{yellow}}6. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n\n'
+    @printf '    {{yellow}}1. eBGP{{reset}}          switches and WAN routers have every session Established\n'
+    @printf '    {{yellow}}2. Routing{{reset}}       sw-iad learns 192.168.11.0/24 over both WAN paths\n'
+    @printf '    {{yellow}}3. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
+    @printf '    {{yellow}}4. MTU{{reset}}           200 B and 3000 B pings from client-jfk to its gateway\n'
+    @printf '    {{yellow}}5. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n\n'
     @printf '    Ends with {{green}}LAB IS VERIFIED{{reset}}, or {{red}}LAB VERIFICATION FAILED{{reset}} with each failed\n'
     @printf '    check printed in red above it.\n\n'
     @./scripts/verify.sh
@@ -81,15 +80,15 @@ verify:
 lab-status:
     @{{clab_run}} inspect -t topology.clab.yml
 
-# open a node's own CLI: spine-jfk, leaf-iad, rtr-phl, client-jfk, ...
+# open a node's own CLI: sw-jfk, sw-iad, rtr-phl, rtr-ewr, client-jfk, client-iad
 [group('lab')]
-lab-cli NODE='spine-jfk':
+lab-cli NODE='sw-jfk':
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{NODE}}" in
-      spine-jfk|leaf-jfk|rtr-ewr)
+      sw-jfk|rtr-ewr)
         docker exec -it clab-ac6-workshop-{{NODE}} sr_cli ;;
-      spine-iad|leaf-iad|rtr-phl)
+      sw-iad|rtr-phl)
         docker exec -it clab-ac6-workshop-{{NODE}} Cli -p 15 ;;
       client-jfk|client-iad)
         docker exec -it clab-ac6-workshop-{{NODE}} sh ;;
@@ -104,12 +103,12 @@ lab-down:
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
-# break a scenario: path, bgp, mtu, ospf or wan
+# break a scenario: path, bgp, mtu or wan
 [group('scenarios')]
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh
 
-# undo a scenario: path, bgp, mtu, ospf or wan
+# undo a scenario: path, bgp, mtu or wan
 [group('scenarios')]
 fix SCENARIO:
     ./scripts/fix-{{SCENARIO}}.sh

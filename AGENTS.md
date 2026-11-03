@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Eight-node AC6 troubleshooting lab using Nokia SR Linux, Arista cEOS, and Linux clients.
+Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS) and two Linux clients.
 
 - `lab/topology.clab.yml`: the containerlab topology; device startup files live in `lab/configs/`.
 - `lab/inventory/`: the Nornir inventory for `stcli -i`.
@@ -20,13 +20,13 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-status`: inspect running nodes.
 - `just verify`: check routing, connectivity, and SSH access.
 - `just lab-cli <node>`: open a device's native CLI.
-- `just break <scenario>` / `just fix <scenario>`: `bgp`, `mtu`, `ospf`, `wan`, or `path`.
+- `just break <scenario>` / `just fix <scenario>`: `bgp`, `mtu`, `wan`, or `path`.
 - `just lab-diagram`: regenerate the topology diagrams.
 - `just lab-down`: tear down the lab.
 
 ## Coding Style & Naming Conventions
 
-Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `break-ospf.sh`; pair fault scripts with corresponding fixes. No shared formatter is configured.
+Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `break-bgp.sh`; pair fault scripts with corresponding fixes. No shared formatter is configured.
 
 - Quote any `exec:` command in `topology.clab.yml` that contains `: `; unquoted, YAML reads it as a map and containerlab rejects the whole file.
 - Write comments inside a non-shebang recipe as `@#`; `just` echoes plain `#` lines when the recipe runs.

@@ -1,7 +1,7 @@
 # Routing diagram
 
-`routing-topology.png` shows the site underlays, iBGP sessions, WAN peers,
-and client subnets. Its generator reads router IDs and AS numbers from
+`routing-topology.png` shows the four eBGP routers, their WAN links, and
+the client subnets. Its generator reads router IDs and AS numbers from
 `lab/configs`. Update the layout and link labels in
 `scripts/routing-diagram.py` when changing the topology.
 

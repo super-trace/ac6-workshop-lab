@@ -34,5 +34,5 @@ unset token
 echo
 echo "In the Codespace, run this command first, then copy the token above:"
 echo "  read -rsp 'Paste access token: ' STCLI_TOKEN; echo; export STCLI_TOKEN"
-echo "Then paste and press Enter, and run: stcli spine-jfk"
+echo "Then paste and press Enter, and run: stcli sw-jfk"
 echo "If the token expires, run this helper again."
