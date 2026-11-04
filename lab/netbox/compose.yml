@@ -1,0 +1,59 @@
+# The smallest NetBox that runs: the web app, Postgres and one Valkey
+# (Redis). Trimmed from netbox-community/netbox-docker's docker-compose.yml:
+# no netbox-worker (only background jobs need it; the import pages and the
+# REST API work without it) and one Valkey for both of NetBox's Redis
+# databases instead of two. `just netbox-up` / `just netbox-down` drive it.
+name: ac6-netbox
+
+services:
+  netbox:
+    image: docker.io/netboxcommunity/netbox:v4.7-5.1.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: netbox.env
+    environment:
+      # The browser's origin, so logging in works through a Codespace's
+      # forwarded URL; scripts/netbox-up.sh sets it.
+      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000}
+    user: "netbox:root"
+    ports:
+      - "8000:8080"
+    healthcheck:
+      test: /opt/netbox/health.sh
+      start_period: 120s
+      timeout: 3s
+      interval: 5s
+    volumes:
+      - netbox-media-files:/opt/netbox/netbox/media:rw
+
+  postgres:
+    image: docker.io/postgres:18-alpine
+    environment:
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+      POSTGRES_PASSWORD: ac6-workshop-db
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      timeout: 30s
+      interval: 2s
+      retries: 15
+    volumes:
+      - netbox-postgres:/var/lib/postgresql
+
+  redis:
+    image: docker.io/valkey/valkey:9.1-alpine
+    command: valkey-server --requirepass ac6-workshop-redis
+    healthcheck:
+      test: '[ "$$(valkey-cli --pass ac6-workshop-redis ping)" = PONG ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+
+volumes:
+  netbox-media-files:
+  netbox-postgres:

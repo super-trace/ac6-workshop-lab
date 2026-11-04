@@ -8,6 +8,7 @@ Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS
 - `lab/inventory/`: a Nornir inventory of the lab devices. The bundled `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/`: container build assets; diagrams live under `lab/` and `lab/diagrams/`.
 - `scripts/`: break/fix scenarios, verification, and setup helpers; `justfile` wraps them.
+- `lab/netbox/`: an on-demand NetBox (Compose file, settings, and `seed.py`, which loads the lab's sites and device types but no devices).
 - `.devcontainer/`: Codespaces configuration.
 
 ## Build, Test, and Development Commands
@@ -21,6 +22,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just verify`: check routing, connectivity, and SSH access.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just break <scenario>` / `just fix <scenario>`: `bgp`, `mtu`, `wan`, or `path`.
+- `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
 - `just lab-diagram`: regenerate the topology diagrams.
 - `just lab-down`: tear down the lab.
 

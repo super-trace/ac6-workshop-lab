@@ -82,12 +82,20 @@ machine has no browser, open the link on another one. Add
 new terminals. For a router's native CLI, run `just lab-cli rtr-ewr`. List
 all commands with `just --list`.
 
+## NetBox
+
+`just netbox-up` starts NetBox at http://localhost:8000 (login `admin` /
+`ac6-workshop`), loaded with the lab's sites and device types; see the
+[main README](README.md#7-netbox) for the API token. `just netbox-down`
+stops it and deletes its data.
+
 ## Finish
 
 ```sh
+just netbox-down   # if you started NetBox
 just lab-down
 just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2406 on your computer.
+running: both use SSH ports 2401–2406 (and NetBox's 8000) on your computer.

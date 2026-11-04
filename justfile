@@ -123,6 +123,22 @@ break SCENARIO:
 fix SCENARIO:
     ./scripts/fix-{{SCENARIO}}.sh
 
+# start NetBox on port 8000, with the lab's sites and device types loaded (~2–3 minutes the first time)
+[group('netbox')]
+netbox-up:
+    @./scripts/banner.sh intro "just netbox-up" \
+        "Starting NetBox, the source of truth stcli exports device data to." \
+        "Expect ~2–3 minutes the first time, then a few seconds."
+    @printf '\n'
+    @./scripts/netbox-up.sh
+
+# stop NetBox and delete its data
+[group('netbox')]
+netbox-down:
+    @docker compose -f lab/netbox/compose.yml down -v
+    @printf '\n'
+    @./scripts/banner.sh red "NETBOX IS DOWN"
+
 # pull the lab images, build the client image, install SSH config and stcli
 [group('setup')]
 lab-setup:
