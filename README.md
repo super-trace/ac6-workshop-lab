@@ -112,9 +112,31 @@ fix (`just fix <name>`) if you get stuck.
 
 Describe the symptom, not the cause, and let the agent walk the network.
 
-## 7. Finish
+## 7. NetBox
 
 ```sh
+just netbox-up
+```
+
+This starts a NetBox on port 8000, separate from the lab. The first start
+takes two to three minutes. NetBox starts empty: no sites, device types or
+devices.
+
+- **Open it:** the recipe prints the URL. In a Codespace, that's the
+  forwarded port 8000 (Ports tab → NetBox).
+- **Log in:** `admin` / `ac6-workshop`.
+- **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
+- **Share it:** the recipe makes port 8000 public when the Codespace allows
+  it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
+  Visibility → Public**. Anyone with the URL can then log in with the
+  password above, so keep it to this disposable lab.
+
+`just netbox-down` stops NetBox and deletes its data.
+
+## 8. Finish
+
+```sh
+just netbox-down   # if you started NetBox
 just lab-down
 ```
 
