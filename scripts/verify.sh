@@ -23,28 +23,16 @@ expect() {
     fi
 }
 
-heading "JFK intra-site OSPF (expect Full on the leaf link)"
-out="$(docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols ospf neighbor")"
+heading "sw-jfk eBGP (expect Established to both rtr-phl and rtr-ewr)"
+out="$(docker exec "${lab}-sw-jfk" sr_cli "show network-instance default protocols bgp neighbor")"
 echo "$out"
-expect "$out" ' full ' 1 "spine-jfk OSPF neighbor Full"
+expect "$out" ' wan .* established ' 2 "sw-jfk eBGP sessions established"
 
 echo
-heading "IAD intra-site OSPF (expect Full on the leaf link)"
-out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip ospf neighbor")"
+heading "sw-iad eBGP (expect Established to both rtr-phl and rtr-ewr)"
+out="$(docker exec "${lab}-sw-iad" Cli -p 15 -c "show bgp summary")"
 echo "$out"
-expect "$out" ' FULL ' 1 "spine-iad OSPF neighbor Full"
-
-echo
-heading "spine-jfk eBGP (expect Established to both rtr-phl and rtr-ewr)"
-out="$(docker exec "${lab}-spine-jfk" sr_cli "show network-instance default protocols bgp neighbor")"
-echo "$out"
-expect "$out" ' wan .* established ' 2 "spine-jfk eBGP sessions established"
-
-echo
-heading "spine-iad eBGP (expect Established to both rtr-phl and rtr-ewr)"
-out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show bgp summary")"
-echo "$out"
-expect "$out" '^172\.16\..* Established' 2 "spine-iad eBGP sessions Established"
+expect "$out" '^172\.16\..* Established' 2 "sw-iad eBGP sessions Established"
 
 echo
 heading "WAN core: rtr-phl and rtr-ewr eBGP sessions (expect 3 Established each)"
@@ -56,15 +44,15 @@ echo "$out"
 expect "$out" ' established ' 3 "rtr-ewr eBGP sessions established"
 
 echo
-heading "JFK's client1 subnet, as seen from IAD's spine (proves cross-WAN advertisement)"
-out="$(docker exec "${lab}-spine-iad" Cli -p 15 -c "show ip bgp 192.168.11.0/24")"
+heading "JFK's client subnet, as seen from sw-iad (proves cross-WAN advertisement)"
+out="$(docker exec "${lab}-sw-iad" Cli -p 15 -c "show ip bgp 192.168.11.0/24")"
 echo "$out"
 # Both WAN paths, not just reachability: one path alone is the wan or path
 # scenario still broken.
-expect "$out" 'Paths: 2 available' 1 "192.168.11.0/24 at spine-iad via both rtr-phl and rtr-ewr"
+expect "$out" 'Paths: 2 available' 1 "192.168.11.0/24 at sw-iad via both rtr-phl and rtr-ewr"
 
 echo
-heading "end-to-end: client-jfk -> client-iad, full stack (leaf->spine->WAN->spine->leaf)"
+heading "end-to-end: client-jfk -> client-iad (sw-jfk -> WAN -> sw-iad)"
 docker exec "${lab}-client-jfk" ping -c 3 192.168.31.10
 
 echo
@@ -74,7 +62,7 @@ docker exec "${lab}-client-jfk" ping -c 2 -s 3000 192.168.11.1 || fail "client-j
 
 echo
 heading "stcli SSH aliases (requires: just lab-setup, so ~/.ssh/ac6-workshop-key exists)"
-for node in spine-jfk leaf-jfk spine-iad leaf-iad rtr-phl rtr-ewr client-jfk client-iad; do
+for node in sw-jfk sw-iad rtr-phl rtr-ewr client-jfk client-iad; do
     echo "-- ${node} --"
     command="show version"
     case "$node" in client-*) command="echo ok" ;; esac

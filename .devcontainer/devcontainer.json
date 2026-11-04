@@ -14,16 +14,15 @@
 		"memory": "16gb"
 	},
 	"privileged": true,
-	"forwardPorts": [2401, 2402, 2403, 2404, 2405, 2406, 2407, 2408],
+	"forwardPorts": [2401, 2402, 2403, 2404, 2405, 2406],
 	"portsAttributes": {
-		"2401": { "label": "spine-jfk SSH" },
-		"2402": { "label": "leaf-jfk SSH" },
-		"2403": { "label": "client-jfk SSH" },
-		"2404": { "label": "spine-iad SSH" },
-		"2405": { "label": "leaf-iad SSH" },
-		"2406": { "label": "client-iad SSH" },
-		"2407": { "label": "rtr-phl SSH" },
-		"2408": { "label": "rtr-ewr SSH" }
+		"2401": { "label": "sw-jfk SSH" },
+		"2402": { "label": "client-jfk SSH" },
+		"2403": { "label": "sw-iad SSH" },
+		"2404": { "label": "client-iad SSH" },
+		"2405": { "label": "rtr-phl SSH" },
+		"2406": { "label": "rtr-ewr SSH" }
 	},
+	"onCreateCommand": "bash .devcontainer/on-create.sh",
 	"postCreateCommand": "bash .devcontainer/setup.sh"
 }

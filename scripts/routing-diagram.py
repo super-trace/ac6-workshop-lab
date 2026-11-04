@@ -6,10 +6,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 SCALE = 2
-im = Image.new("RGB", (1600 * SCALE, 1120 * SCALE), "#f7f9fc")
+im = Image.new("RGB", (1600 * SCALE, 960 * SCALE), "#f7f9fc")
 d = ImageDraw.Draw(im)
 INK, MUTED = "#172b45", "#52677e"
-EBGP, OSPF, IBGP, LAN = "#d16b25", "#197e83", "#6a51ad", "#77899b"
+EBGP, LAN, JFK, IAD = "#d16b25", "#77899b", "#197e83", "#6a51ad"
 
 def font(size, bold=False):
     choices = (["/System/Library/Fonts/Supplemental/Arial Bold.ttf",
@@ -61,11 +61,11 @@ def router(x,y,node,kind):
     text(x,y+40,f"Router ID {rid}",18,MUTED)
 
 text(70,60,"AC6 workshop routing topology",38,bold=True,anchor="lm")
-text(70,104,"Two sites · two WAN paths · eight devices",23,MUTED,anchor="lm")
-box((50,160,515,960),"#eef6f6")
-box((1085,160,1550,960),"#f0f2fa")
-text(280,198,"JFK  /  AS 65010",27,OSPF,True)
-text(1320,198,"IAD  /  AS 65030",27,IBGP,True)
+text(70,104,"Two sites · two WAN paths · six devices",23,MUTED,anchor="lm")
+box((50,160,515,720),"#eef6f6")
+box((1085,160,1550,720),"#f0f2fa")
+text(280,198,"JFK  /  AS 65010",27,JFK,True)
+text(1320,198,"IAD  /  AS 65030",27,IAD,True)
 text(800,165,"WAN CORE",22,MUTED,True)
 
 # Physical WAN links; BGP sessions use the directly connected /31s.
@@ -81,41 +81,28 @@ line([(800,310),(800,470)],EBGP)
 pill(800,365,"eBGP",EBGP)
 pill(800,403,"172.16.5.0/31",EBGP)
 
-for x,site,prefix in [(280,"jfk","10.10"),(1320,"iad","10.30")]:
-    line([(x,430),(x,620)],OSPF)
-    pill(x,483,"OSPF · area 0.0.0.0",OSPF)
-    pill(x,520,f"{prefix}.1.0/31",OSPF)
-    # iBGP is a logical loopback session over the OSPF link.
-    side=x+190 if site=="jfk" else x-190
-    line([(x+150 if site=="jfk" else x-150,400),(side,400),
-          (side,650),(x+150 if site=="jfk" else x-150,650)],IBGP,dashed=True)
-    pill(side,573,"iBGP",IBGP)
-    line([(x,740),(x,825)],LAN)
+for x,site in [(280,"jfk"),(1320,"iad")]:
+    line([(x,430),(x,570)],LAN)
     subnet="192.168.11" if site=="jfk" else "192.168.31"
-    pill(x,780,f"{subnet}.0/24",LAN)
-    box((x-160,825,x+160,925),"#ffffff","#ccd6e3")
-    text(x,852,f"client-{site}",26,bold=True)
-    text(x,886,f"{subnet}.10  ·  gateway .1",18,MUTED)
-    router(x,370,f"spine-{site}","SR Linux" if site=="jfk" else "Arista cEOS")
-    router(x,680,f"leaf-{site}","SR Linux" if site=="jfk" else "Arista cEOS")
+    pill(x,500,f"{subnet}.0/24",LAN)
+    box((x-160,570,x+160,670),"#ffffff","#ccd6e3")
+    text(x,597,f"client-{site}",26,bold=True)
+    text(x,631,f"{subnet}.10  ·  gateway .1",18,MUTED)
+    router(x,370,f"sw-{site}","SR Linux" if site=="jfk" else "Arista cEOS")
 
 router(800,250,"rtr-phl","Arista cEOS")
 router(800,530,"rtr-ewr","SR Linux")
-box((565,660,1035,895),"#ffffff","#dce3ed")
-text(800,695,"How routes flow",24,bold=True)
-for y,label in [(741,"OSPF carries site links + loopbacks."),
-                (779,"iBGP peers between site loopbacks."),
-                (817,"Spines set next-hop-self to leaves."),
-                (855,"eBGP carries site prefixes over WAN.")]:
+box((565,615,1035,780),"#ffffff","#dce3ed")
+text(800,648,"How routes flow",24,bold=True)
+for y,label in [(690,"Every router is its own AS; eBGP on every link."),
+                (722,"Each site originates its loopback and client LAN."),
+                (754,"The WAN routers carry both, so IAD sees two paths.")]:
     text(800,y,label,19,MUTED)
 
-for x,color,label,dash in [(95,OSPF,"OSPF underlay",False),
-                           (485,IBGP,"iBGP overlay",True),
-                           (860,EBGP,"eBGP WAN",False),
-                           (1205,LAN,"Client LAN",False)]:
-    line([(x,1020),(x+65,1020)],color,dashed=dash)
-    text(x+82,1020,label,22,INK,anchor="lm")
-text(800,1080,"Solid lines show physical links. Dashed iBGP sessions run over OSPF. Management network omitted.",19,MUTED)
+for x,color,label in [(470,EBGP,"eBGP WAN"),(880,LAN,"Client LAN")]:
+    line([(x,840),(x+65,840)],color)
+    text(x+82,840,label,22,INK,anchor="lm")
+text(800,900,"Lines show physical links; each BGP session runs over its directly connected /31. Management network omitted.",19,MUTED)
 out=ROOT/"lab/diagrams/routing-topology.png"
 out.parent.mkdir(parents=True,exist_ok=True)
 im.save(out)

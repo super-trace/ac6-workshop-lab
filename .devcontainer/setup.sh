@@ -1,12 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Codespaces shows this script's output only in the creation log, so it also
+# goes to a log file that setup-progress.sh streams into every new terminal
+# while setup runs. The state file says whether setup is running (and as
+# which process), done or failed.
+log=/tmp/ac6-workshop-setup.log
+state_file=/tmp/ac6-workshop-setup.state
+echo "running $$" > "$state_file"
+exec > >(tee "$log") 2>&1
+trap 'status=$?; if (( status == 0 )); then echo done; else echo failed; fi > "$state_file"' EXIT
+
 # step prints a numbered, timestamped banner, so the creation log (Codespaces:
 # View Creation Log, or `gh codespace logs`) shows which step is running and
-# how long each took. The ERR trap names the step that failed. docker pull
-# draws live per-layer progress bars in a terminal; to watch them, run
-#   tail -f /workspaces/.codespaces/.persistedshare/creation.log
-# in a Codespace terminal.
+# how long each took. The ERR trap names the step that failed.
 total_steps=4
 step_number=0
 current_step="starting"
@@ -52,6 +59,6 @@ df -h / | tail -1
 
 echo ""
 echo "Setup complete. Run: just lab-up    then: just verify"
-echo "SSH ports 2401-2408 (spine-jfk, leaf-jfk, client-jfk, spine-iad, leaf-iad,"
-echo "client-iad, rtr-phl, rtr-ewr) auto-forward — VS Code Ports tab, or"
+echo "SSH ports 2401-2406 (sw-jfk, client-jfk, sw-iad, client-iad, rtr-phl,"
+echo "rtr-ewr) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."

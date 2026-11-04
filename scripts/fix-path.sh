@@ -12,4 +12,4 @@ end
 clear ip bgp 172.16.3.0 soft out"
 
 echo ""
-echo "Fixed: rtr-phl advertises 192.168.11.0/24 (client-jfk) to spine-iad again."
+echo "Fixed: rtr-phl advertises 192.168.11.0/24 (client-jfk) to sw-iad again."
