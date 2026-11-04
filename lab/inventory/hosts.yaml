@@ -1,9 +1,10 @@
 ---
-# AC6 workshop devices for `stcli -i lab/inventory/hosts.yaml`.
+# AC6 workshop devices as a Nornir inventory. The bundled stcli doesn't read
+# it (it has no inventory flag); `stcli <device>` and `/add <device>` dial
+# through the matching SSH aliases in lab/ssh_config.
 #
-# Host names match the SSH aliases in lab/ssh_config, so stcli dials each
-# device through that alias (port, user, key). hostname/port/username below
-# are only used where the alias is not installed.
+# Host names match those aliases. hostname/port/username below are only used
+# where the alias is not installed.
 sw-jfk:
   port: 2401
   groups: [jfk, nokia_srlinux]

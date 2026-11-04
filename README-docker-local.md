@@ -55,21 +55,29 @@ export PATH="$HOME/.local/bin:$PATH"
 stcli --version
 ```
 
-Then sign in and connect:
+Then sign in and start a session on one device:
 
 ```sh
 stcli login
-stcli -i lab/inventory/hosts.yaml
+stcli sw-jfk
 ```
 
-The picker lists the lab devices: type to filter (`site=iad`,
-`platform=arista_ceos`), **space** to select, **enter** to connect. Or name
-them directly: `stcli sw-iad rtr-phl rtr-ewr sw-jfk`. Several devices
-open one conversation plus a tab per router; the main
-[README](README.md#5-use-stcli) explains the tabs and the scenarios.
+Inside `stcli`, add the other devices to the same session, one per line:
 
-If the machine has no browser, use `stcli login --headless` and complete the
-verification link and code in a browser on another machine. Add
+```
+/add sw-iad
+/add rtr-phl
+/add rtr-ewr
+/add client-jfk
+/add client-iad
+```
+
+`stcli sw-jfk sw-iad` would open each device in its own tab, a separate
+session. The main [README](README.md#4-connect-to-the-network) covers the
+agent-driven way to connect, approvals, and the scenarios.
+
+`stcli login` prints a verification link with the code filled in; if this
+machine has no browser, open the link on another one. Add
 `~/.local/bin` to your shell's PATH to keep the installed CLI available in
 new terminals. For a router's native CLI, run `just lab-cli rtr-ewr`. List
 all commands with `just --list`.

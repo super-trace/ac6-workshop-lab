@@ -48,37 +48,55 @@ already filled in) and wait for **Signed in.** in the Codespace terminal. Creden
 saved in the Codespace and refreshed automatically.
 
 ## 4. Connect to the network
-Either open stcli without any arguments or feed it a device as an argument.
+
+Put every device in one session, so one agent can work across the whole
+network. Start `stcli` on one device:
 
 ```sh
-stcli
-stcli sw-iad        # by name
+stcli sw-jfk
 ```
 
+Then, inside `stcli`, add the rest. `/add` joins a device to this session
+without asking, one device per line:
+
+```
+/add sw-iad
+/add rtr-phl
+/add rtr-ewr
+/add client-jfk
+/add client-iad
+```
+
+A session holds up to 8 devices, so all six fit, and the tab title lists
+them: `sw-jfk, sw-iad +4`.
+
+Or let the agent do it: run `stcli` with no device and ask it to "connect to
+sw-jfk, sw-iad, rtr-phl, rtr-ewr, client-jfk and client-iad in this session".
+It asks before each connection; press **Enter** to confirm each one.
+
+`stcli sw-jfk sw-iad` is not the same thing: it opens each device in its own
+tab, and every tab is a separate session with its own agent.
+
 Devices: `sw-jfk`, `client-jfk`, `sw-iad`, `client-iad`, `rtr-phl`,
-`rtr-ewr`. Groups: `jfk`, `iad`, `wan`,
-`arista_ceos`, `nokia_srlinux`, `linux`. For a router's native CLI outside
-`stcli`, run `just lab-cli rtr-phl`.
+`rtr-ewr`. For a router's native CLI outside `stcli`, run
+`just lab-cli rtr-phl`.
 
 ## 5. Use stcli
 
-- **Conversation (tab 1).** Ask in plain language — "client-iad can't reach
-  192.168.11.0/24". One agent works across every connected device and names
-  the device on every command it runs.
+- **Ask in plain language:** "client-iad can't reach 192.168.11.0/24". One
+  agent works across every device in the session, and each command it runs
+  is labelled with the device it ran on.
 - **Approvals.** Read-only commands run straight away. Anything that changes
-  a device stops for you, and the dialog names the router: **Approve on
-  rtr-phl?**. Destructive commands need a typed confirmation.
-- **Device tabs (tab 2 onward).** One per router, styled like a terminal on
-  that router: its prompt, every command run there (the agent's are marked
-  `· agent`) and the raw output. Type a command to run it on that router
-  yourself; typing it is your approval, but destructive commands still ask
-  for the typed confirmation.
-  <!-- TODO(alex): confirm `?` and tab (ask the router for help/completion)
-  have shipped in the bundled binary before advertising them here. -->
-- **Switch tabs** with `shift+←/→`, with `←/→` when the input is empty, or
-  with `/switch`.
-- In the conversation, `!rtr-phl: show ip route` runs a command yourself on
-  one router without asking the agent.
+  a device stops at **Approve this command?**, with the device named beside
+  the command. Destructive commands also ask you to type a confirmation
+  phrase.
+- **Run a command yourself:** `!sw-iad show ip bgp summary`. With several
+  devices in the session, name the device first; a bare `!` lists the names.
+- **Manage devices:** `/disconnect rtr-ewr` closes one device;
+  `/connect rtr-ewr` dials it again.
+- **Tabs are separate sessions.** `/new <device>` opens one. Switch with
+  `/switch`, `ctrl+←/→` or `alt+1..9`; a background tab shows `!` when it is
+  waiting for your approval.
 
 ## 6. Troubleshooting scenarios
 

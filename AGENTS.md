@@ -5,7 +5,7 @@
 Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS) and two Linux clients.
 
 - `lab/topology.clab.yml`: the containerlab topology; device startup files live in `lab/configs/`.
-- `lab/inventory/`: the Nornir inventory for `stcli -i`.
+- `lab/inventory/`: a Nornir inventory of the lab devices. The bundled `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/`: container build assets; diagrams live under `lab/` and `lab/diagrams/`.
 - `scripts/`: break/fix scenarios, verification, and setup helpers; `justfile` wraps them.
 - `.devcontainer/`: Codespaces configuration.
