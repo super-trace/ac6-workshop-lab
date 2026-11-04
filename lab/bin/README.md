@@ -1,9 +1,9 @@
 # Bundled stcli for Codespaces
 
-> **Keep in step with the backend:** this binary speaks protocol 3.0 (stcli #94,
-> stcli-be #51, spec `ce4ce0f`). A protocol bump on either side breaks it with
-> errors such as `decode POST /v1/sessions response`; rebuild from `main` and
-> update the commit, date and SHA-256 below.
+> **Keep in step with the backend:** this binary speaks protocol 3.0, pinned at
+> spec `795f138` (stcli #104), the same spec as stcli-be `main`. A protocol
+> bump on either side breaks it with errors such as `decode POST /v1/sessions
+> response`; rebuild from `main` and update the commit, date and SHA-256 below.
 
 `stcli-linux-amd64` is a static Linux x86-64 executable. `just lab-setup`
 installs it automatically inside Codespaces via `scripts/install-stcli.sh`. It is
@@ -11,7 +11,9 @@ committed temporarily so Codespaces can run without downloading a release.
 Replace this copy step with a release download when distribution is public.
 
 Built from a clean `main` checkout at commit
-`0d24de747d136679799ef2283a1fcee97dc699ef` on **2026-11-02**.
+`146ea4564ed8685742c1bf84fd9a7dff2734cb67` (#108) on **2026-11-04**. Includes
+multi-device sessions (#101), the session picker listing every device (#110),
+and confirming a session the agent names (#107).
 Includes device login (`stcli login`, which works headless; the `--headless`
 flag was removed in stcli #87) and `stcli --version`.
 The build embeds its source revision; `vcs.modified` must be `false`. Build from
@@ -28,4 +30,4 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' \
 Check the binary with `file` and `go version -m`; run `stcli --version` and
 `stcli login --help` on Linux to confirm the revision and login flags.
 
-SHA-256: `8c9df1d031bd1c700809b650c3b1a21757d8c9e360f8cc81cf804c4732bddfd5`
+SHA-256: `68e75866c9487b2e76b6ec9951a02f9db894c3d2b4b3329721bb3f4ceb038594`
