@@ -8,7 +8,7 @@ Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS
 - `lab/inventory/`: a Nornir inventory of the lab devices. The bundled `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/`: container build assets; diagrams live under `lab/` and `lab/diagrams/`.
 - `scripts/`: break/fix scenarios, verification, and setup helpers; `justfile` wraps them.
-- `lab/netbox/`: an on-demand NetBox (Compose file, settings, and `seed.py`, which loads the lab's sites and device types but no devices).
+- `lab/netbox/`: an on-demand, empty NetBox (Compose file and settings).
 - `.devcontainer/`: Codespaces configuration.
 
 ## Build, Test, and Development Commands

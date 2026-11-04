@@ -85,7 +85,7 @@ all commands with `just --list`.
 ## NetBox
 
 `just netbox-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), loaded with the lab's sites and device types; see the
+`ac6-workshop`), empty apart from that login; see the
 [main README](README.md#7-netbox) for the API token. `just netbox-down`
 stops it and deletes its data.
 

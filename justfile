@@ -123,7 +123,7 @@ break SCENARIO:
 fix SCENARIO:
     ./scripts/fix-{{SCENARIO}}.sh
 
-# start NetBox on port 8000, with the lab's sites and device types loaded (~2–3 minutes the first time)
+# start an empty NetBox on port 8000 (~2–3 minutes the first time)
 [group('netbox')]
 netbox-up:
     @./scripts/banner.sh intro "just netbox-up" \

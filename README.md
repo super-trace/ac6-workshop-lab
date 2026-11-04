@@ -119,9 +119,8 @@ just netbox-up
 ```
 
 This starts a NetBox on port 8000, separate from the lab. The first start
-takes two to three minutes. It already has the lab's sites (JFK, IAD, WAN),
-manufacturers, device types, platforms and roles, but no devices: those come
-from what `stcli` exports.
+takes two to three minutes. NetBox starts empty: no sites, device types or
+devices.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
