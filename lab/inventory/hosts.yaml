@@ -1,6 +1,6 @@
 ---
-# AC6 workshop devices as a Nornir inventory. The bundled stcli doesn't read
-# it (it has no inventory flag); `stcli <device>` and `/add <device>` dial
+# AC6 workshop devices as a Nornir inventory. stcli doesn't read it
+# (it has no inventory flag); `stcli <device>` and `/add <device>` dial
 # through the matching SSH aliases in lab/ssh_config.
 #
 # Host names match those aliases. hostname/port/username below are only used

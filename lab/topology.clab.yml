@@ -74,8 +74,8 @@ topology:
     - endpoints: ["sw-iad:eth1", "client-iad:eth1"]      # 192.168.31.0/24
 
     # WAN — 2 paths between sites + 1 direct link between the WAN routers
-    - endpoints: ["sw-jfk:e1-3", "rtr-phl:eth1"]         # eBGP, 172.16.1.0/31 — wan scenario
+    - endpoints: ["sw-jfk:e1-3", "rtr-phl:eth1"]         # eBGP, 172.16.1.0/31 — peer scenario
     - endpoints: ["sw-jfk:e1-4", "rtr-ewr:e1-1"]         # eBGP, 172.16.2.0/31
-    - endpoints: ["sw-iad:eth3", "rtr-phl:eth2"]         # eBGP, 172.16.3.0/31 — path scenario
+    - endpoints: ["sw-iad:eth3", "rtr-phl:eth2"]         # eBGP, 172.16.3.0/31 — filter scenario
     - endpoints: ["sw-iad:eth4", "rtr-ewr:e1-2"]         # eBGP, 172.16.4.0/31
     - endpoints: ["rtr-phl:eth3", "rtr-ewr:e1-3"]        # eBGP, 172.16.5.0/31

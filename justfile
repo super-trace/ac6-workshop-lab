@@ -113,12 +113,12 @@ lab-down:
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
-# break a scenario: path, bgp, mtu or wan
+# break a scenario: peer, prefix, filter, mtu or icmp
 [group('scenarios')]
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh
 
-# undo a scenario: path, bgp, mtu or wan
+# undo a scenario: peer, prefix, filter, mtu or icmp
 [group('scenarios')]
 fix SCENARIO:
     ./scripts/fix-{{SCENARIO}}.sh
@@ -139,7 +139,7 @@ netbox-down:
     @printf '\n'
     @./scripts/banner.sh red "NETBOX IS DOWN"
 
-# pull the lab images, build the client image, install SSH config and stcli
+# pull the lab images, build the client image, install SSH config
 [group('setup')]
 lab-setup:
     @# The private cEOS image supports native AMD64 and ARM64 Docker engines.
@@ -148,7 +148,6 @@ lab-setup:
     docker pull ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
     docker build --progress=plain -t client-ssh:latest lab/images/client-ssh
     ./scripts/install-ssh.sh
-    ./scripts/install-stcli.sh
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
 [group('setup')]
