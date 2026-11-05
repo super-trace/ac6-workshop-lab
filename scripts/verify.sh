@@ -47,13 +47,13 @@ echo
 heading "JFK's client subnet, as seen from sw-iad (proves cross-WAN advertisement)"
 out="$(docker exec "${lab}-sw-iad" Cli -p 15 -c "show ip bgp 192.168.11.0/24")"
 echo "$out"
-# Both WAN paths, not just reachability: one path alone is the wan or path
+# Both WAN paths, not just reachability: one path alone is the peer or filter
 # scenario still broken.
 expect "$out" 'Paths: 2 available' 1 "192.168.11.0/24 at sw-iad via both rtr-phl and rtr-ewr"
 
 echo
 heading "end-to-end: client-jfk -> client-iad (sw-jfk -> WAN -> sw-iad)"
-docker exec "${lab}-client-jfk" ping -c 3 192.168.31.10
+docker exec "${lab}-client-jfk" ping -c 3 192.168.31.10 || fail "client-jfk ping to client-iad failed"
 
 echo
 heading "MTU scenario baseline: both small and large pings should succeed"

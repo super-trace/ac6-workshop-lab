@@ -21,14 +21,14 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-status`: inspect running nodes.
 - `just verify`: check routing, connectivity, and SSH access.
 - `just lab-cli <node>`: open a device's native CLI.
-- `just break <scenario>` / `just fix <scenario>`: `bgp`, `mtu`, `wan`, or `path`.
+- `just break <scenario>` / `just fix <scenario>`: `peer`, `prefix`, `filter`, `mtu`, or `icmp`.
 - `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
 - `just lab-diagram`: regenerate the topology diagrams.
 - `just lab-down`: tear down the lab.
 
 ## Coding Style & Naming Conventions
 
-Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `break-bgp.sh`; pair fault scripts with corresponding fixes. No shared formatter is configured.
+Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `break-peer.sh`; pair fault scripts with corresponding fixes. No shared formatter is configured.
 
 - Quote any `exec:` command in `topology.clab.yml` that contains `: `; unquoted, YAML reads it as a map and containerlab rejects the whole file.
 - Write comments inside a non-shebang recipe as `@#`; `just` echoes plain `#` lines when the recipe runs.

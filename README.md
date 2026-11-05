@@ -105,10 +105,11 @@ fix (`just fix <name>`) if you get stuck.
 
 | Scenario | Break | What you'll notice |
 | --- | --- | --- |
-| Hidden path | `just break path` | IAD reaches JFK's clients over one path |
-| BGP | `just break bgp` | JFK's client subnet disappears from the WAN |
+| BGP peer | `just break peer` | Traffic still flows, redundancy doesn't |
+| Missing prefix | `just break prefix` | JFK's client subnet disappears from the WAN |
+| Route filter | `just break filter` | IAD reaches JFK's clients over one path |
 | MTU | `just break mtu` | Small pings work, larger transfers fail |
-| WAN | `just break wan` | Traffic still flows, redundancy doesn't |
+| ICMP | `just break icmp` | client-jfk can't ping anything, yet traceroute works |
 
 Describe the symptom, not the cause, and let the agent walk the network.
 

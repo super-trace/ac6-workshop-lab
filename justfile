@@ -113,12 +113,12 @@ lab-down:
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
-# break a scenario: path, bgp, mtu or wan
+# break a scenario: peer, prefix, filter, mtu or icmp
 [group('scenarios')]
 break SCENARIO:
     ./scripts/break-{{SCENARIO}}.sh
 
-# undo a scenario: path, bgp, mtu or wan
+# undo a scenario: peer, prefix, filter, mtu or icmp
 [group('scenarios')]
 fix SCENARIO:
     ./scripts/fix-{{SCENARIO}}.sh
