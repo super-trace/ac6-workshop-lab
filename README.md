@@ -56,18 +56,20 @@ Put every device in one session, so one agent can work across the whole
 network. Start `stcli` on one device:
 
 ```sh
-stcli sw-jfk
+stcli
 ```
 
 Then, inside `stcli`, add the rest. `/add` joins a device to this session
-without asking, one device per line:
+without asking.  
 
 ```
-/add sw-iad
-/add rtr-phl
-/add rtr-ewr
-/add client-jfk
-/add client-iad
+/add sw-jfk
+```
+
+You can also ask in natural language, this is the easiest way.
+
+```
+Can you please connect to sw-iad rtr-phl rtr-ewr client-jfk client-iad?
 ```
 
 A session holds up to 8 devices, so all six fit, and the tab title lists
