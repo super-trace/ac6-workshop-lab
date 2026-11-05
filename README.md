@@ -53,31 +53,21 @@ Credentials are saved in the Codespace and refreshed automatically.
 ## 4. Connect to the network
 
 Put every device in one session, so one agent can work across the whole
-network. Start `stcli` on one device:
+network. Start `stcli`, then ask it in plain language (the easiest way):
 
-```sh
-stcli
+```
+Can you please connect to sw-jfk sw-iad rtr-phl rtr-ewr client-jfk client-iad?
 ```
 
-Then, inside `stcli`, add the rest. `/add` joins a device to this session
-without asking.  
+It asks before each connection; press **Enter** to confirm each one. Or add
+devices yourself with `/add`, one per line, which skips the confirmation:
 
 ```
 /add sw-jfk
 ```
 
-You can also ask in natural language, this is the easiest way.
-
-```
-Can you please connect to sw-iad rtr-phl rtr-ewr client-jfk client-iad?
-```
-
 A session holds up to 8 devices, so all six fit, and the tab title lists
 them: `sw-jfk, sw-iad +4`.
-
-Or let the agent do it: run `stcli` with no device and ask it to "connect to
-sw-jfk, sw-iad, rtr-phl, rtr-ewr, client-jfk and client-iad in this session".
-It asks before each connection; press **Enter** to confirm each one.
 
 `stcli sw-jfk sw-iad` is not the same thing: it opens each device in its own
 tab, and every tab is a separate session with its own agent.
