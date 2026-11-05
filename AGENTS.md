@@ -44,3 +44,7 @@ Use the observed prefixes `feat:`, `fix:`, `docs:`, or `chore:` with an imperati
 ## Security & Configuration
 
 Keep licensed vendor archives, personal credentials, and login tokens out of commits. The shared SSH key is for disposable labs only. Preserve distinct management networks and documented SSH ports; setup recipes can modify `~/.ssh/`.
+
+## Public launch
+
+This repository and `super-trace/stcli-releases` will both become public. At launch, update both READMEs, remove the private-access workarounds (README step 3's `gh api` install, the local guide's authenticated installer download, and the Codespace's `stcli-releases` permission request), and test installation without a GitHub login.

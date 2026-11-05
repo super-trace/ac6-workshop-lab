@@ -7,10 +7,6 @@ site has one router, SR Linux at JFK (`sw-jfk`) and Arista cEOS at IAD
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
-> **Public launch:** This repository and `super-trace/stcli-releases` will both
-> become public. At launch, update both READMEs, remove private-access requirements
-> from the local-install instructions, and test downloads without GitHub login.
-
 ![Routing topology](lab/diagrams/routing-topology.png)
 
 ## 1. Create a Codespace
@@ -34,8 +30,9 @@ just lab-up
 just verify
 ```
 
-Expect every BGP session to be Established and end-to-end client pings
-to succeed. Check the output for SSH failures.
+`lab-up` takes about 2–5 minutes. `verify` ends with **LAB IS VERIFIED**; if
+anything is unhealthy it ends with **LAB VERIFICATION FAILED** instead, with
+each failed check printed in red above it.
 
 ## 3. Install stcli and sign in
 
@@ -50,8 +47,8 @@ download fails with a 404; install through your GitHub login instead:
 `gh api repos/super-trace/stcli-releases/contents/install.sh --jq .content | base64 -d | bash`.
 
 Open the verification link in your computer's browser (the one-time code is
-already filled in) and wait for **Signed in.** in the Codespace terminal. Credentials are
-saved in the Codespace and refreshed automatically.
+already filled in) and wait for **Signed in.** in the Codespace terminal.
+Credentials are saved in the Codespace and refreshed automatically.
 
 ## 4. Connect to the network
 
@@ -111,13 +108,17 @@ fix (`just fix <name>`) if you get stuck.
 
 | Scenario | Break | What you'll notice |
 | --- | --- | --- |
-| BGP peer | `just break peer` | Traffic still flows, redundancy doesn't |
-| Missing prefix | `just break prefix` | JFK's client subnet disappears from the WAN |
-| Route filter | `just break filter` | IAD reaches JFK's clients over one path |
+| BGP peer | `just break peer` | Everything still pings, but JFK has lost a WAN path |
+| Missing prefix | `just break prefix` | client-jfk and client-iad can't reach each other |
+| Route filter | `just break filter` | Everything still pings, but IAD reaches JFK over one path only |
 | MTU | `just break mtu` | Small pings work, larger transfers fail |
 | ICMP | `just break icmp` | client-jfk can't ping anything, yet traceroute works |
 
 Describe the symptom, not the cause, and let the agent walk the network.
+
+Fix one scenario before breaking the next, and run `just verify` after a fix
+to confirm the network is healthy again. If things get tangled, `just lab-up`
+redeploys every device from its original config.
 
 ## 7. NetBox
 
@@ -125,7 +126,9 @@ Describe the symptom, not the cause, and let the agent walk the network.
 just netbox-up
 ```
 
-This starts a NetBox on port 8000, separate from the lab. The first start
+NetBox is where device data exported with `stcli` will land; that export
+feature is still being built. This starts a NetBox on port 8000, separate
+from the lab. The first start
 takes two to three minutes. NetBox starts empty: no sites, device types or
 devices.
 
