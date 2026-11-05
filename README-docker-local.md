@@ -28,7 +28,7 @@ just lab-setup
 
 `lab-setup` pulls the network OS images, builds the Linux client image,
 and installs the shared lab key and SSH aliases under `~/.ssh/`.
-It does not install the Linux-only bundled `stcli` on your computer.
+It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
 
 ## Start and check

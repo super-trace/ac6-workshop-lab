@@ -19,8 +19,8 @@ Open this repository on GitHub and select **Code → Codespaces → Create
 codespace on main**. The repository requires a **4-core / 16 GB RAM**
 machine, so smaller machine types aren't offered.
 
-Wait for automatic setup to finish. It installs the lab images, `just`,
-`stcli`, and SSH configuration. The **GitHub Codespaces** terminal that opens
+Wait for automatic setup to finish. It installs the lab images, `just`, and
+SSH configuration. The **GitHub Codespaces** terminal that opens
 first shows only a pointer to the creation log; to watch setup live, click
 **+** in the terminal panel (or pick the **bash** terminal in the list). That
 terminal follows setup step by step and says when it's done.
@@ -37,11 +37,17 @@ just verify
 Expect every BGP session to be Established and end-to-end client pings
 to succeed. Check the output for SSH failures.
 
-## 3. Sign in
+## 3. Install stcli and sign in
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/super-trace/stcli-releases/main/install.sh | bash
 stcli login
 ```
+
+The installer puts `stcli` in `~/.local/bin`, which Codespace terminals
+already have on their PATH. Until `stcli-releases` is public, the `curl`
+download fails with a 404; install through your GitHub login instead:
+`gh api repos/super-trace/stcli-releases/contents/install.sh --jq .content | base64 -d | bash`.
 
 Open the verification link in your computer's browser (the one-time code is
 already filled in) and wait for **Signed in.** in the Codespace terminal. Credentials are
