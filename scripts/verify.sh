@@ -71,6 +71,19 @@ for node in sw-jfk sw-iad rtr-phl rtr-ewr client-jfk client-iad; do
 done
 
 echo
+heading "NetBox API on port 8000 (expect its version, authenticated with the workshop token)"
+# /api/status/ answers only once NetBox and its database are up, and the
+# token proves the admin user lab-up's first NetBox start creates exists.
+netbox_token="nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000"
+if out="$(curl -fsS --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+        -H "Accept: application/json" http://localhost:8000/api/status/)"; then
+    echo "$out"
+    expect "$out" '"netbox-version"' 1 "NetBox status reporting its version"
+else
+    fail "NetBox API on localhost:8000 not answering (run: just netbox-up)"
+fi
+
+echo
 if (( checks_failed )); then
     printf '\033[1;31mLAB VERIFICATION FAILED — check the errors above.\033[0m\n' >&2
     exit 1

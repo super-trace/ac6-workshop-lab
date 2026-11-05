@@ -19,12 +19,13 @@ linux := '\033[92m'
 default:
     @just --list --unsorted
 
-# deploy every node fresh from lab/configs/ (~2–5 minutes)
+# deploy every node fresh from lab/configs/ and start NetBox (~4–8 minutes)
 [group('lab')]
 lab-up:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command will provision multiple" \
-        "containers to simulate a network. Expect this to take ~2–5 minutes."
+        "containers to simulate a network, then start NetBox." \
+        "Expect this to take ~4–8 minutes the first time."
     @printf '\n'
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file (not /dev/null — see its
@@ -45,11 +46,17 @@ lab-up:
     @./scripts/heal-fabric.sh
     @./scripts/fix-mtu.sh
     @printf '\n'
+    @# NetBox runs beside the lab, not in it: containerlab doesn't manage it,
+    @# so it keeps its data across lab-ups. netbox-up.sh is safe to re-run
+    @# and returns in seconds once NetBox has started before.
+    @./scripts/netbox-up.sh
+    @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n'
     @printf '    {{bold}}JFK{{reset}}  sw-jfk {{srl}}(Nokia SR Linux){{reset}} + client-jfk {{linux}}(Linux){{reset}}\n'
     @printf '    {{bold}}IAD{{reset}}  sw-iad {{ceos}}(Arista cEOS){{reset}} + client-iad {{linux}}(Linux){{reset}}\n'
-    @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n\n'
+    @printf '    {{bold}}WAN{{reset}}  rtr-phl {{ceos}}(Arista cEOS){{reset}} + rtr-ewr {{srl}}(Nokia SR Linux){{reset}}, eBGP to each site\n'
+    @printf '    {{bold}}NetBox{{reset}}  port 8000, admin / ac6-workshop (URL and API token above)\n\n'
     @printf '    Every node booted fresh from lab/configs/, so changes made inside a node\n'
     @printf '    last until the next lab-up. The SR Linux configs were re-applied in two\n'
     @printf '    smaller commits (one big commit sometimes partly fails), and client-jfk\n'
@@ -60,7 +67,7 @@ lab-up:
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "<node>": ...\n'
     @printf '\n    Next: {{green}}just verify{{reset}}\n'
 
-# check BGP, routing, reachability, MTU and SSH on every node (~20 seconds)
+# check BGP, routing, reachability, MTU, SSH and NetBox (~20 seconds)
 [group('lab')]
 verify:
     @./scripts/banner.sh intro "just verify" \
@@ -76,7 +83,7 @@ verify:
     @# kept so a failed verify still fails.
     @./scripts/verify.sh; status=$?; printf '\n'; just _verify-checks; exit $status
 
-# The five checks verify runs, printed before and after them.
+# The six checks verify runs, printed before and after them.
 [private]
 _verify-checks:
     @printf '    {{yellow}}1. eBGP{{reset}}          switches and WAN routers have every session Established\n'
@@ -84,6 +91,7 @@ _verify-checks:
     @printf '    {{yellow}}3. Reachability{{reset}}  client-jfk pings client-iad end to end\n'
     @printf '    {{yellow}}4. MTU{{reset}}           200 B and 3000 B pings from client-jfk to its gateway\n'
     @printf '    {{yellow}}5. SSH{{reset}}           every node answers on its lab alias, as stcli connects\n'
+    @printf '    {{yellow}}6. NetBox{{reset}}        the NetBox API answers on port 8000 with the workshop token\n'
 
 # list the running lab nodes and their addresses
 [group('lab')]

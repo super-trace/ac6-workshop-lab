@@ -30,7 +30,8 @@ just lab-up
 just verify
 ```
 
-`lab-up` takes about 2–5 minutes. `verify` ends with **LAB IS VERIFIED**; if
+`lab-up` deploys the network and starts NetBox (section 7). It takes about
+4–8 minutes the first time. `verify` ends with **LAB IS VERIFIED**; if
 anything is unhealthy it ends with **LAB VERIFICATION FAILED** instead, with
 each failed check printed in red above it.
 
@@ -114,21 +115,17 @@ redeploys every device from its original config.
 
 ## 7. NetBox
 
-```sh
-just netbox-up
-```
-
 NetBox is where device data exported with `stcli` will land; that export
-feature is still being built. This starts a NetBox on port 8000, separate
-from the lab. The first start
-takes two to three minutes. NetBox starts empty: no sites, device types or
-devices.
+feature is still being built. `just lab-up` starts it on port 8000, beside
+the lab, and `just verify` checks that its API answers. To start it again
+without redeploying the lab, run `just netbox-up`. The first start takes two
+to three minutes. NetBox starts empty: no sites, device types or devices.
 
-- **Open it:** the recipe prints the URL. In a Codespace, that's the
+- **Open it:** `lab-up` prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
 - **Log in:** `admin` / `ac6-workshop`.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
-- **Share it:** the recipe makes port 8000 public when the Codespace allows
+- **Share it:** `lab-up` makes port 8000 public when the Codespace allows
   it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
   Visibility → Public**. Anyone with the URL can then log in with the
   password above, so keep it to this disposable lab.
@@ -138,7 +135,7 @@ devices.
 ## 8. Finish
 
 ```sh
-just netbox-down   # if you started NetBox
+just netbox-down
 just lab-down
 ```
 
