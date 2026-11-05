@@ -47,7 +47,7 @@ docker info >/dev/null 2>&1 || { echo "dockerd never became ready" >&2; exit 1; 
 echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'))"
 
 # Codespaces supplies registry credentials for this repository's private package.
-step "Pulling lab images, building client-ssh, installing SSH config (just lab-setup)"
+step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
 just lab-setup
 
@@ -58,6 +58,5 @@ df -h / | tail -1
 
 echo ""
 echo "Setup complete. Run: just lab-up    then: just verify, and install stcli (README step 3)"
-echo "SSH ports 2401-2406 (sw-jfk, client-jfk, sw-iad, client-iad, rtr-phl,"
-echo "rtr-ewr) auto-forward — VS Code Ports tab, or"
+echo "SSH ports 2401 (nokia) and 2402 (arista) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."

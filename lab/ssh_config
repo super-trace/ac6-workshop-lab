@@ -1,53 +1,25 @@
 # AC6 workshop lab — Include this file from ~/.ssh/config:
 #   Include /path/to/workshop/lab/ssh_config
-# Then: stcli sw-jfk / stcli sw-iad / ... / stcli rtr-phl / stcli client-jfk
-#
-# Every node is an stcli target in this lab — unlike the old topology,
-# there's no "supporting cast, docker exec only" tier.
+# Then: stcli nokia / stcli arista
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
-# these are loopback-only lab nodes, not real network exposure. A dedicated
-# known_hosts file (wiped by `just lab-up`/`lab-down`, see justfile) rather
-# than /dev/null: stcli's trust-on-first-use flow writes the accepted key
-# back to this file and then re-verifies against it, so it needs somewhere
-# that actually retains what's written — /dev/null discards it, which
-# makes every "trust this host key?" prompt loop forever. Plain `ssh` never
-# notices the difference either way, since StrictHostKeyChecking no skips
-# its own check regardless of what's recorded.
-
-# Key-based login for every node — stcli's own account on SR Linux (admin
-# is a reserved username there and can't take an ssh-key, see
-# lab/configs/sw-jfk.cfg), the stcli account on cEOS, and root on Linux
-# clients, all seeded from the same shared, non-secret lab key. `just
-# lab-setup` copies it to ~/.ssh/ac6-workshop-key; run that once before
-# first use.
-Host sw-jfk client-jfk sw-iad client-iad rtr-phl rtr-ewr
+# these are loopback-only lab nodes. A dedicated known_hosts file (wiped by
+# `just lab-up`/`lab-down`) rather than /dev/null: stcli's trust-on-first-use
+# flow writes the accepted key back and re-verifies against it, so /dev/null
+# would make every "trust this host key?" prompt loop forever.
+#
+# Both nodes log in as `stcli` with the shared, non-secret lab key (`admin`
+# is a reserved username on SR Linux and can't take an ssh-key). `just
+# lab-setup` copies the key to ~/.ssh/ac6-workshop-key.
+Host nokia arista
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
     IdentityFile ~/.ssh/ac6-workshop-key
+    User stcli
 
-# JFK
-Host sw-jfk
+Host nokia
     Port 2401
-    User stcli
-Host client-jfk
+Host arista
     Port 2402
-    User root
-
-# IAD
-Host sw-iad
-    Port 2403
-    User stcli
-Host client-iad
-    Port 2404
-    User root
-
-# WAN core
-Host rtr-phl
-    Port 2405
-    User stcli
-Host rtr-ewr
-    Port 2406
-    User stcli

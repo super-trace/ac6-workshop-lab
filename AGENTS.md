@@ -2,12 +2,12 @@
 
 ## Project Structure & Module Organization
 
-Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS) and two Linux clients.
+Two-node AC6 workshop lab: `nokia` (SR Linux, fully configured) and `arista` (cEOS, blank), joined by an eBGP link (`e1-1`↔`Ethernet1`) and an 802.1Q trunk (`e1-2`↔`Ethernet2`) that the workshop configures on arista.
 
 - `lab/topology.clab.yml`: the containerlab topology; device startup files live in `lab/configs/`.
 - `lab/inventory/`: a Nornir inventory of the lab devices. `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
-- `lab/images/`: container build assets; diagrams live under `lab/` and `lab/diagrams/`.
-- `scripts/`: break/fix scenarios, verification, and setup helpers; `justfile` wraps them.
+- `lab/images/ceos-shim/`: an `iptables-restore` wrapper bind-mounted into arista; without it, cEOS SSH never answers on Docker Desktop (see the script).
+- `scripts/`: verification, exercise checks, and setup helpers; `justfile` wraps them.
 - `lab/netbox/`: an on-demand, empty NetBox (Compose file and settings).
 - `.devcontainer/`: Codespaces configuration.
 
@@ -16,26 +16,27 @@ Six-node AC6 troubleshooting lab: four eBGP routers (Nokia SR Linux, Arista cEOS
 Run commands from the repository root, with Docker and `just` installed:
 
 - `just --list`: list recipes.
-- `just lab-setup`: fetch images, build the SSH-enabled client image, and install lab SSH configuration.
+- `just lab-setup`: fetch images and install lab SSH configuration.
 - `just lab-up`: deploy the topology. It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy.
 - `just lab-status`: inspect running nodes.
-- `just verify`: check routing, connectivity, and SSH access.
+- `just verify`: check the baseline: nokia configured, arista blank, both links up, SSH to both.
 - `just lab-cli <node>`: open a device's native CLI.
-- `just break <scenario>` / `just fix <scenario>`: `peer`, `prefix`, `filter`, `mtu`, or `icmp`.
+- `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
+- `just reset-arista`: return arista to blank in seconds without redeploying nokia.
 - `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
 - `just lab-diagram`: regenerate the topology diagrams.
 - `just lab-down`: tear down the lab.
 
 ## Coding Style & Naming Conventions
 
-Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `break-peer.sh`; pair fault scripts with corresponding fixes. No shared formatter is configured.
+Match adjacent files: two-space YAML indentation, four-space Python indentation, and existing Bash/just recipe formatting. Bash scripts use `#!/usr/bin/env bash`, `set -euo pipefail`, and quoted variable expansions. Use descriptive kebab-case script names such as `check-bgp.sh`. No shared formatter is configured.
 
 - Quote any `exec:` command in `topology.clab.yml` that contains `: `; unquoted, YAML reads it as a map and containerlab rejects the whole file.
 - Write comments inside a non-shebang recipe as `@#`; `just` echoes plain `#` lines when the recipe runs.
 
 ## Testing Guidelines
 
-Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just verify` before and after changes. `just verify` fails on any unhealthy protocol state, a missing WAN path, MTU loss, or a broken SSH alias, so it catches every `break` scenario. For scenario changes, demonstrate the fault, apply its fix, and verify recovery. Keep configurations, README instructions, and diagrams consistent.
+Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just verify` before and after changes. For exercise changes, configure arista the way the exercise intends, confirm `just check-bgp` / `just check-l2` pass, then `just reset-arista` and confirm they fail again. Keep configurations, README instructions, and diagrams consistent.
 
 ## Commit & Pull Request Guidelines
 

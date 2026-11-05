@@ -5,31 +5,13 @@
 #
 # Host names match those aliases. hostname/port/username below are only used
 # where the alias is not installed.
-sw-jfk:
+nokia:
   port: 2401
-  groups: [jfk, nokia_srlinux]
+  groups: [nokia_srlinux]
   data:
-    role: switch
-client-jfk:
+    role: configured
+arista:
   port: 2402
-  username: root
-  groups: [jfk, linux]
+  groups: [arista_ceos]
   data:
-    role: client
-sw-iad:
-  port: 2403
-  groups: [iad, arista_ceos]
-  data:
-    role: switch
-client-iad:
-  port: 2404
-  username: root
-  groups: [iad, linux]
-  data:
-    role: client
-rtr-phl:
-  port: 2405
-  groups: [wan, arista_ceos]
-rtr-ewr:
-  port: 2406
-  groups: [wan, nokia_srlinux]
+    role: blank

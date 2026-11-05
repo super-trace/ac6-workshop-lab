@@ -1,0 +1,7 @@
+#!/bin/sh
+# Docker Desktop's kernel has no conntrack helpers (ftp, sip, tftp). EOS adds
+# a `-j CT --helper` rule for each to the ruleset it restores, the whole
+# restore fails, and the control-plane ACL never loads, so INPUT stays at
+# DROP and SSH never answers. Drop those rules and pass everything else to
+# the real iptables-restore/ip6tables-restore (named by how this was called).
+grep -v -- '-j CT --helper' | exec /usr/sbin/xtables-nft-multi "$(basename "$0")" "$@"

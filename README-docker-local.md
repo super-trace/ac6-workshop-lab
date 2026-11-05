@@ -1,16 +1,14 @@
 # Run the workshop locally with Docker
 
-The same six-node topology runs locally: SR Linux at JFK (`sw-jfk`) and
-`rtr-ewr`, cEOS at IAD (`sw-iad`) and `rtr-phl`, and Linux clients at both
-sites.
-
-![Routing topology](lab/diagrams/routing-topology.png)
+The same two-device lab runs locally: `nokia` (SR Linux, configured) and
+`arista` (cEOS, blank), joined by a BGP link and a layer 2 trunk. See the
+[main README](README.md) for the diagram and the exercises.
 
 ## Prepare
 
 Install Git, Docker, `just`, GitHub CLI (`gh`), and a native `stcli` binary.
-Allocate **4 CPU cores / 16 GB RAM** to the lab machine. On macOS, use
-OrbStack and allocate these resources to its Linux VM. On Linux, use
+Allocate **4 CPU cores / 8 GB RAM** to the lab machine. On macOS, use
+OrbStack or Docker Desktop and allocate these resources to its Linux VM. On Linux, use
 Docker Engine on a machine with these resources. The cEOS package
 supports both AMD64 and ARM64; Docker selects your native architecture.
 
@@ -26,8 +24,7 @@ gh auth token | docker login ghcr.io -u "$(gh api user --jq .login)" --password-
 just lab-setup
 ```
 
-`lab-setup` pulls the network OS images, builds the Linux client image,
-and installs the shared lab key and SSH aliases under `~/.ssh/`.
+`lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
 It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
 
@@ -38,9 +35,8 @@ just lab-up
 just verify
 ```
 
-Wait for startup configuration to finish. Expect Established BGP sessions,
-successful client pings, and SSH access to all nodes. Initial image
-downloads and device startup can take several minutes.
+Expect nokia configured, arista blank, both links up, and SSH access to
+both. Initial image downloads and device startup can take several minutes.
 
 ## Connect
 
@@ -59,27 +55,23 @@ Then sign in and start a session on one device:
 
 ```sh
 stcli login
-stcli sw-jfk
+stcli nokia
 ```
 
-Inside `stcli`, add the other devices to the same session, one per line:
+Inside `stcli`, add arista to the same session:
 
 ```
-/add sw-iad
-/add rtr-phl
-/add rtr-ewr
-/add client-jfk
-/add client-iad
+/add arista
 ```
 
-`stcli sw-jfk sw-iad` would open each device in its own tab, a separate
+`stcli nokia arista` would open each device in its own tab, a separate
 session. The main [README](README.md#4-connect-to-the-network) covers the
-agent-driven way to connect, approvals, and the scenarios.
+agent-driven way to connect, approvals, and the exercises.
 
 `stcli login` prints a verification link with the code filled in; if this
 machine has no browser, open the link on another one. Add
 `~/.local/bin` to your shell's PATH to keep the installed CLI available in
-new terminals. For a router's native CLI, run `just lab-cli rtr-ewr`. List
+new terminals. For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.
 
 ## NetBox
@@ -98,4 +90,4 @@ just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2406 (and NetBox's 8000) on your computer.
+running: both use SSH ports 2401–2402 (and NetBox's 8000) on your computer.

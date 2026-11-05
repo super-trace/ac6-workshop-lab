@@ -24,15 +24,11 @@
 		"memory": "16gb"
 	},
 	"privileged": true,
-	"forwardPorts": [2401, 2402, 2403, 2404, 2405, 2406, 8000],
+	"forwardPorts": [2401, 2402, 8000],
 	"portsAttributes": {
 		"8000": { "label": "NetBox", "onAutoForward": "silent" },
-		"2401": { "label": "sw-jfk SSH" },
-		"2402": { "label": "client-jfk SSH" },
-		"2403": { "label": "sw-iad SSH" },
-		"2404": { "label": "client-iad SSH" },
-		"2405": { "label": "rtr-phl SSH" },
-		"2406": { "label": "rtr-ewr SSH" }
+		"2401": { "label": "nokia SSH" },
+		"2402": { "label": "arista SSH" }
 	},
 	"onCreateCommand": "bash .devcontainer/on-create.sh",
 	"postCreateCommand": "bash .devcontainer/setup.sh"

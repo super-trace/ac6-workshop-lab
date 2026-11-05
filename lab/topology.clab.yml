@@ -7,75 +7,32 @@ mgmt:
   network: ac6
   ipv4-subnet: 172.20.23.0/24
 
+# Two devices, two links:
+#   nokia (SR Linux) is fully configured: BGP toward arista on e1-1, an
+#   802.1Q trunk with three VLANs on e1-2.
+#   arista (cEOS) starts blank apart from SSH access; the workshop
+#   configures both of its links.
 topology:
   nodes:
-    # ---------------------------------------------------------------- JFK --
-    sw-jfk:
+    nokia:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/sw-jfk.cfg
+      startup-config: configs/nokia.cfg
       ports: ["2401:22"]
-      labels: { graph-level: 1, graph-icon: router }
-    client-jfk:
-      kind: linux
-      image: client-ssh:latest
+      labels: { graph-level: 0, graph-icon: router }
+    arista:
+      kind: arista_ceos
+      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+      startup-config: configs/arista.cfg
       ports: ["2402:22"]
-      labels: { graph-level: 2, graph-icon: host }
+      labels: { graph-level: 0, graph-icon: switch }
+      # EOS finds iptables-restore on PATH, where /usr/local/sbin comes first.
+      # The shim drops conntrack-helper rules that Docker Desktop's kernel
+      # can't load; without it SSH to arista never answers. See the script.
       binds:
-        - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
-      exec:
-        - ip address add 192.168.11.10/24 dev eth1
-        - 'ip link set eth1 alias "UPLINK: sw-jfk e1-1"'
-        - ip route replace default via 192.168.11.1 dev eth1
-        # No MTU baseline here — this is the mtu scenario's target, see
-        # scripts/fix-mtu.sh for the healthy-state 1500 this normally runs
-        # once at lab-up.
-
-    # ---------------------------------------------------------------- IAD --
-    sw-iad:
-      kind: arista_ceos
-      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
-      startup-config: configs/sw-iad.cfg
-      ports: ["2403:22"]
-      labels: { graph-level: 1, graph-icon: router }
-    client-iad:
-      kind: linux
-      image: client-ssh:latest
-      ports: ["2404:22"]
-      labels: { graph-level: 2, graph-icon: host }
-      binds:
-        - ac6-workshop-key.pub:/tmp/ac6-workshop-key.pub:ro
-      exec:
-        - ip address add 192.168.31.10/24 dev eth1
-        - 'ip link set eth1 alias "UPLINK: sw-iad Et1"'
-        - ip route replace default via 192.168.31.1 dev eth1
-        - ip link set eth1 mtu 1500
-
-    # ------------------------------------------------------------ WAN core --
-    # Two independent paths between the sites (rtr-phl, rtr-ewr) plus a
-    # direct link between them for a third form of resilience. eBGP
-    # everywhere here, distinct AS per router.
-    rtr-phl:
-      kind: arista_ceos
-      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
-      startup-config: configs/rtr-phl.cfg
-      ports: ["2405:22"]
-      labels: { graph-level: 0, graph-icon: router }
-    rtr-ewr:
-      kind: nokia_srlinux
-      image: ghcr.io/nokia/srlinux:25.3.2
-      startup-config: configs/rtr-ewr.cfg
-      ports: ["2406:22"]
-      labels: { graph-level: 0, graph-icon: router }
+        - images/ceos-shim/iptables-restore:/usr/local/sbin/iptables-restore:ro
+        - images/ceos-shim/iptables-restore:/usr/local/sbin/ip6tables-restore:ro
 
   links:
-    # Site access: each client's gateway is its site switch
-    - endpoints: ["sw-jfk:e1-1", "client-jfk:eth1"]      # 192.168.11.0/24 — bgp and mtu scenarios
-    - endpoints: ["sw-iad:eth1", "client-iad:eth1"]      # 192.168.31.0/24
-
-    # WAN — 2 paths between sites + 1 direct link between the WAN routers
-    - endpoints: ["sw-jfk:e1-3", "rtr-phl:eth1"]         # eBGP, 172.16.1.0/31 — peer scenario
-    - endpoints: ["sw-jfk:e1-4", "rtr-ewr:e1-1"]         # eBGP, 172.16.2.0/31
-    - endpoints: ["sw-iad:eth3", "rtr-phl:eth2"]         # eBGP, 172.16.3.0/31 — filter scenario
-    - endpoints: ["sw-iad:eth4", "rtr-ewr:e1-2"]         # eBGP, 172.16.4.0/31
-    - endpoints: ["rtr-phl:eth3", "rtr-ewr:e1-3"]        # eBGP, 172.16.5.0/31
+    - endpoints: ["nokia:e1-1", "arista:eth1"]   # layer 3: eBGP, 10.0.0.0/31
+    - endpoints: ["nokia:e1-2", "arista:eth2"]   # layer 2: 802.1Q trunk
