@@ -84,15 +84,16 @@ all commands with `just --list`.
 
 ## NetBox
 
-`just netbox-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), empty apart from that login; see the
-[main README](README.md#7-netbox) for the API token. `just netbox-down`
-stops it and deletes its data.
+`just lab-up` also starts NetBox at http://localhost:8000 (login `admin` /
+`ac6-workshop`), empty apart from that login, and `just verify` checks that
+its API answers; see the [main README](README.md#7-netbox) for the API token.
+`just netbox-up` starts it again on its own. `just netbox-down` stops it and
+deletes its data.
 
 ## Finish
 
 ```sh
-just netbox-down   # if you started NetBox
+just netbox-down
 just lab-down
 just cleanup-ssh
 ```
