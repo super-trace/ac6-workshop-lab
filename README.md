@@ -119,13 +119,14 @@ The BGP peer toward arista shows as down: arista isn't configured yet.
 
 Stay in the same session and type:
 
-- Generate a configuration snippet to configure BGP on a peer to nokia. Do it for Arista cEOS.
+- Generate a configuration snippet to configure BGP on a peer to this device, written for Nokia SR Linux.
+- Convert that snippet to Arista cEOS.
 - `/add arista`
-- Configure arista using the BGP snippet you generated earlier.
+- Configure arista using the cEOS snippet you converted earlier.
 - Verify that BGP is up between nokia and arista.
 
-`/add arista` brings arista into this session, so the agent still has the
-snippet. When the change stops at **Approve this command?**, check that it
+`/add arista` brings arista into this session, so the agent still has both
+snippets. When the change stops at **Approve this command?**, check that it
 names **arista** before you approve it.
 
 In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
