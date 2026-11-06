@@ -134,10 +134,11 @@ Then ask it whatever you want; be curious.
 
 ### Scenario 2: two devices, BGP
 
-Stay in the same session. Add arista, so both devices are in one session:
+Stay in the same session. Add arista by its management IP, so both devices
+are in one session:
 
 ```
-/add arista
+/add 172.20.23.3
 ```
 
 Ping across the BGP link. This should fail: arista's end of the link has no
