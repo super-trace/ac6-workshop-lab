@@ -122,12 +122,18 @@ Stay in the same session and type:
 - Generate a configuration snippet to configure BGP on a peer to this device, written for Nokia SR Linux.
 - Convert that snippet to Arista cEOS.
 - `/add arista`
+- Ping nokia from arista over the BGP link.
 - Configure arista using the cEOS snippet you converted earlier.
 - Verify that BGP is up between nokia and arista.
 
 `/add arista` brings arista into this session, so the agent still has both
-snippets. When the change stops at **Approve this command?**, check that it
-names **arista** before you approve it.
+snippets.
+
+The ping should fail: arista's end of the link has no IP address yet. A good
+answer explains why rather than only reporting the failure.
+
+When the configuration change stops at **Approve this command?**, check that
+it names **arista** before you approve it.
 
 In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
 with **BGP IS UP** once the session is Established and arista has learned
