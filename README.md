@@ -134,50 +134,56 @@ Then ask it whatever you want; be curious.
 
 ### Scenario 2: two devices, BGP
 
-Stay in the same session. Add arista by its management IP, so both devices
-are in one session:
+Stay in the same session, still connected only to nokia. nokia has a BGP
+peer configured at `10.0.0.1`, but nothing in its config says what that peer
+is.
+
+Ping the peer across the BGP link. This should fail: the peer's end of the
+link has no IP address yet. A good answer explains why rather than only
+reporting the failure.
+
+```
+Ping the BGP peer at 10.0.0.1.
+```
+
+Generate the config for the other end. With only nokia in the session, the
+agent should write it for Nokia SR Linux:
+
+```
+Generate a configuration snippet to configure BGP on a peer to this device.
+```
+
+The peer is actually an Arista. Convert the snippet:
+
+```
+Do it for Arista cEOS.
+```
+
+Connect to the Arista by its management IP, so both devices are in one
+session:
 
 ```
 /add 172.20.23.3
 ```
 
-Ping across the BGP link. This should fail: arista's end of the link has no
-IP address yet. A good answer explains why rather than only reporting the
-failure.
+Apply the config. When the change stops at **Approve this command?**, check
+that it names the Arista before you approve it:
 
 ```
-Ping nokia from arista over the BGP link.
+Apply the Arista cEOS config to the device you just added.
 ```
 
-Generate the BGP config for nokia's peer, written for SR Linux first:
+Ping again and check the session. The ping should now succeed, and BGP
+should be Established:
 
 ```
-Generate a configuration snippet to configure BGP on a peer to nokia, written for Nokia SR Linux.
+Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
 ```
 
-Convert it to Arista:
+Have the agent walk through it:
 
 ```
-Convert that snippet to Arista cEOS.
-```
-
-Apply it. When the change stops at **Approve this command?**, check that it
-names **arista** before you approve it:
-
-```
-Configure arista using the cEOS snippet you converted earlier.
-```
-
-Ping again. This time it should succeed, which proves the link itself:
-
-```
-Ping nokia from arista over the BGP link again.
-```
-
-Confirm the BGP session on top of it:
-
-```
-Verify that BGP is up between nokia and arista.
+Explain what you did.
 ```
 
 In a terminal outside `stcli`, this confirms the result. It ends with **BGP
