@@ -51,25 +51,16 @@ export PATH="$HOME/.local/bin:$PATH"
 stcli --version
 ```
 
-Then sign in and start a session on one device:
+Then start `stcli`:
 
 ```sh
-stcli login
-stcli nokia
+stcli
 ```
 
-Inside `stcli`, add arista to the same session:
-
-```
-/add arista
-```
-
-`stcli nokia arista` would open each device in its own tab, a separate
-session. The main [README](README.md#4-connect-to-the-network) covers the
-agent-driven way to connect, approvals, and the exercises.
-
-`stcli login` prints a verification link with the code filled in; if this
-machine has no browser, open the link on another one. Add
+The first run signs you in: it prints a verification link with the code
+filled in; if this machine has no browser, open the link on another one.
+From there, follow the exercises in the main
+[README](README.md#6-workshop-exercises). Add
 `~/.local/bin` to your shell's PATH to keep the installed CLI available in
 new terminals. For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.

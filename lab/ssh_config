@@ -1,6 +1,7 @@
 # AC6 workshop lab — Include this file from ~/.ssh/config:
 #   Include /path/to/workshop/lab/ssh_config
-# Then: stcli nokia / stcli arista
+# Then: stcli nokia / stcli arista, or connect by management IP:
+#   nokia 172.20.23.2, arista 172.20.23.3 (fixed in topology.clab.yml).
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
@@ -12,14 +13,17 @@
 # Both nodes log in as `stcli` with the shared, non-secret lab key (`admin`
 # is a reserved username on SR Linux and can't take an ssh-key). `just
 # lab-setup` copies the key to ~/.ssh/ac6-workshop-key.
-Host nokia arista
+Host nokia arista 172.20.23.2 172.20.23.3
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
     IdentityFile ~/.ssh/ac6-workshop-key
     User stcli
 
-Host nokia
+# The management IPs go through the same forwarded ports as the names:
+# Docker Desktop on macOS can't route to container IPs at all, so this keeps
+# "connect 172.20.23.2" working locally as well as in a Codespace.
+Host nokia 172.20.23.2
     Port 2401
-Host arista
+Host arista 172.20.23.3
     Port 2402

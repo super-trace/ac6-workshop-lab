@@ -29,7 +29,7 @@ first shows only a pointer to the creation log; to watch setup live, click
 **+** in the terminal panel (or pick the **bash** terminal in the list). That
 terminal follows setup step by step and says when it's done.
 
-## 2. Install stcli and sign in
+## 2. Install stcli
 
 In the Codespace terminal, install `stcli`:
 
@@ -43,19 +43,11 @@ Reload your shell configuration, so this terminal finds `stcli`:
 source /home/vscode/.bashrc
 ```
 
-Sign in:
-
-```sh
-stcli login
-```
-
 Until `stcli-releases` is public, the `curl` download fails with a 404;
 install through your GitHub login instead:
 `gh api repos/super-trace/stcli-releases/contents/install.sh --jq .content | base64 -d | bash`.
 
-Open the verification link in your computer's browser (the one-time code is
-already filled in) and wait for **Signed in.** in the Codespace terminal.
-Credentials are saved in the Codespace and refreshed automatically.
+You'll sign in the first time you run `stcli`, once the lab is up.
 
 ## 3. Start and verify
 
@@ -71,8 +63,22 @@ in red above it.
 
 ## 4. Connect to the network
 
-Put both devices in one session, so one agent can work across them. Start
-`stcli`, then ask it in plain language (the easiest way):
+Start `stcli`:
+
+```sh
+stcli
+```
+
+The first time, it signs you in: open the verification link in your
+computer's browser (the one-time code is already filled in) and wait for
+**Signed in.** in the Codespace terminal. Credentials are saved in the
+Codespace and refreshed automatically.
+
+For the workshop, go straight to [section 6](#6-workshop-exercises), which
+connects one device at a time. The rest of this section is reference.
+
+Put both devices in one session, so one agent can work across them. Ask
+`stcli` in plain language (the easiest way):
 
 ```
 Can you please connect to nokia and arista?
@@ -88,6 +94,9 @@ devices yourself with `/add`, one per line, which skips the confirmation:
 
 `stcli nokia arista` is not the same thing: it opens each device in its own
 tab, and every tab is a separate session with its own agent.
+
+Each device also answers on its management IP: `connect 172.20.23.2` for
+nokia, `connect 172.20.23.3` for arista.
 
 For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
 `just lab-cli arista`.
@@ -111,70 +120,157 @@ For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
 
 ## 6. Workshop exercises
 
-Work through these in order, in one `stcli` session, typing each prompt as
-written. Every step builds on the answers before it, so don't open a new tab
-partway through.
+Work through these in order, in one `stcli` session. Copy each prompt into
+`stcli` as written. Every step builds on the answers before it, so don't open
+a new tab partway through.
 
 ### Scenario 1: single device, basic queries and web search
 
-**Explore the Nokia.** Start `stcli`, then type:
+**Explore the Nokia.** Start `stcli`:
 
-- connect nokia
-- show me the config that controls the username and password on this box
-- Show me routing on this device.
-- `!show version`: runs the command directly on nokia, without the agent.
-- Show me the configuration snippets behind the routing you just diagnosed.
-- Search the web for any recent patches on this firmware version that I should be aware of.
-- Do a full security audit and give me a TLDR of what to focus on.
+```sh
+stcli
+```
 
-Then ask it whatever you want; be curious. The routing table shows the BGP
-peer toward arista as down, because arista isn't configured yet.
+Connect to nokia by its management IP:
+
+```
+connect 172.20.23.2
+```
+
+Find the login config:
+
+```
+show me the config that controls the username and password on this box
+```
+
+Read the routing table. The BGP peer shows as down, because arista isn't
+configured yet:
+
+```
+Show me routing on this device.
+```
+
+Run a command directly on nokia, without the agent:
+
+```
+!show version
+```
+
+Pull the config behind the routing:
+
+```
+Show me the configuration snippets behind the routing you just diagnosed.
+```
+
+Check the firmware against the web:
+
+```
+Search the web for any recent patches on this firmware version that I should be aware of.
+```
+
+Audit the device:
+
+```
+Do a full security audit and give me a TLDR of what to focus on.
+```
+
+Then ask it whatever you want; be curious.
 
 ### Scenario 2: two devices, BGP
 
-Stay in the same session and type:
+Stay in the same session. Add arista, so both devices are in one session:
 
-- `/add arista`
-- Ping nokia from arista over the BGP link.
-- Generate a configuration snippet to configure BGP on a peer to nokia, written for Nokia SR Linux.
-- Convert that snippet to Arista cEOS.
-- Configure arista using the cEOS snippet you converted earlier.
-- Ping nokia from arista over the BGP link again.
-- Verify that BGP is up between nokia and arista.
+```
+/add arista
+```
 
-`/add arista` brings arista into this session alongside nokia.
+Ping across the BGP link. This should fail: arista's end of the link has no
+IP address yet. A good answer explains why rather than only reporting the
+failure.
 
-The first ping should fail: arista's end of the link has no IP address yet.
-A good answer explains why rather than only reporting the failure.
+```
+Ping nokia from arista over the BGP link.
+```
 
-When the configuration change stops at **Approve this command?**, check that
-it names **arista** before you approve it. The second ping should then
-succeed. A working ping proves the link itself; the last prompt confirms the
-BGP session on top of it.
+Generate the BGP config for nokia's peer, written for SR Linux first:
 
-In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
-with **BGP IS UP** once the session is Established and arista has learned
-nokia's prefixes.
+```
+Generate a configuration snippet to configure BGP on a peer to nokia, written for Nokia SR Linux.
+```
+
+Convert it to Arista:
+
+```
+Convert that snippet to Arista cEOS.
+```
+
+Apply it. When the change stops at **Approve this command?**, check that it
+names **arista** before you approve it:
+
+```
+Configure arista using the cEOS snippet you converted earlier.
+```
+
+Ping again. This time it should succeed, which proves the link itself:
+
+```
+Ping nokia from arista over the BGP link again.
+```
+
+Confirm the BGP session on top of it:
+
+```
+Verify that BGP is up between nokia and arista.
+```
+
+In a terminal outside `stcli`, this confirms the result. It ends with **BGP
+IS UP** once the session is Established and arista has learned nokia's
+prefixes:
+
+```sh
+just check-bgp
+```
 
 ### Scenario 3: layer 2
 
 nokia's `ethernet-1/2` is a trunk carrying several VLANs, each with a gateway
 address on nokia. arista's `Ethernet2` is still at factory defaults. In the
-same session, type:
+same session, have the agent work out the VLANs and configure arista:
 
-- nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
-- Verify that arista can reach nokia's gateway in every VLAN.
+```
+nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
+```
 
-`just check-l2` confirms the result: it ends with **LAYER 2 IS UP** once
-arista reaches nokia's gateway in every VLAN. A new VLAN on arista spends
-about 30 seconds in spanning-tree listening and learning before it forwards,
-so give it a moment.
+Confirm it:
+
+```
+Verify that arista can reach nokia's gateway in every VLAN.
+```
+
+A new VLAN on arista spends about 30 seconds in spanning-tree listening and
+learning before it forwards, so give it a moment. In a terminal outside
+`stcli`, this ends with **LAYER 2 IS UP** once arista reaches nokia's gateway
+in every VLAN:
+
+```sh
+just check-l2
+```
 
 ### Start over
 
-`just reset-arista` wipes arista back to blank in seconds and leaves nokia
-alone; start again from Scenario 2. `just lab-up` redeploys both devices from
-scratch.
+Wipe arista back to blank in seconds, leaving nokia alone, then start again
+from Scenario 2:
+
+```sh
+just reset-arista
+```
+
+Or redeploy both devices from scratch:
+
+```sh
+just lab-up
+```
 
 <details>
 <summary>Facilitator reference: what nokia has configured</summary>
