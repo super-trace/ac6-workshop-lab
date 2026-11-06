@@ -204,24 +204,56 @@ just check-bgp
 
 ### Scenario 3: layer 2
 
-nokia's `ethernet-1/2` is a trunk carrying several VLANs, each with a gateway
-address on nokia. arista's `Ethernet2` is still at factory defaults. In the
-same session, have the agent work out the VLANs and configure arista:
+Stay in the same session, with both devices connected. The second link,
+nokia `ethernet-1/2` to the Arista's `Ethernet2`, is a layer 2 link: nokia
+already treats it as a trunk carrying several VLANs, each with a gateway
+address on nokia. The Arista's end is still at factory defaults.
+
+Test the link. This should fail: the Arista isn't carrying any of nokia's
+VLANs yet. A good answer works out which VLANs and gateways nokia has, tries
+to reach them, and explains why it can't.
 
 ```
-nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
+Test layer 2 connectivity between nokia's ethernet-1/2 and the Arista's Ethernet2.
 ```
 
-Confirm it:
+Generate the config for both ends: nokia's existing trunk as the reference,
+and the Arista side to match it, with an address in each VLAN so the Arista
+can reach nokia's gateways:
 
 ```
-Verify that arista can reach nokia's gateway in every VLAN.
+Show me nokia's trunk and VLAN configuration on ethernet-1/2, then generate the matching Arista cEOS configuration for Ethernet2, with an address in each VLAN.
 ```
 
-A new VLAN on arista spends about 30 seconds in spanning-tree listening and
-learning before it forwards, so give it a moment. In a terminal outside
-`stcli`, this ends with **LAYER 2 IS UP** once arista reaches nokia's gateway
-in every VLAN:
+Apply it. When the change stops at **Approve this command?**, check that it
+names the Arista before you approve it; nokia needs no changes:
+
+```
+Apply the Arista cEOS layer 2 config to the Arista.
+```
+
+Test again. A new VLAN spends about 30 seconds in spanning-tree listening and
+learning before it forwards, so the first pings may fail; a good answer waits
+and retries rather than changing more config:
+
+```
+Test layer 2 connectivity between the two devices again.
+```
+
+Confirm every VLAN is up, from both ends:
+
+```
+Confirm the Arista can reach nokia's gateway in every VLAN, and that nokia has learned the Arista's MAC address in each one.
+```
+
+Have the agent walk through it:
+
+```
+Explain what you did.
+```
+
+In a terminal outside `stcli`, this confirms the result. It ends with
+**LAYER 2 IS UP** once the Arista reaches nokia's gateway in every VLAN:
 
 ```sh
 just check-l2
