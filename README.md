@@ -105,17 +105,22 @@ Work through these in order, in one `stcli` session, typing each prompt as
 written. Every step builds on the answers before it, so don't open a new tab
 partway through.
 
-### Explore the Nokia
+### Scenario 1: single device, basic queries and web search
 
-Start a session on the Nokia with `stcli nokia`, then type:
+**Explore the Nokia.** Start `stcli`, then type:
 
-- Show me the config that controls the username and password on this box.
+- connect nokia
+- show me the config that controls the username and password on this box
 - Show me routing on this device.
+- `!show version`: runs the command directly on nokia, without the agent.
 - Show me the configuration snippets behind the routing you just diagnosed.
+- Search the web for any recent patches on this firmware version that I should be aware of.
+- Do a full security audit and give me a TLDR of what to focus on.
 
-The BGP peer toward arista shows as down: arista isn't configured yet.
+Then ask it whatever you want; be curious. The routing table shows the BGP
+peer toward arista as down, because arista isn't configured yet.
 
-### Bring up BGP
+### Scenario 2: two devices, BGP
 
 Stay in the same session and type:
 
@@ -141,7 +146,7 @@ In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
 with **BGP IS UP** once the session is Established and arista has learned
 nokia's prefixes.
 
-### Bring up layer 2
+### Scenario 3: layer 2
 
 nokia's `ethernet-1/2` is a trunk carrying several VLANs, each with a gateway
 address on nokia. arista's `Ethernet2` is still at factory defaults. In the
@@ -158,7 +163,7 @@ so give it a moment.
 ### Start over
 
 `just reset-arista` wipes arista back to blank in seconds and leaves nokia
-alone; start again from **Bring up BGP**. `just lab-up` redeploys both devices from
+alone; start again from Scenario 2. `just lab-up` redeploys both devices from
 scratch.
 
 <details>
