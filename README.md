@@ -102,62 +102,31 @@ For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
 ## 6. Workshop exercises
 
 Work through these in order, in one `stcli` session, typing each prompt as
-shown. Every step builds on the answers before it, so don't open a new tab
+written. Every step builds on the answers before it, so don't open a new tab
 partway through.
 
 ### Explore the Nokia
 
-Start a session on the Nokia:
+Start a session on the Nokia with `stcli nokia`, then type:
 
-```sh
-stcli nokia
-```
+- Show me the config that controls the username and password on this box.
+- Show me routing on this device.
+- Show me the configuration snippets behind the routing you just diagnosed.
 
-1. Find the login config:
-
-   ```
-   Show me the config that controls the username and password on this box.
-   ```
-
-2. Read the routing table. The BGP peer toward arista is down, because
-   arista isn't configured yet:
-
-   ```
-   Show me routing on this device.
-   ```
-
-3. Pull the config behind it:
-
-   ```
-   Show me the configuration snippets behind the routing you just diagnosed.
-   ```
+The BGP peer toward arista shows as down: arista isn't configured yet.
 
 ### Bring up BGP
 
-4. Have the agent write the other side, using what it just read from nokia:
+Stay in the same session and type:
 
-   ```
-   Generate a configuration snippet to configure BGP on a peer to nokia. Do it for Arista cEOS.
-   ```
+- Generate a configuration snippet to configure BGP on a peer to nokia. Do it for Arista cEOS.
+- `/add arista`
+- Configure arista using the BGP snippet you generated earlier.
+- Verify that BGP is up between nokia and arista.
 
-5. Add arista to the same session, so the agent still has the snippet:
-
-   ```
-   /add arista
-   ```
-
-6. Apply the snippet. Check that the **Approve this command?** prompt names
-   **arista** before you approve it:
-
-   ```
-   Configure arista using the BGP snippet you generated earlier.
-   ```
-
-7. Confirm the session is up from both sides:
-
-   ```
-   Verify that BGP is up between nokia and arista.
-   ```
+`/add arista` brings arista into this session, so the agent still has the
+snippet. When the change stops at **Approve this command?**, check that it
+names **arista** before you approve it.
 
 In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
 with **BGP IS UP** once the session is Established and arista has learned
@@ -166,14 +135,11 @@ nokia's prefixes.
 ### Bring up layer 2
 
 nokia's `ethernet-1/2` is a trunk carrying several VLANs, each with a gateway
-address on nokia. arista's `Ethernet2` is still at factory defaults.
+address on nokia. arista's `Ethernet2` is still at factory defaults. In the
+same session, type:
 
-8. In the same session, have the agent work out the VLANs from nokia and
-   configure arista to match:
-
-   ```
-   nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
-   ```
+- nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
+- Verify that arista can reach nokia's gateway in every VLAN.
 
 `just check-l2` confirms the result: it ends with **LAYER 2 IS UP** once
 arista reaches nokia's gateway in every VLAN. A new VLAN on arista spends
@@ -183,7 +149,7 @@ so give it a moment.
 ### Start over
 
 `just reset-arista` wipes arista back to blank in seconds and leaves nokia
-alone; start again from step 4. `just lab-up` redeploys both devices from
+alone; start again from **Bring up BGP**. `just lab-up` redeploys both devices from
 scratch.
 
 <details>
