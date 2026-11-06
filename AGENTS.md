@@ -48,4 +48,4 @@ Keep licensed vendor archives, personal credentials, and login tokens out of com
 
 ## Public launch
 
-This repository and `super-trace/stcli-releases` will both become public. At launch, update both READMEs, remove the private-access workarounds (README step 3's `gh api` install, the local guide's authenticated installer download, and the Codespace's `stcli-releases` permission request), and test installation without a GitHub login.
+This repository and `super-trace/stcli-releases` will both become public. At launch, update both READMEs, remove the private-access workarounds (README step 2's `gh api` install, the local guide's authenticated installer download, and the Codespace's `stcli-releases` permission request), and test installation without a GitHub login.
