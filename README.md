@@ -101,43 +101,90 @@ For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
 
 ## 6. Workshop exercises
 
-Work through these in order, in plain language. The prompts are examples;
-say it your own way.
+Work through these in order, in one `stcli` session, typing each prompt as
+shown. Every step builds on the answers before it, so don't open a new tab
+partway through.
 
-**Explore the Nokia.** Connect to `nokia`, then:
+### Explore the Nokia
 
-- "Show me the config that controls the username and password on this box."
-- "Show me routing on this device."
-- "Show me the configuration snippets behind the routing you just diagnosed."
+Start a session on the Nokia:
 
-**Bring up BGP.** nokia is waiting for a BGP peer on `ethernet-1/1`; arista
-has nothing configured.
+```sh
+stcli nokia
+```
 
-- "Generate a configuration snippet to configure BGP on a peer to this
-  device. Do it for Arista cEOS."
-- "Save that to a file."
-- Extra credit: "Generate an Ansible playbook snippet that configures this
-  on a device."
-- Connect to `arista`: "Configure this device using the snippet from
-  earlier", then "Verify that BGP is up."
+1. Find the login config:
 
-`just check-bgp` confirms the result: the session is Established and arista
-has learned nokia's prefixes.
+   ```
+   Show me the config that controls the username and password on this box.
+   ```
 
-**Bring up layer 2.** nokia's `ethernet-1/2` is a trunk carrying several
-VLANs, each with a gateway address on nokia. arista's `Ethernet2` is at
-factory defaults.
+2. Read the routing table. The BGP peer toward arista is down, because
+   arista isn't configured yet:
 
-- "nokia's ethernet-1/2 is a trunk with multiple VLANs. Connect to the other
-  device, figure out the trunking and VLANs, and configure it so the two can
-  talk over layer 2."
+   ```
+   Show me routing on this device.
+   ```
 
-`just check-l2` confirms the result: arista reaches nokia's gateway in every
-VLAN. A new VLAN on arista spends about 30 seconds in spanning-tree
-listening and learning before it forwards, so give it a moment.
+3. Pull the config behind it:
 
-**Start over.** `just reset-arista` wipes arista back to blank in seconds and
-leaves nokia alone. `just lab-up` redeploys both devices from scratch.
+   ```
+   Show me the configuration snippets behind the routing you just diagnosed.
+   ```
+
+### Bring up BGP
+
+4. Have the agent write the other side, using what it just read from nokia:
+
+   ```
+   Generate a configuration snippet to configure BGP on a peer to nokia. Do it for Arista cEOS.
+   ```
+
+5. Add arista to the same session, so the agent still has the snippet:
+
+   ```
+   /add arista
+   ```
+
+6. Apply the snippet. Check that the **Approve this command?** prompt names
+   **arista** before you approve it:
+
+   ```
+   Configure arista using the BGP snippet you generated earlier.
+   ```
+
+7. Confirm the session is up from both sides:
+
+   ```
+   Verify that BGP is up between nokia and arista.
+   ```
+
+In a terminal outside `stcli`, `just check-bgp` confirms the result: it ends
+with **BGP IS UP** once the session is Established and arista has learned
+nokia's prefixes.
+
+### Bring up layer 2
+
+nokia's `ethernet-1/2` is a trunk carrying several VLANs, each with a gateway
+address on nokia. arista's `Ethernet2` is still at factory defaults.
+
+8. In the same session, have the agent work out the VLANs from nokia and
+   configure arista to match:
+
+   ```
+   nokia's ethernet-1/2 is a trunk with multiple VLANs. Figure out the trunking and VLANs, and configure arista so the two can talk over layer 2.
+   ```
+
+`just check-l2` confirms the result: it ends with **LAYER 2 IS UP** once
+arista reaches nokia's gateway in every VLAN. A new VLAN on arista spends
+about 30 seconds in spanning-tree listening and learning before it forwards,
+so give it a moment.
+
+### Start over
+
+`just reset-arista` wipes arista back to blank in seconds and leaves nokia
+alone; start again from step 4. `just lab-up` redeploys both devices from
+scratch.
 
 <details>
 <summary>Facilitator reference: what nokia has configured</summary>
