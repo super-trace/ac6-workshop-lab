@@ -68,64 +68,7 @@ configured, arista blank, both links up, and SSH to both. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
-## 4. Connect to the network
-
-Start `stcli`:
-
-```sh
-stcli
-```
-
-The first time, it signs you in: open the verification link in your
-computer's browser (the one-time code is already filled in) and wait for
-**Signed in.** in the Codespace terminal. Credentials are saved in the
-Codespace and refreshed automatically.
-
-For the workshop, go straight to [section 6](#6-workshop-exercises), which
-connects one device at a time. The rest of this section is reference.
-
-Put both devices in one session, so one agent can work across them. Ask
-`stcli` in plain language (the easiest way):
-
-```
-Can you please connect to nokia and arista?
-```
-
-It asks before each connection; press **Enter** to confirm each one. Or add
-devices yourself with `/add`, one per line, which skips the confirmation:
-
-```
-/add nokia
-/add arista
-```
-
-`stcli nokia arista` is not the same thing: it opens each device in its own
-tab, and every tab is a separate session with its own agent.
-
-Each device also answers on its management IP: `connect 172.20.23.2` for
-nokia, `connect 172.20.23.3` for arista.
-
-For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
-`just lab-cli arista`.
-
-## 5. Use stcli
-
-- **Ask in plain language:** "is BGP up between nokia and arista?" One agent
-  works across every device in the session, and each command it runs is
-  labelled with the device it ran on.
-- **Approvals.** Read-only commands run straight away. Anything that changes
-  a device stops at **Approve this command?**, with the device named beside
-  the command. Destructive commands also ask you to type a confirmation
-  phrase.
-- **Run a command yourself:** `!arista show ip bgp summary`. With several
-  devices in the session, name the device first; a bare `!` lists the names.
-- **Manage devices:** `/disconnect arista` closes one device;
-  `/connect arista` dials it again.
-- **Tabs are separate sessions.** `/new <device>` opens one. Switch with
-  `/switch`, `ctrl+←/→` or `alt+1..9`; a background tab shows `!` when it is
-  waiting for your approval.
-
-## 6. Workshop exercises
+## 4. Workshop exercises
 
 Work through these in order, in one `stcli` session. Copy each prompt into
 `stcli` as written. Every step builds on the answers before it, so don't open
@@ -138,6 +81,11 @@ a new tab partway through.
 ```sh
 stcli
 ```
+
+The first time, it signs you in: open the verification link in your
+computer's browser (the one-time code is already filled in) and wait for
+**Signed in.** in the Codespace terminal. Credentials are saved in the
+Codespace and refreshed automatically.
 
 Connect to nokia by its management IP:
 
@@ -296,6 +244,51 @@ pings from arista, so arista needs an address in each VLAN. On EOS, enter
 opens an EVPN VLAN instead.
 
 </details>
+
+## 5. Connect to the network
+
+Other ways to connect, beyond the workshop's steps.
+
+Put both devices in one session, so one agent can work across them. Ask
+`stcli` in plain language (the easiest way):
+
+```
+Can you please connect to nokia and arista?
+```
+
+It asks before each connection; press **Enter** to confirm each one. Or add
+devices yourself with `/add`, one per line, which skips the confirmation:
+
+```
+/add nokia
+/add arista
+```
+
+`stcli nokia arista` is not the same thing: it opens each device in its own
+tab, and every tab is a separate session with its own agent.
+
+Each device also answers on its management IP: `connect 172.20.23.2` for
+nokia, `connect 172.20.23.3` for arista.
+
+For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
+`just lab-cli arista`.
+
+## 6. Use stcli
+
+- **Ask in plain language:** "is BGP up between nokia and arista?" One agent
+  works across every device in the session, and each command it runs is
+  labelled with the device it ran on.
+- **Approvals.** Read-only commands run straight away. Anything that changes
+  a device stops at **Approve this command?**, with the device named beside
+  the command. Destructive commands also ask you to type a confirmation
+  phrase.
+- **Run a command yourself:** `!arista show ip bgp summary`. With several
+  devices in the session, name the device first; a bare `!` lists the names.
+- **Manage devices:** `/disconnect arista` closes one device;
+  `/connect arista` dials it again.
+- **Tabs are separate sessions.** `/new <device>` opens one. Switch with
+  `/switch`, `ctrl+←/→` or `alt+1..9`; a background tab shows `!` when it is
+  waiting for your approval.
 
 ## 7. NetBox
 

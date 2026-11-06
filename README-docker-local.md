@@ -63,7 +63,7 @@ stcli
 The first run signs you in: it prints a verification link with the code
 filled in; if this machine has no browser, open the link on another one.
 From there, follow the exercises in the main
-[README](README.md#6-workshop-exercises). Add
+[README](README.md#4-workshop-exercises). Add
 `~/.local/bin` to your shell's PATH to keep the installed CLI available in
 new terminals. For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.
