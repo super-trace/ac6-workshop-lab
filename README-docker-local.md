@@ -32,7 +32,10 @@ The containerlab helper requires privileged Docker access.
 
 ```sh
 just lab-up
-just verify
+```
+
+```sh
+just lab-verify
 ```
 
 Expect nokia configured, arista blank, both links up, and SSH access to

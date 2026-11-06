@@ -20,5 +20,5 @@ if ssh -G arista 2>/dev/null | grep -q '^port 2402$'; then
             && { echo "arista: SSH ready."; exit 0; }
         sleep 2
     done
-    echo "arista: SSH not answering yet; 'just verify' will say if it stays down." >&2
+    echo "arista: SSH not answering yet; 'just lab-verify' will say if it stays down." >&2
 fi

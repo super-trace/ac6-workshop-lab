@@ -19,7 +19,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-setup`: fetch images and install lab SSH configuration.
 - `just lab-up`: deploy the topology. It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy.
 - `just lab-status`: inspect running nodes.
-- `just verify`: check the baseline: nokia configured, arista blank, both links up, SSH to both.
+- `just lab-verify`: check the baseline: nokia configured, arista blank, both links up, SSH to both.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
 - `just reset-arista`: return arista to blank in seconds without redeploying nokia.
@@ -36,7 +36,7 @@ Match adjacent files: two-space YAML indentation, four-space Python indentation,
 
 ## Testing Guidelines
 
-Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just verify` before and after changes. For exercise changes, configure arista the way the exercise intends, confirm `just check-bgp` / `just check-l2` pass, then `just reset-arista` and confirm they fail again. Keep configurations, README instructions, and diagrams consistent.
+Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just lab-verify` before and after changes. For exercise changes, configure arista the way the exercise intends, confirm `just check-bgp` / `just check-l2` pass, then `just reset-arista` and confirm they fail again. Keep configurations, README instructions, and diagrams consistent.
 
 ## Commit & Pull Request Guidelines
 

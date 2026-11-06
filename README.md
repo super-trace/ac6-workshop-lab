@@ -51,12 +51,19 @@ You'll sign in the first time you run `stcli`, once the lab is up.
 
 ## 3. Start and verify
 
+Start the lab (about 2 minutes):
+
 ```sh
 just lab-up
-just verify
 ```
 
-`lab-up` takes about 2 minutes. `verify` checks the starting point: nokia
+Then check it:
+
+```sh
+just lab-verify
+```
+
+`lab-verify` checks the starting point: nokia
 configured, arista blank, both links up, and SSH to both. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.

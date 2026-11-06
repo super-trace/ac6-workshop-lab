@@ -49,16 +49,20 @@ lab-up:
     @printf 'They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node nokia: ...\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "nokia": ...\n'
-    @printf '\n    Next: {{green}}just verify{{reset}}\n'
+    @printf '\n    Next: {{green}}just lab-verify{{reset}}\n'
 
 # check the baseline: nokia configured, arista blank, links and SSH up (~10 seconds)
 [group('lab')]
-verify:
-    @./scripts/banner.sh intro "just verify" \
+lab-verify:
+    @./scripts/banner.sh intro "just lab-verify" \
         "This command checks the lab baseline: nokia configured, arista" \
         "blank, both links up. Expect this to take ~10 seconds."
     @printf '\n'
     @./scripts/verify.sh
+
+# Same as lab-verify, kept for older docs and muscle memory; hidden from --list.
+[private]
+verify: lab-verify
 
 # list the running lab nodes and their addresses
 [group('lab')]
