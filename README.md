@@ -99,17 +99,18 @@ Find the login config:
 show me the config that controls the username and password on this box
 ```
 
-Read the routing table. The BGP peer shows as down, because arista isn't
-configured yet:
-
-```
-Show me routing on this device.
-```
-
-Run a command directly on nokia, without the agent:
+Run a command directly on nokia, without the agent. Note the software
+version: you'll ask about it shortly:
 
 ```
 !show version
+```
+
+Read the routing table. The BGP peer shows as down, because nothing on the
+other end is configured yet:
+
+```
+Show me routing on this device.
 ```
 
 Pull the config behind the routing:
