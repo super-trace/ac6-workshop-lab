@@ -7,18 +7,7 @@ bring up.
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
-```
-      mgmt 172.20.23.2                                   mgmt 172.20.23.3
-  ┌──────────────────────┐                           ┌──────────────────────┐
-  │ nokia                │ e1-1          Ethernet1   │ arista               │
-  │ Nokia SR Linux       │ ───────────────────────── │ Arista cEOS          │
-  │ configured           │ 10.0.0.0/31   10.0.0.1/31 │ blank                │
-  │                      │     layer 3: eBGP         │                      │
-  │                      │                           │                      │
-  │                      │ e1-2          Ethernet2   │                      │
-  │                      │ ───────────────────────── │                      │
-  └──────────────────────┘    layer 2: VLAN trunk    └──────────────────────┘
-```
+![Lab topology](lab/diagrams/routing-topology.png)
 
 nokia's end of the BGP link is configured; arista's `10.0.0.1/31` is the
 address the workshop gives it, since arista starts with no addresses on

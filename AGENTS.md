@@ -24,7 +24,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
 - `just reset-arista`: return arista to blank in seconds without redeploying nokia.
 - `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
-- `just lab-diagram`: regenerate the topology diagrams.
+- `just lab-diagram`: regenerate `lab/topology.clab.png` and its `.drawio` source. The README's diagram, `lab/diagrams/routing-topology.png`, comes from `scripts/routing-diagram.py` (see `lab/diagrams/README.md`).
 - `just lab-down`: tear down the lab.
 
 ## Coding Style & Naming Conventions
