@@ -1,7 +1,7 @@
 # Run the workshop locally with Docker
 
-The same two-device lab runs locally: `nokia` (SR Linux, configured) and
-`arista` (cEOS, blank), joined by a BGP link and a layer 2 trunk. See the
+The same two-device lab runs locally: `arista` (cEOS, configured) and
+`nokia` (SR Linux, blank), joined by a BGP link and a layer 2 trunk. See the
 [main README](README.md) for the diagram and the exercises.
 
 ## Prepare
@@ -38,7 +38,7 @@ just lab-up
 just lab-verify
 ```
 
-Expect nokia configured, arista blank, both links up, and SSH access to
+Expect arista configured, nokia blank, both links up, and SSH access to
 both. Initial image downloads and device startup can take several minutes.
 
 ## Connect

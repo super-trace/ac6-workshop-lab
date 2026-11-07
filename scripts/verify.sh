@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baseline check: nokia is fully configured, arista is reachable and blank,
+# Baseline check: arista is fully configured, nokia is reachable and blank,
 # both links are up, and both SSH aliases work.
 set -euo pipefail
 
@@ -22,36 +22,36 @@ expect() {
     fi
 }
 
-heading "nokia links to arista (expect ethernet-1/1 and ethernet-1/2 up)"
-out="$(docker exec "${lab}-nokia" sr_cli "show interface ethernet-1/{1,2} brief")"
+heading "arista links to nokia (expect Ethernet1 and Ethernet2 connected)"
+out="$(docker exec "${lab}-arista" Cli -p 15 -c "show interfaces Ethernet1-2 status")"
 echo "$out"
-expect "$out" 'ethernet-1/[12] .*\| *enable *\| *up ' 2 "nokia links oper up"
+expect "$out" '^Et[12] .* connected ' 2 "arista links connected"
 
 echo
-heading "nokia trunk (expect VLANs 110, 120 and 130 bridged on ethernet-1/2)"
-out="$(docker exec "${lab}-nokia" sr_cli "show network-instance summary")"
+heading "arista trunk (expect VLANs 110, 120 and 130 active on Ethernet2)"
+out="$(docker exec "${lab}-arista" Cli -p 15 -c "show vlan")"
 echo "$out"
-expect "$out" 'vlan1[123]0 .*mac-vrf .*up' 3 "nokia mac-vrfs up"
+expect "$out" '^1[123]0 .*active.*Et2' 3 "arista VLANs active on Ethernet2"
 
 echo
-heading "nokia BGP (expect neighbor 10.0.0.1 configured toward AS 65002)"
-out="$(docker exec "${lab}-nokia" sr_cli "show network-instance default protocols bgp neighbor")"
+heading "arista BGP (expect neighbor 10.0.0.1 configured toward AS 65002)"
+out="$(docker exec "${lab}-arista" Cli -p 15 -c "show ip bgp summary")"
 echo "$out"
-expect "$out" '10\.0\.0\.1' 1 "nokia BGP neighbor 10.0.0.1"
+expect "$out" '10\.0\.0\.1 .*65002' 1 "arista BGP neighbor 10.0.0.1"
 
 echo
-heading "arista (expect blank: no BGP configured yet)"
-out="$(docker exec "${lab}-arista" Cli -p 15 -c "show running-config section router bgp")"
-if [[ -n "$out" ]]; then
+heading "nokia (expect blank: no BGP configured yet)"
+out="$(docker exec "${lab}-nokia" sr_cli "info from running network-instance default protocols bgp" 2>/dev/null || true)"
+if grep -q 'autonomous-system' <<<"$out"; then
     echo "$out"
-    echo "   arista already has BGP config; run 'just reset-arista' for a blank slate."
+    echo "   nokia already has BGP config; run 'just reset-nokia' for a blank slate."
 else
     echo "   blank, as expected"
 fi
 
 echo
 heading "SSH (expect each alias to answer, as stcli connects)"
-for node in nokia arista; do
+for node in arista nokia; do
     if ssh -o BatchMode=yes -o ConnectTimeout=10 "${node}" "show version" >/dev/null 2>&1; then
         echo "   ${node}: ok"
     else

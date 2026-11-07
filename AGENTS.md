@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Two-node AC6 workshop lab: `nokia` (SR Linux, fully configured) and `arista` (cEOS, blank), joined by an eBGP link (`e1-1`↔`Ethernet1`) and an 802.1Q trunk (`e1-2`↔`Ethernet2`) that the workshop configures on arista.
+Two-node AC6 workshop lab: `arista` (cEOS, fully configured) and `nokia` (SR Linux, blank), joined by an eBGP link (`Ethernet1`↔`e1-1`) and an 802.1Q trunk (`Ethernet2`↔`e1-2`) that the workshop configures on nokia.
 
 - `lab/topology.clab.yml`: the containerlab topology; device startup files live in `lab/configs/`.
 - `lab/inventory/`: a Nornir inventory of the lab devices. `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
@@ -19,12 +19,11 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-setup`: fetch images and install lab SSH configuration.
 - `just lab-up`: deploy the topology. It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy.
 - `just lab-status`: inspect running nodes.
-- `just lab-verify`: check the baseline: nokia configured, arista blank, both links up, SSH to both.
+- `just lab-verify`: check the baseline: arista configured, nokia blank, both links up, SSH to both.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
-- `just reset-arista`: return arista to blank in seconds without redeploying nokia.
+- `just reset-nokia`: return nokia to blank in seconds (a saved checkpoint) without redeploying arista.
 - `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
-- `just lab-diagram`: regenerate the topology diagrams.
 - `just lab-down`: tear down the lab.
 
 ## Coding Style & Naming Conventions
@@ -36,11 +35,11 @@ Match adjacent files: two-space YAML indentation, four-space Python indentation,
 
 ## Testing Guidelines
 
-Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just lab-verify` before and after changes. For exercise changes, configure arista the way the exercise intends, confirm `just check-bgp` / `just check-l2` pass, then `just reset-arista` and confirm they fail again. Keep configurations, README instructions, and diagrams consistent.
+Testing uses live lab checks rather than a unit-test framework; no coverage threshold is configured. Run `just lab-verify` before and after changes. For exercise changes, configure nokia the way the exercise intends, confirm `just check-bgp` / `just check-l2` pass, then `just reset-nokia` and confirm they fail again. Keep configurations, README instructions, and the README's ASCII diagram consistent.
 
 ## Commit & Pull Request Guidelines
 
-Use the observed prefixes `feat:`, `fix:`, `docs:`, or `chore:` with an imperative summary. PR descriptions should explain the behavior changed, list validation commands and results, link relevant issues, and update diagrams for topology changes.
+Use the observed prefixes `feat:`, `fix:`, `docs:`, or `chore:` with an imperative summary. PR descriptions should explain the behavior changed, list validation commands and results, link relevant issues, and update the README diagram for topology changes.
 
 ## Security & Configuration
 

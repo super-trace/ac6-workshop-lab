@@ -57,6 +57,9 @@ free -h | head -2
 df -h / | tail -1
 
 echo ""
-echo "Setup complete. Next: install stcli (README step 2), then: just lab-up    then: just lab-verify"
+echo "Setup complete. Next, README step 2: install stcli:"
+echo "    curl -fsSL https://raw.githubusercontent.com/super-trace/stcli-releases/main/install.sh | bash"
+echo "    source /home/vscode/.bashrc"
+echo "Then README step 3: just lab-up, then just lab-verify."
 echo "SSH ports 2401 (nokia) and 2402 (arista) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."

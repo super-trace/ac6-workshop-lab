@@ -8,26 +8,24 @@ mgmt:
   ipv4-subnet: 172.20.23.0/24
 
 # Two devices, two links:
-#   nokia (SR Linux) is fully configured: BGP toward arista on e1-1, an
-#   802.1Q trunk with three VLANs on e1-2.
-#   arista (cEOS) starts blank apart from SSH access; the workshop
-#   configures both of its links.
+#   arista (cEOS) is fully configured: BGP toward nokia on Ethernet1, an
+#   802.1Q trunk with three VLANs on Ethernet2.
+#   nokia (SR Linux) starts blank apart from SSH access and its two ports
+#   turned on; the workshop configures both of its links.
 topology:
   nodes:
     nokia:
       kind: nokia_srlinux
       image: ghcr.io/nokia/srlinux:25.3.2
       startup-config: configs/nokia.cfg
-      mgmt-ipv4: 172.20.23.2   # fixed, so the README can say "connect 172.20.23.2"
+      mgmt-ipv4: 172.20.23.2   # fixed, so the README can give each device's IP
       ports: ["2401:22"]
-      labels: { graph-level: 0, graph-icon: router }
     arista:
       kind: arista_ceos
       image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
       startup-config: configs/arista.cfg
       mgmt-ipv4: 172.20.23.3
       ports: ["2402:22"]
-      labels: { graph-level: 0, graph-icon: switch }
       # EOS finds iptables-restore on PATH, where /usr/local/sbin comes first.
       # The shim drops conntrack-helper rules that Docker Desktop's kernel
       # can't load; without it SSH to arista never answers. See the script.
