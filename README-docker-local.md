@@ -38,8 +38,9 @@ just lab-up
 just lab-verify
 ```
 
-Expect arista configured, nokia blank, both links up, and SSH access to
-both. Initial image downloads and device startup can take several minutes.
+Expect arista configured, nokia blank, both links up, SSH access to both,
+and NetBox and its MCP server answering. Initial image downloads and device
+startup can take several minutes.
 
 ## Connect
 
@@ -70,18 +71,19 @@ all commands with `just --list`.
 
 ## NetBox
 
-`just netbox-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), empty apart from that login; see the
-[main README](README.md#7-netbox) for the API token. `just netbox-down`
-stops it and deletes its data.
+`just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
+`ac6-workshop`), empty apart from that login, and its MCP server at
+http://localhost:8001/mcp; see the [main README](README.md#7-netbox) for
+the API token. `just netbox-up` starts just those two; `just netbox-down`
+stops them and deletes NetBox's data.
 
 ## Finish
 
 ```sh
-just netbox-down   # if you started NetBox
 just lab-down
 just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2402 (and NetBox's 8000) on your computer.
+running: both use SSH ports 2401–2402 (and NetBox's 8000 and 8001) on your
+computer.

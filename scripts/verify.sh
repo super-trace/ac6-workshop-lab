@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Baseline check: arista is fully configured, nokia is reachable and blank,
-# both links are up, and both SSH aliases work.
+# both links are up, both SSH aliases work, and NetBox and its MCP server
+# answer.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -58,6 +59,44 @@ for node in arista nokia; do
         fail "ssh ${node} failed — run 'just lab-setup' to install the SSH aliases"
     fi
 done
+
+echo
+heading "NetBox (expect the API to answer on port 8000 with the admin token)"
+netbox_token="nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000"
+out="$(curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+    http://localhost:8000/api/status/ || true)"
+version="$(sed -nE 's/.*"netbox-version": *"([^"]+)".*/\1/p' <<<"$out")"
+if [ -n "$version" ]; then
+    echo "   NetBox ${version}: ok"
+else
+    fail "NetBox not answering on http://localhost:8000 — run 'just netbox-up'"
+fi
+
+echo
+heading "NetBox MCP (expect an MCP session and a tool call that reads NetBox)"
+# The streamable HTTP handshake: initialize returns a session ID, the client
+# confirms with notifications/initialized, then calls a tool. Listing sites
+# goes through the MCP server to NetBox, so it also proves the server's token.
+mcp="http://localhost:8001/mcp"
+mcp_headers=(-H "Content-Type: application/json" -H "Accept: application/json, text/event-stream")
+session="$(curl -s --max-time 10 -D - -o /dev/null "${mcp_headers[@]}" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"lab-verify","version":"1"}}}' \
+    "$mcp" | tr -d '\r' | awk -F': ' 'tolower($1) == "mcp-session-id" { print $2 }' || true)"
+if [ -z "$session" ]; then
+    fail "NetBox MCP server not answering on ${mcp} — run 'just netbox-up'"
+else
+    curl -s --max-time 10 -o /dev/null "${mcp_headers[@]}" -H "mcp-session-id: ${session}" \
+        -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' "$mcp" || true
+    out="$(curl -s --max-time 30 "${mcp_headers[@]}" -H "mcp-session-id: ${session}" \
+        -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"netbox_get_objects","arguments":{"object_type":"dcim.site","filters":{}}}}' \
+        "$mcp" || true)"
+    if grep -q '"isError":false' <<<"$out" && grep -q '"count":' <<<"$out"; then
+        echo "   MCP session ${session:0:8}…, netbox_get_objects: ok"
+    else
+        echo "$out"
+        fail "NetBox MCP server answered, but its call to NetBox failed — see 'docker logs ac6-netbox-netbox-mcp-1'"
+    fi
+fi
 
 echo
 if (( checks_failed )); then

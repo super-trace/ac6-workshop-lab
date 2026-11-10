@@ -8,7 +8,7 @@ Two-node AC6 workshop lab: `arista` (cEOS, fully configured) and `nokia` (SR Lin
 - `lab/inventory/`: a Nornir inventory of the lab devices. `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/ceos-shim/`: an `iptables-restore` wrapper bind-mounted into arista; without it, cEOS SSH never answers on Docker Desktop (see the script).
 - `scripts/`: verification, exercise checks, and setup helpers; `justfile` wraps them.
-- `lab/netbox/`: an on-demand, empty NetBox (Compose file and settings).
+- `lab/netbox/`: an empty NetBox and NetBox Labs' MCP server (Compose file and settings). `lab-up` starts both; its network is pinned to `172.20.24.0/24` so it can't overlap containerlab's `172.20.23.0/24`.
 - `.devcontainer/`: Codespaces configuration.
 
 ## Build, Test, and Development Commands
@@ -17,14 +17,14 @@ Run commands from the repository root, with Docker and `just` installed:
 
 - `just --list`: list recipes.
 - `just lab-setup`: fetch images and install lab SSH configuration.
-- `just lab-up`: deploy the topology. It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy.
+- `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does.
 - `just lab-status`: inspect running nodes.
-- `just lab-verify`: check the baseline: arista configured, nokia blank, both links up, SSH to both.
+- `just lab-verify`: check the baseline: arista configured, nokia blank, both links up, SSH to both, NetBox's API and an MCP tool call through to NetBox.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
 - `just reset-nokia`: return nokia to blank in seconds (a saved checkpoint) without redeploying arista.
-- `just netbox-up` / `just netbox-down`: start NetBox on port 8000 / stop it and delete its data.
-- `just lab-down`: tear down the lab.
+- `just netbox-up` / `just netbox-down`: start NetBox and the MCP server without the lab / stop both and delete NetBox's data.
+- `just lab-down`: tear down the lab, NetBox and the MCP server.
 
 ## Coding Style & Naming Conventions
 

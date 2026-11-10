@@ -58,7 +58,8 @@ You'll sign in the first time you run `stcli`, once the lab is up.
 
 ## 3. Start and verify
 
-Start the lab (about 2 minutes):
+Start the lab (about 3 minutes). This also starts NetBox and its MCP server
+(see [step 7](#7-netbox)):
 
 ```sh
 just lab-up
@@ -71,7 +72,8 @@ just lab-verify
 ```
 
 `lab-verify` checks the starting point: arista
-configured, nokia blank, both links up, and SSH to both. It ends with **LAB
+configured, nokia blank, both links up, SSH to both, and NetBox and its MCP
+server answering. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
@@ -362,31 +364,30 @@ For a device's native CLI outside `stcli`, run `just lab-cli arista` or
 
 ## 7. NetBox
 
-```sh
-just netbox-up
-```
-
 NetBox is where device data exported with `stcli` will land; that export
-feature is still being built. This starts a NetBox on port 8000, separate
-from the lab. The first start
-takes two to three minutes. NetBox starts empty: no sites, device types or
-devices.
+feature is still being built. `just lab-up` starts it on port 8000, with
+NetBox Labs' read-only MCP server beside it on port 8001. NetBox starts
+empty: no sites, device types or devices. To start just NetBox and the MCP
+server without the lab, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
 - **Log in:** `admin` / `ac6-workshop`.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
+- **MCP server:** `http://localhost:8001/mcp` (streamable HTTP, no
+  authentication). It reads NetBox with the admin token above. Port 8001
+  stays private in a Codespace.
 - **Share it:** the recipe makes port 8000 public when the Codespace allows
   it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
   Visibility → Public**. Anyone with the URL can then log in with the
   password above, so keep it to this disposable lab.
 
-`just netbox-down` stops NetBox and deletes its data.
+`just netbox-down` stops NetBox and the MCP server and deletes NetBox's
+data; `just lab-down` does the same along with the lab.
 
 ## 8. Finish
 
 ```sh
-just netbox-down   # if you started NetBox
 just lab-down
 ```
 

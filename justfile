@@ -16,13 +16,16 @@ ceos := '\033[95m'
 default:
     @just --list --unsorted
 
-# deploy both nodes fresh from lab/configs/ (~2 minutes)
+# deploy both nodes fresh from lab/configs/, plus NetBox and its MCP server (~3 minutes)
 [group('lab')]
 lab-up:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
-        "one Nokia and one Arista. Expect this to take ~2 minutes."
+        "one Nokia and one Arista, plus NetBox and its MCP server." \
+        "Expect this to take ~3 minutes."
     @printf '\n'
+    @# NetBox boots while containerlab deploys; netbox-up.sh waits for it below.
+    @./scripts/netbox-up.sh --background
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file; wiping it here keeps a
     @# redeploy from looking like a man-in-the-middle to either of them.
@@ -36,24 +39,28 @@ lab-up:
     @# and waits for SSH.
     @./scripts/lab-ready.sh
     @printf '\n'
+    @./scripts/netbox-up.sh
+    @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n'
     @printf '    {{bold}}arista{{reset}}  {{ceos}}Arista cEOS{{reset}}     configured: BGP on Ethernet1, VLAN trunk on Ethernet2\n'
     @printf '    {{bold}}nokia{{reset}}   {{srl}}Nokia SR Linux{{reset}}  blank: ethernet-1/1 and ethernet-1/2 unconfigured\n\n'
     @printf '    Links: arista Ethernet1 <-> nokia e1-1 (BGP)\n'
     @printf '           arista Ethernet2 <-> nokia e1-2 (layer 2 trunk)\n'
+    @printf '    NetBox: port 8000, empty; MCP server: http://localhost:8001/mcp\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node nokia: ...\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "nokia": ...\n'
     @printf '\n    Next: {{green}}just lab-verify{{reset}}\n'
 
-# check the baseline: arista configured, nokia blank, links and SSH up (~10 seconds)
+# check the baseline: arista configured, nokia blank, links and SSH up, NetBox and MCP answering (~10 seconds)
 [group('lab')]
 lab-verify:
     @./scripts/banner.sh intro "just lab-verify" \
         "This command checks the lab baseline: arista configured, nokia" \
-        "blank, both links up. Expect this to take ~10 seconds."
+        "blank, both links up, NetBox and its MCP server answering." \
+        "Expect this to take ~10 seconds."
     @printf '\n'
     @./scripts/verify.sh
 
@@ -77,11 +84,12 @@ lab-cli NODE='arista':
       *) echo "unknown node {{NODE}} (nokia or arista)" >&2; exit 1 ;;
     esac
 
-# tear down the lab
+# tear down the lab, NetBox and its MCP server (deletes NetBox's data)
 [group('lab')]
 lab-down:
     @{{clab_run}} destroy -t topology.clab.yml
     @rm -f ~/.ac6-workshop-known-hosts
+    @docker compose -f lab/netbox/compose.yml down -v
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
@@ -100,16 +108,17 @@ check-l2:
 reset-nokia:
     @./scripts/reset-nokia.sh
 
-# start an empty NetBox on port 8000 (~2–3 minutes the first time)
+# start an empty NetBox on port 8000 and its MCP server on 8001 (lab-up does this too)
 [group('netbox')]
 netbox-up:
     @./scripts/banner.sh intro "just netbox-up" \
-        "Starting NetBox, the source of truth stcli exports device data to." \
-        "Expect ~2–3 minutes the first time, then a few seconds."
+        "Starting NetBox, the source of truth stcli exports device data to," \
+        "and its MCP server. Expect ~2–3 minutes the first time, then a" \
+        "few seconds."
     @printf '\n'
     @./scripts/netbox-up.sh
 
-# stop NetBox and delete its data
+# stop NetBox and its MCP server and delete NetBox's data
 [group('netbox')]
 netbox-down:
     @docker compose -f lab/netbox/compose.yml down -v
@@ -123,6 +132,7 @@ lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
     docker pull ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+    docker compose -f lab/netbox/compose.yml pull
     ./scripts/install-ssh.sh
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
