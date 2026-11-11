@@ -52,4 +52,4 @@ Keep licensed vendor archives, personal credentials, and login tokens out of com
 
 ## Public launch
 
-This repository and `super-trace/stcli-releases` will both become public. At launch, update both READMEs, remove the private-access workarounds (README step 2's `gh api` install, the local guide's authenticated installer download, and the Codespace's `stcli-releases` permission request), and test installation without a GitHub login.
+`super-trace/stcli-releases` is public: both READMEs install stcli with `curl -fsSL https://cli.supertrace.ai/install.sh | sh`, as cli.supertrace.ai shows, and the Codespace no longer asks for access to it. This repository will become public too; test the Codespace link and installation without a GitHub login when it does. The cEOS image stays a private package, which is why a prebuild skips it and `postCreateCommand` pulls it (see the `ceos-pull` recipe).
