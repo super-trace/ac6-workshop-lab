@@ -17,7 +17,7 @@ Run commands from the repository root, with Docker and `just` installed:
 
 - `just --list`: list recipes.
 - `just lab-setup`: fetch images and install lab SSH configuration.
-- `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and, if the SONiC image is neither local nor pullable, stops and points at `just sonic-image`.
+- `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and, if the SONiC image is neither local nor pullable, builds it (`sonic-ensure`, then `scripts/sonic-image.sh`).
 - `just lab-status`: inspect running nodes.
 - `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API and an MCP tool call through to NetBox.
 - `just lab-cli <node>`: open a device's native CLI.

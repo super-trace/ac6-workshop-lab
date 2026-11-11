@@ -487,15 +487,10 @@ data; the next `just lab-up` seeds it again.
 
 ## H. Troubleshooting
 
-- **`just lab-up` says it can't pull the SONiC image.** Build it in the
-  Codespace instead (about 3 minutes), then run `just lab-up` again:
-
-  ```sh
-  just sonic-image
-  ```
-
-  It downloads SONiC's official virtual switch from SONiC's build pipeline
-  and adds the lab login on top, the same image the lab normally pulls.
+- **`just lab-up` stops to build the SONiC image.** That's expected when
+  the image isn't in the Codespace and can't be pulled: it downloads SONiC's
+  official virtual switch and adds the lab login on top, once, in about 3
+  minutes. The next `just lab-up` starts straight away.
 - **Your Codespace is older than the README.** Commands or devices here
   that your lab doesn't have (`just --list` shows recipes, `just lab-up`
   names both devices) mean it was created from an older version. Update it,

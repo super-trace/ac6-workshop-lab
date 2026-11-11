@@ -29,9 +29,9 @@ lab-up:
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
     @# that changes lab/ssh_config takes effect without rerunning lab-setup.
     @./scripts/install-ssh.sh >/dev/null
-    @# The SONiC image comes from ghcr; say what to do if it can't be pulled.
-    @docker image inspect "{{sonic_image}}" >/dev/null 2>&1 || docker pull -q "{{sonic_image}}" >/dev/null || \
-        { printf '\nCan'"'"'t pull the SONiC image {{sonic_image}}.\nBuild it here instead (about 3 minutes): just sonic-image\n' >&2; exit 1; }
+    @# The SONiC image: already here, else pulled from ghcr, else built here
+    @# from SONiC's official build (once, about 3 minutes).
+    @just sonic-ensure
     @# NetBox boots while containerlab deploys; netbox-up.sh waits for it below.
     @./scripts/netbox-up.sh --background
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
@@ -151,10 +151,19 @@ netbox-down:
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    @# Until the image is on ghcr (or if it can't be pulled), build it here.
     docker pull {{sonic_image}} || just sonic-image
     docker compose -f lab/netbox/compose.yml pull
     ./scripts/install-ssh.sh
+
+# Use the local SONiC image, else pull it, else build it here.
+[private]
+sonic-ensure:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker image inspect "{{sonic_image}}" >/dev/null 2>&1 && exit 0
+    docker pull -q "{{sonic_image}}" >/dev/null 2>&1 && exit 0
+    echo "SONiC image not on ghcr yet; building it here from SONiC's official build (one time, about 3 minutes)."
+    ./scripts/sonic-image.sh "{{sonic_image}}"
 
 # maintainers: build the SONiC image from SONiC's official build (add --push to publish it)
 [group('setup')]

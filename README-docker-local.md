@@ -19,9 +19,8 @@ cd ac6-workshop-lab
 just lab-setup
 ```
 
-If `lab-setup` can't pull the SONiC image, build it locally instead with
-`just sonic-image` (it downloads SONiC's official build and adds the lab
-login), then carry on.
+If `lab-setup` can't pull the SONiC image, it builds it locally instead
+(SONiC's official build plus the lab login, about 3 minutes).
 
 `lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
 It does not install `stcli`; see Connect below.
