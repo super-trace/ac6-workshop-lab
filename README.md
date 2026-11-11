@@ -218,7 +218,7 @@ prefixes:
 just check-bgp
 ```
 
-### Scenario 3: layer 2
+### Scenario 3: NetBox, drift and updating the source of truth
 
 Start a fresh conversation. Both devices stay connected:
 
@@ -226,55 +226,111 @@ Start a fresh conversation. Both devices stay connected:
 /new
 ```
 
-The second link, the Arista's `Ethernet2` to nokia's `ethernet-1/2`, is a
-layer 2 link: the Arista already treats it as a trunk carrying several
-VLANs, each with a gateway address on the Arista. The Nokia's end is still
-at factory defaults.
+NetBox is the lab's source of truth: it documents what arista should look
+like. Like every real NetBox, it has drifted: in a few places it no longer
+matches the network. In this scenario the agent finds where NetBox and
+arista disagree, asks you which side is right, and fixes the side that's
+wrong.
 
-Test the link. This should fail: the Nokia isn't carrying any of the
-Arista's VLANs yet. A good answer works out which VLANs and gateways the
-Arista has, tries to reach them, and explains why it can't.
+<!-- TODO(mahir): /netbox connect needs an stcli release that includes
+super-trace/stcli#194; the Codespace installs the latest release. -->
 
-```
-Test layer 2 connectivity between the Arista's Ethernet2 and the Nokia's ethernet-1/2.
-```
-
-Generate the config: the Arista's existing trunk as the reference, and the
-Nokia side to match it, with an address in each VLAN so the Nokia can reach
-the Arista's gateways:
+Connect `stcli` to NetBox. It asks for the API token; paste the lab's
+token, `nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`. The
+token stays in the Codespace, like an SSH password: `stcli` never sends it
+to the agent.
 
 ```
-Show me the Arista's trunk and VLAN configuration on Ethernet2, then generate the matching Nokia SR Linux configuration for ethernet-1/2, with an address in each VLAN. Don't apply anything yet.
+/netbox connect http://localhost:8000
 ```
 
-Apply it. Check that each command names the Nokia before you approve it;
-the Arista needs no changes:
+Ask what NetBox knows. Reads from NetBox run without asking you:
 
 ```
-Apply that config block to the Nokia, one command at a time, in order. Don't run anything in parallel.
+What does NetBox document for arista? List its interfaces, IP addresses and VLANs.
 ```
 
-Test again. The first ping in each VLAN may lose a packet while ARP
-resolves:
+Compare NetBox with the real device:
 
 ```
-Test layer 2 connectivity between the two devices again.
+Compare arista's running configuration with NetBox and show me every difference.
 ```
 
-Confirm every VLAN is up, from both ends:
+A good answer is a table of discrepancies, and a question: for each one,
+which side is right? It won't change either side until you answer. Decide
+item by item. Where arista is right, NetBox is stale:
 
 ```
-Confirm the Nokia can reach the Arista's gateway in every VLAN, and that the Arista has learned the Nokia's MAC address in each one.
+For every difference where arista is right, update NetBox to match.
+```
+
+The agent proposes one changeset. **Apply these changes to NetBox?** shows
+every field it will change, `current → new`, with the reason for each.
+Nothing is written until you press `y`.
+
+Where NetBox is right, arista has drifted. Have the agent fix arista
+instead; that's a device change, with its own approval.
+
+Check the result in the NetBox UI (**Ports** tab → port 8000, login
+`admin` / `ac6-workshop`): each change is in **Operations → Change Log**,
+with the agent's reason as its message. In a terminal outside `stcli`, this
+confirms it. It ends with **NETBOX MATCHES ARISTA** once NetBox no longer
+disagrees with arista anywhere arista is right:
+
+```sh
+just check-netbox
 ```
 
 Have the agent walk through it:
 
 ```
-Explain what you did.
+Explain what you changed in NetBox and why.
 ```
 
-In a terminal outside `stcli`, this confirms the result. It ends with
-**LAYER 2 IS UP** once the Nokia reaches the Arista's gateway in every VLAN:
+To run this scenario again, put NetBox back as it was seeded, drift
+included (seconds; the devices are untouched):
+
+```sh
+just reset-netbox
+```
+
+<details>
+<summary>Facilitator reference: what NetBox gets wrong</summary>
+
+| Object | NetBox says | arista has | Right side | Fix |
+| --- | --- | --- | --- | --- |
+| VLAN 130 name | `SECURITY` | `CAMERAS` | arista | update the VLAN in NetBox |
+| Loopback1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | arista | create the interface and its address in NetBox |
+| Vlan120 gateway | `10.120.0.254/24` | `10.120.0.1/24` | arista | update the address in NetBox |
+| Ethernet2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the documented standard) | set the description on arista |
+
+`just check-netbox` checks the first three. The fourth is there so the
+agent has to ask, rather than assume the device always wins; either answer
+is fine. Everything else in NetBox matches arista: the site `lab`, the
+device and its platform, Management0, Ethernet1, Loopback0, VLANs 110 and
+120, and the other addresses. nokia isn't in NetBox: attendees build it in
+Scenario 2.
+
+</details>
+
+### Scenario 4: skills
+
+<!-- TODO: placeholder; the skills feature is still being built. -->
+
+Coming soon.
+
+### Scenario 5: choose your own adventure, layer 2
+
+The second link between the devices, arista's `Ethernet2` to nokia's
+`ethernet-1/2`, is a layer 2 trunk. arista already carries several VLANs on
+it, each with a gateway address. nokia's end is at factory defaults.
+
+Your goal: **nokia reaches arista's gateway in every VLAN on the trunk.**
+How you get there is up to you. Find out what arista expects, decide what
+nokia needs, and have `stcli` build it. Check NetBox's view of those VLANs
+along the way if you like.
+
+You're done when this ends with **LAYER 2 IS UP**:
 
 ```sh
 just check-l2
@@ -372,11 +428,12 @@ For a device's native CLI outside `stcli`, run `just lab-cli arista` or
 
 ## 7. NetBox
 
-NetBox is where device data exported with `stcli` will land; that export
-feature is still being built. `just lab-up` starts it on port 8000, with
-NetBox Labs' read-only MCP server beside it on port 8001. NetBox starts
-empty: no sites, device types or devices. It keeps what you add, even across
-a `just lab-down`. To start just NetBox and the MCP
+NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
+it on port 8000, with NetBox Labs' read-only MCP server beside it on port
+8001. `stcli` connects to NetBox itself with `/netbox connect`. NetBox
+starts seeded with arista as documented, drift included (see Scenario 3).
+It keeps what you change, even across a `just lab-down`; `just
+reset-netbox` puts it back as seeded. To start just NetBox and the MCP
 server without the lab, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
@@ -392,7 +449,7 @@ server without the lab, run `just netbox-up`.
   password above, so keep it to this disposable lab.
 
 `just netbox-down` stops NetBox and the MCP server and deletes NetBox's
-data; the next `just lab-up` starts it empty again.
+data; the next `just lab-up` seeds it again.
 
 ## 8. Finish
 
