@@ -430,6 +430,17 @@ Every connection uses the lab login, `oldprotocol` / `newbrain`:
 For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
 `just lab-cli sonic`.
 
+The two devices feel different once you're in:
+
+- **nokia (SR Linux)** opens its own CLI. Changes go into a candidate
+  configuration and take effect on `commit now`.
+- **sonic (SONiC)** opens a Linux shell (bash on Debian), like a real
+  SONiC switch. `show ...` reads; `sudo config ...` changes interfaces,
+  addresses and VLANs, live as soon as it runs; routing is FRR, through
+  `vtysh` (`vtysh -c "show ip bgp summary"`). Ports are `Ethernet0`,
+  `Ethernet4` and so on, and `sudo config save -y` keeps changes across a
+  restart of the switch.
+
 ## F. Use stcli
 
 - **Ask in plain language:** "is BGP up between nokia and sonic?" One agent
@@ -474,7 +485,44 @@ server without the lab, run `just netbox-up`.
 `just netbox-down` stops NetBox and the MCP server and deletes NetBox's
 data; the next `just lab-up` seeds it again.
 
-## H. Finish
+## H. Troubleshooting
+
+- **`just lab-up` says it can't pull the SONiC image.** Build it in the
+  Codespace instead (about 3 minutes), then run `just lab-up` again:
+
+  ```sh
+  just sonic-image
+  ```
+
+  It downloads SONiC's official virtual switch from SONiC's build pipeline
+  and adds the lab login on top, the same image the lab normally pulls.
+- **Your Codespace is older than the README.** Commands or devices here
+  that your lab doesn't have (`just --list` shows recipes, `just lab-up`
+  names both devices) mean it was created from an older version. Update it,
+  then start the lab again:
+
+  ```sh
+  git pull
+  just lab-up
+  ```
+
+  `just lab-up` refreshes the SSH aliases from the checkout each time, so a
+  pull is all it needs.
+- **`ssh nokia` or `ssh sonic` fails in `just lab-verify`.** Reinstall the
+  SSH aliases and key, then check again:
+
+  ```sh
+  ./scripts/install-ssh.sh
+  just lab-verify
+  ```
+- **The BGP session is Established but `just check-bgp` still fails.** On
+  sonic, FRR shows `(Policy)` and exchanges no routes until a policy allows
+  them; see "Facilitator reference: what nokia has configured" under Start
+  over.
+- **Anything else stuck.** `just lab-down`, then `just lab-up`, rebuilds
+  both devices from scratch; NetBox keeps its data.
+
+## I. Finish
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.

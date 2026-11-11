@@ -26,6 +26,12 @@ lab-up:
         "one Nokia and one SONiC, plus NetBox and its MCP server." \
         "Expect this to take ~3 minutes."
     @printf '\n'
+    @# Refresh the SSH aliases and key from this checkout, so a `git pull`
+    @# that changes lab/ssh_config takes effect without rerunning lab-setup.
+    @./scripts/install-ssh.sh >/dev/null
+    @# The SONiC image comes from ghcr; say what to do if it can't be pulled.
+    @docker image inspect "{{sonic_image}}" >/dev/null 2>&1 || docker pull -q "{{sonic_image}}" >/dev/null || \
+        { printf '\nCan'"'"'t pull the SONiC image {{sonic_image}}.\nBuild it here instead (about 3 minutes): just sonic-image\n' >&2; exit 1; }
     @# NetBox boots while containerlab deploys; netbox-up.sh waits for it below.
     @./scripts/netbox-up.sh --background
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points

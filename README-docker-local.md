@@ -19,6 +19,10 @@ cd ac6-workshop-lab
 just lab-setup
 ```
 
+If `lab-setup` can't pull the SONiC image, build it locally instead with
+`just sonic-image` (it downloads SONiC's official build and adds the lab
+login), then carry on.
+
 `lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
 It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
