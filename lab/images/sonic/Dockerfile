@@ -25,10 +25,12 @@ RUN apt-get update \
     && rm /tmp/ac6-workshop-key.pub
 
 # docker-sonic-vs ships sshd but never starts it. Start it with the other
-# services, with host keys made fresh on every deploy.
+# services, with host keys made fresh on every deploy. sshd refuses to start
+# if /run/sshd is group- or world-writable, which it is when the image is
+# built in a Codespace, so set its owner and mode rather than trust mkdir.
 RUN printf '%s\n' '' \
         '[program:sshd]' \
-        'command=/bin/bash -c "mkdir -p /run/sshd && ssh-keygen -A && exec /usr/sbin/sshd -D -e"' \
+        'command=/bin/bash -c "mkdir -p /run/sshd && chown root:root /run/sshd && chmod 0755 /run/sshd && ssh-keygen -A && exec /usr/sbin/sshd -D -e"' \
         'priority=2' \
         'autostart=true' \
         'autorestart=true' \
