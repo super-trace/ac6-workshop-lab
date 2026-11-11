@@ -44,14 +44,17 @@ startup can take several minutes.
 
 ## Connect
 
-Install the native CLI on your computer (macOS, Linux, or WSL). While the
-release repository is private, use your authenticated GitHub CLI:
+Install the native CLI on your computer (macOS, Linux, or WSL), the same way
+as on [cli.supertrace.ai](https://cli.supertrace.ai):
 
 ```sh
-gh api repos/super-trace/stcli-releases/contents/install.sh \
-  --jq .content | base64 --decode > /tmp/stcli-install.sh
-bash /tmp/stcli-install.sh
-export PATH="$HOME/.local/bin:$PATH"
+curl -fsSL https://cli.supertrace.ai/install.sh | sh
+```
+
+If the installer added `stcli` to your PATH, run `source ~/.zshrc` (or the
+profile it names) or open a new terminal, then check it:
+
+```sh
 stcli --version
 ```
 
@@ -64,9 +67,7 @@ stcli
 The first run signs you in: it prints a verification link with the code
 filled in; if this machine has no browser, open the link on another one.
 From there, follow the exercises in the main
-[README](README.md#4-workshop-exercises). Add
-`~/.local/bin` to your shell's PATH to keep the installed CLI available in
-new terminals. For a router's native CLI, run `just lab-cli arista`. List
+[README](README.md#4-workshop-exercises). For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.
 
 ## NetBox

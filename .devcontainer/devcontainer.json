@@ -10,15 +10,6 @@
 		},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
-	"customizations": {
-		"codespaces": {
-			"repositories": {
-				"super-trace/stcli-releases": {
-					"permissions": { "contents": "read" }
-				}
-			}
-		}
-	},
 	"hostRequirements": {
 		"cpus": 4,
 		"memory": "16gb"

@@ -26,33 +26,34 @@ either link. Connect to each device by its management IP.
 
 ## 1. Create a Codespace
 
-Open this repository on GitHub and select **Code → Codespaces → Create
-codespace on main**. The repository requires a **4-core / 16 GB RAM**
-machine, so smaller machine types aren't offered.
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast)
 
-Wait for automatic setup to finish. It installs the lab images, `just`, and
-SSH configuration. The **GitHub Codespaces** terminal that opens
-first shows only a pointer to the creation log; to watch setup live, click
-**+** in the terminal panel (or pick the **bash** terminal in the list). That
-terminal follows setup step by step and says when it's done.
+Open the link above:
+<https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast>.
+It creates your Codespace from a prebuilt image, or reopens the one you
+already have. The repository requires a **4-core / 16 GB RAM** machine, so
+smaller machine types aren't offered.
+
+The Codespace opens in about a minute with the lab images, `just` and SSH
+configuration already in place. The Arista image (about 4 GB) finishes
+downloading in the background; `just lab-up` waits for it if it's still
+going.
 
 ## 2. Install stcli
 
-In the Codespace terminal, install `stcli`:
+In the Codespace terminal, install `stcli`, the same way as on
+[cli.supertrace.ai](https://cli.supertrace.ai):
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/super-trace/stcli-releases/main/install.sh | bash
+curl -fsSL https://cli.supertrace.ai/install.sh | sh
 ```
 
-Reload your shell configuration, so this terminal finds `stcli`:
+The installer adds `stcli` to your PATH in `~/.bashrc`. Reload it, so this
+terminal finds `stcli`:
 
 ```sh
-source /home/vscode/.bashrc
+source ~/.bashrc
 ```
-
-Until `stcli-releases` is public, the `curl` download fails with a 404;
-install through your GitHub login instead:
-`gh api repos/super-trace/stcli-releases/contents/install.sh --jq .content | base64 -d | bash`.
 
 You'll sign in the first time you run `stcli`, once the lab is up.
 
