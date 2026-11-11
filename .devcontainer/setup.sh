@@ -25,7 +25,7 @@ step() {
 }
 trap 'echo "!! setup failed during: ${current_step}" >&2' ERR
 
-# just — not preinstalled on the base devcontainer image. postCreateCommand
+# just — not preinstalled on the base devcontainer image. onCreateCommand
 # runs as the non-root default user (vscode), which can't write to
 # /usr/local/bin directly — sudo (passwordless for this user, standard on
 # devcontainer base images) is required here.
@@ -35,7 +35,7 @@ curl --proto '=https' --tlsv1.2 -fS --progress-bar https://just.systems/install.
 just --version
 
 # docker-in-docker's nested dockerd starts in the background and isn't
-# necessarily ready the moment postCreateCommand runs — confirmed live
+# necessarily ready the moment onCreateCommand runs — confirmed live
 # ("failed to connect to the docker API ... no such file or directory" on
 # an otherwise-clean build). Wait for the socket rather than racing it.
 step "Waiting for dockerd"
@@ -49,7 +49,8 @@ echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'
 # Codespaces supplies registry credentials for this repository's private package.
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
-just lab-setup
+# A prebuild can't read the private cEOS image; postCreateCommand pulls it.
+AC6_CEOS_OPTIONAL=1 just lab-setup
 
 step "Summary"
 docker images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
@@ -57,6 +58,9 @@ free -h | head -2
 df -h / | tail -1
 
 echo ""
-echo "Setup complete. Next: install stcli (README step 2), then: just lab-up    then: just lab-verify"
+echo "Setup complete. Next, README step 2: install stcli:"
+echo "    curl -fsSL https://raw.githubusercontent.com/super-trace/stcli-releases/main/install.sh | bash"
+echo "    source /home/vscode/.bashrc"
+echo "Then README step 3: just lab-up, then just lab-verify."
 echo "SSH ports 2401 (nokia) and 2402 (arista) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."

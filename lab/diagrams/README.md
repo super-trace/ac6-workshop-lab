@@ -1,5 +1,10 @@
 # Topology diagram
 
+> **Out of date.** The image shows the lab before arista and nokia swapped
+> roles (arista is now configured, nokia blank), and the generator reads
+> `nokia.cfg`, which is now blank. The README uses its ASCII diagram until
+> the generator is updated and the image re-rendered.
+
 `routing-topology.png` is the README's diagram: nokia and arista, the BGP
 link and VLAN trunk between them, and their management IPs. Its generator
 reads addresses, AS numbers, VLANs, and gateways from `lab/configs/nokia.cfg`

@@ -2,7 +2,10 @@
 # (Redis). Trimmed from netbox-community/netbox-docker's docker-compose.yml:
 # no netbox-worker (only background jobs need it; the import pages and the
 # REST API work without it) and one Valkey for both of NetBox's Redis
-# databases instead of two. `just netbox-up` / `just netbox-down` drive it.
+# databases instead of two. Plus netbox-mcp, NetBox Labs' MCP server, so an
+# agent can read NetBox over MCP. `just lab-up` starts it all (through
+# scripts/netbox-up.sh); `just lab-down` stops it and keeps the database;
+# `just netbox-down` deletes it.
 name: ac6-netbox
 
 services:
@@ -15,19 +18,59 @@ services:
         condition: service_healthy
     env_file: netbox.env
     environment:
-      # The browser's origin, so logging in works through a Codespace's
-      # forwarded URL; scripts/netbox-up.sh sets it.
-      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000}
+      # Origins NetBox accepts a login form from (space-separated). The
+      # Codespaces relay rewrites the browser's Origin header to
+      # http://localhost:8000, so trust that as well as the forwarded URL
+      # that scripts/netbox-up.sh sets.
+      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000} http://localhost:8000
+      # initdb/'s dump already has the admin user and token, so skip the
+      # startup step (a whole Django start) that creates them.
+      # scripts/netbox-snapshot.sh sets this to false to create them.
+      SKIP_SUPERUSER: ${NETBOX_SKIP_SUPERUSER:-true}
     user: "netbox:root"
     ports:
       - "8000:8080"
     healthcheck:
       test: /opt/netbox/health.sh
-      start_period: 120s
+      # Generous for a start without initdb/'s dump, which runs every
+      # migration (~6 minutes in a Codespace). Checks that pass end the grace
+      # period early, so normal starts aren't slower.
+      start_period: 900s
+      # Check every second while starting, so dependants don't wait for the
+      # next 5-second check once NetBox is up.
+      start_interval: 1s
       timeout: 3s
       interval: 5s
     volumes:
       - netbox-media-files:/opt/netbox/netbox/media:rw
+
+  # Read-only MCP server for NetBox, on the streamable HTTP transport at
+  # http://localhost:8001/mcp. No MCP_AUTH_TOKEN: like NetBox's own
+  # credentials, it's a disposable lab, and scripts/netbox-up.sh leaves port
+  # 8001 private in a Codespace.
+  netbox-mcp:
+    image: docker.io/netboxlabs/netbox-mcp-server:1.2.1
+    # It only contacts NetBox on a tool call, so it can boot alongside it.
+    depends_on:
+      - netbox
+    environment:
+      NETBOX_URL: http://netbox:8080/
+      # The admin token from netbox.env; nbt_ tokens are sent as Bearer.
+      NETBOX_TOKEN: nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000
+      TRANSPORT: http
+      HOST: 0.0.0.0
+      PORT: "8000"
+    ports:
+      - "8001:8000"
+    healthcheck:
+      # Healthy once the HTTP endpoint answers at all: a bare GET on /mcp is
+      # an error to MCP but proves the server is listening.
+      test: ["CMD", "python", "-c", "import urllib.request as u, urllib.error as e\ntry: u.urlopen('http://127.0.0.1:8000/mcp', timeout=2)\nexcept e.HTTPError: pass"]
+      start_period: 30s
+      start_interval: 1s
+      timeout: 3s
+      interval: 2s
+      retries: 15
 
   postgres:
     image: docker.io/postgres:18-alpine
@@ -38,11 +81,16 @@ services:
     healthcheck:
       test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
       start_period: 20s
+      start_interval: 1s
       timeout: 30s
       interval: 2s
       retries: 15
     volumes:
       - netbox-postgres:/var/lib/postgresql
+      # A freshly migrated NetBox database, loaded only when the volume is
+      # empty, so NetBox's first start skips ~800 migrations (~6 minutes in
+      # a Codespace). Regenerate with scripts/netbox-snapshot.sh.
+      - ./initdb:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: docker.io/valkey/valkey:9.1-alpine
@@ -57,3 +105,13 @@ services:
 volumes:
   netbox-media-files:
   netbox-postgres:
+
+# A fixed subnet beside the lab's own (172.20.23.0/24, lab/topology.clab.yml).
+# Left to Docker, the first network created gets all of 172.20.0.0/16, and
+# since `just lab-up` starts NetBox before containerlab deploys, containerlab
+# would then fail on an overlapping subnet.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.24.0/24

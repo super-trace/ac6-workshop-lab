@@ -41,8 +41,8 @@ while :; do
         done | failed) break ;;
         running) setup_running || break ;;
         pending)
-            # postCreateCommand normally starts within seconds of the editor
-            # connecting; stop waiting if it never does.
+            # setup.sh normally starts within seconds of on-create.sh; stop
+            # waiting if it never does.
             (( waited >= 300 )) && break
             ;;
     esac
