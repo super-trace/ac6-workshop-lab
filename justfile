@@ -151,7 +151,8 @@ netbox-down:
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    docker pull {{sonic_image}}
+    @# Until the image is on ghcr (or if it can't be pulled), build it here.
+    docker pull {{sonic_image}} || just sonic-image
     docker compose -f lab/netbox/compose.yml pull
     ./scripts/install-ssh.sh
 
