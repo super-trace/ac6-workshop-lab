@@ -38,5 +38,26 @@ RUN printf '%s\n' '' \
     && sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # docker-sonic-vs leaves bgpd stopped (SONiC's tests start it on demand), so
-# a blank switch couldn't run BGP at all. Start it last, with the others.
-RUN printf '\n%s\n' '# ac6 workshop: run BGP like a real switch does.' 'supervisorctl start bgpd' >>/usr/bin/start.sh
+# a blank switch couldn't run BGP at all. Start it right after zebra: start.sh
+# runs under `bash -e` and stops at a later line that fails in this image
+# (`supervisorctl start rebootbackend`), so anything appended at its end
+# never runs.
+RUN sed -i 's/^supervisorctl start zebra$/&\nsupervisorctl start bgpd/' /usr/bin/start.sh \
+    && grep -A1 '^supervisorctl start zebra$' /usr/bin/start.sh | grep -q 'start bgpd'
+
+# docker-sonic-vs ships a cut-down /etc/sonic/sonic_version.yml, and
+# `show version` (the first thing anyone, or stcli's agent, runs to identify
+# the box) crashes on the missing fields. Fill them in as a real switch has
+# them: the build version and Debian release now, the kernel at boot.
+RUN python3 - <<'PY'
+import yaml
+path = "/etc/sonic/sonic_version.yml"
+v = yaml.safe_load(open(path))
+if not v.get("build_version"):
+    # `show version` adds the "SONiC." prefix itself.
+    v["build_version"] = "{}.{}".format(v.get("branch", "unknown"), v.get("build_number", 0))
+v.setdefault("debian_version", open("/etc/debian_version").read().strip())
+v.setdefault("kernel_version", "unknown")
+yaml.safe_dump(v, open(path, "w"), default_flow_style=False, sort_keys=False)
+PY
+RUN sed -i '1a sed -i "s/^kernel_version:.*/kernel_version: $(uname -r)/" /etc/sonic/sonic_version.yml' /usr/bin/start.sh

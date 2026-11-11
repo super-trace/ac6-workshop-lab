@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Goal check for the NetBox exercise: NetBox documents arista as it really is
+# Goal check for the NetBox exercise: NetBox documents nokia as it really is
 # wherever the seed left NetBox stale (see the README's Scenario 3 facilitator
-# reference). The Ethernet2 description, where NetBox is the side that is
+# reference). The ethernet-1/2 description, where NetBox is the side that is
 # right, is the attendee's call and is not checked.
 set -euo pipefail
 
@@ -24,33 +24,33 @@ fi
 # first FIELD JSON: the first value of a string field, "" when there is none.
 first() { { grep -o "\"$1\":\"[^\"]*\"" <<<"$2" || true; } | head -n1 | cut -d'"' -f4; }
 
-# addresses INTERFACE: arista's addresses on INTERFACE, space-separated; ""
+# addresses INTERFACE: nokia's addresses on INTERFACE, space-separated; ""
 # when the interface or its addresses are missing.
 addresses() {
     local id
-    id="$(get "dcim/interfaces/?device=arista&name=$1&fields=id" | { grep -o '"id":[0-9]*' || true; } | head -n1 | cut -d: -f2)"
+    id="$(get "dcim/interfaces/?device=nokia&name=$1&fields=id" | { grep -o '"id":[0-9]*' || true; } | head -n1 | cut -d: -f2)"
     [[ -n "$id" ]] || return 0
     get "ipam/ip-addresses/?interface_id=${id}&fields=address" | { grep -o '"address":"[^"]*"' || true; } | cut -d'"' -f4 | tr '\n' ' '
 }
 
-heading "VLAN 130 (arista names it CAMERAS)"
+heading "VLAN 130 (nokia's gateway names it CAMERAS)"
 name="$(first name "$(get "ipam/vlans/?site=lab&vid=130&fields=vid,name")")"
 echo "   NetBox: ${name:-(no VLAN 130)}"
-[[ "$name" == "CAMERAS" ]] || fail "NetBox names VLAN 130 '${name:-nothing}', arista names it CAMERAS"
+[[ "$name" == "CAMERAS" ]] || fail "NetBox names VLAN 130 '${name:-nothing}', nokia names it CAMERAS"
 
 echo
-heading "Loopback1 (arista has 172.16.10.1/24)"
-addrs="$(addresses Loopback1)"
-echo "   NetBox: ${addrs:-(no Loopback1, or no address on it)}"
-[[ " $addrs " == *" 172.16.10.1/24 "* ]] || fail "NetBox has no 172.16.10.1/24 on arista's Loopback1"
+heading "lo1 (nokia has 172.16.10.1/24)"
+addrs="$(addresses lo1)"
+echo "   NetBox: ${addrs:-(no lo1, or no address on it)}"
+[[ " $addrs " == *" 172.16.10.1/24 "* ]] || fail "NetBox has no 172.16.10.1/24 on nokia's lo1"
 
 echo
-heading "Vlan120 gateway (arista has 10.120.0.1/24)"
-addrs="$(addresses Vlan120)"
-echo "   NetBox: ${addrs:-(no address on Vlan120)}"
-[[ " $addrs " == *" 10.120.0.1/24 "* ]] || fail "NetBox does not give arista's Vlan120 10.120.0.1/24"
-[[ " $addrs " != *" 10.120.0.254/24 "* ]] || fail "NetBox still gives arista's Vlan120 the stale 10.120.0.254/24"
+heading "VLAN 120 gateway, ethernet-1/2.120 (nokia has 10.120.0.1/24)"
+addrs="$(addresses ethernet-1/2.120)"
+echo "   NetBox: ${addrs:-(no address on ethernet-1/2.120)}"
+[[ " $addrs " == *" 10.120.0.1/24 "* ]] || fail "NetBox does not give nokia's ethernet-1/2.120 10.120.0.1/24"
+[[ " $addrs " != *" 10.120.0.254/24 "* ]] || fail "NetBox still gives nokia's ethernet-1/2.120 the stale 10.120.0.254/24"
 
 echo
-if (( failed )); then ./scripts/banner.sh red "NETBOX DOES NOT MATCH ARISTA"; exit 1; fi
-./scripts/banner.sh green "NETBOX MATCHES ARISTA"
+if (( failed )); then ./scripts/banner.sh red "NETBOX DOES NOT MATCH NOKIA"; exit 1; fi
+./scripts/banner.sh green "NETBOX MATCHES NOKIA"

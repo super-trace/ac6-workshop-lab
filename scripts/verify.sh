@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Baseline check: arista is fully configured, nokia is reachable and blank,
+# Baseline check: nokia is fully configured, sonic is reachable and blank,
 # both links are up, both SSH aliases work, and NetBox and its MCP server
 # answer.
 set -euo pipefail
@@ -23,36 +23,41 @@ expect() {
     fi
 }
 
-heading "arista links to nokia (expect Ethernet1 and Ethernet2 connected)"
-out="$(docker exec "${lab}-arista" Cli -p 15 -c "show interfaces Ethernet1-2 status")"
-echo "$out"
-expect "$out" '^Et[12] .* connected ' 2 "arista links connected"
+heading "nokia links to sonic (expect ethernet-1/1 and ethernet-1/2 up)"
+out="$(docker exec "${lab}-nokia" sr_cli "show interface brief" 2>/dev/null || true)"
+grep -E 'ethernet-1/[12] ' <<<"$out" || true
+expect "$out" '^\| ethernet-1/[12] +\| enable +\| up ' 2 "nokia links up"
 
 echo
-heading "arista trunk (expect VLANs 110, 120 and 130 active on Ethernet2)"
-out="$(docker exec "${lab}-arista" Cli -p 15 -c "show vlan")"
-echo "$out"
-expect "$out" '^1[123]0 .*active.*Et2' 3 "arista VLANs active on Ethernet2"
+heading "nokia trunk (expect VLAN gateways 110, 120 and 130 up on ethernet-1/2)"
+out="$(docker exec "${lab}-nokia" sr_cli "show interface ethernet-1/2" 2>/dev/null || true)"
+grep -E 'ethernet-1/2\.1[123]0' <<<"$out" || true
+expect "$out" 'ethernet-1/2\.1[123]0 is up' 3 "nokia VLAN subinterfaces up"
 
 echo
-heading "arista BGP (expect neighbor 10.0.0.1 configured toward AS 65002)"
-out="$(docker exec "${lab}-arista" Cli -p 15 -c "show ip bgp summary")"
-echo "$out"
-expect "$out" '10\.0\.0\.1 .*65002' 1 "arista BGP neighbor 10.0.0.1"
+heading "nokia BGP (expect neighbor 10.0.0.1 configured toward AS 65002)"
+out="$(docker exec "${lab}-nokia" sr_cli "show network-instance default protocols bgp neighbor" 2>/dev/null || true)"
+grep -E '10\.0\.0\.1' <<<"$out" || true
+expect "$out" '10\.0\.0\.1 .* 65002 ' 1 "nokia BGP neighbor 10.0.0.1"
 
 echo
-heading "nokia (expect blank: no BGP configured yet)"
-out="$(docker exec "${lab}-nokia" sr_cli "info from running network-instance default protocols bgp" 2>/dev/null || true)"
-if grep -q 'autonomous-system' <<<"$out"; then
-    echo "$out"
-    echo "   nokia already has BGP config; run 'just reset-nokia' for a blank slate."
+heading "sonic (expect blank: no addresses, VLANs or BGP yet; Ethernet0 and Ethernet4 up)"
+out="$(docker exec "${lab}-sonic" show interfaces status 2>/dev/null || true)"
+grep -E '^ +Ethernet[04] ' <<<"$out" || true
+expect "$out" '^ +Ethernet[04] .* up +up ' 2 "sonic lab ports up"
+leftovers=""
+docker exec "${lab}-sonic" vtysh -c "show running-config" 2>/dev/null | grep -q '^router bgp' && leftovers+=" BGP"
+docker exec "${lab}-sonic" sonic-db-cli CONFIG_DB KEYS 'VLAN|*' 2>/dev/null | grep -q . && leftovers+=" VLANs"
+docker exec "${lab}-sonic" sonic-db-cli CONFIG_DB KEYS 'INTERFACE|*' 2>/dev/null | grep -q . && leftovers+=" addresses"
+if [ -n "$leftovers" ]; then
+    echo "   sonic already has${leftovers} configured; run 'just reset-sonic' for a blank slate."
 else
     echo "   blank, as expected"
 fi
 
 echo
 heading "SSH (expect each alias to answer, as stcli connects)"
-for node in arista nokia; do
+for node in nokia sonic; do
     if ssh -o BatchMode=yes -o ConnectTimeout=10 "${node}" "show version" >/dev/null 2>&1; then
         echo "   ${node}: ok"
     else
@@ -61,7 +66,7 @@ for node in arista nokia; do
 done
 
 echo
-heading "NetBox (expect the API to answer on port 8000 and to document arista)"
+heading "NetBox (expect the API to answer on port 8000 and to document nokia)"
 netbox_token="nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000"
 out="$(curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
     http://localhost:8000/api/status/ || true)"
@@ -69,10 +74,10 @@ version="$(sed -nE 's/.*"netbox-version": *"([^"]+)".*/\1/p' <<<"$out")"
 if [ -z "$version" ]; then
     fail "NetBox not answering on http://localhost:8000 — run 'just netbox-up'"
 elif curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
-    "http://localhost:8000/api/dcim/devices/?name=arista&brief=1" | grep -q '"count":1'; then
-    echo "   NetBox ${version}: ok, arista documented"
+    "http://localhost:8000/api/dcim/devices/?name=nokia&brief=1" | grep -q '"count":1'; then
+    echo "   NetBox ${version}: ok, nokia documented"
 else
-    fail "NetBox ${version} answers but does not document arista — run 'just reset-netbox'"
+    fail "NetBox ${version} answers but does not document nokia — run 'just reset-netbox'"
 fi
 
 echo

@@ -1,5 +1,5 @@
 {
-	"name": "AC6 workshop lab (SR Linux + Arista cEOS)",
+	"name": "AC6 workshop lab (SR Linux + SONiC)",
 	"build": { "dockerfile": "Dockerfile" },
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {
@@ -20,8 +20,7 @@
 		"8000": { "label": "NetBox", "onAutoForward": "silent" },
 		"8001": { "label": "NetBox MCP", "onAutoForward": "silent" },
 		"2401": { "label": "nokia SSH" },
-		"2402": { "label": "arista SSH" }
+		"2402": { "label": "sonic SSH" }
 	},
-	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh",
-	"postCreateCommand": "AC6_CEOS_OPTIONAL=1 just ceos-pull"
+	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh"
 }

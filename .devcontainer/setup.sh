@@ -48,10 +48,9 @@ echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'
 
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
-# cEOS comes from arista.com with the repo's ARISTA_TOKEN Codespaces secret
-# (see scripts/ceos-pull.sh). Without it, setup still finishes and
-# postCreateCommand or `just lab-up` fetches it with the attendee's token.
-AC6_CEOS_OPTIONAL=1 just lab-setup
+# Every image is public (SR Linux, our SONiC build, NetBox), so the prebuild
+# pulls them all and new Codespaces start with them in place.
+just lab-setup
 
 step "Summary"
 docker images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
@@ -63,5 +62,5 @@ echo "Setup complete. Next, README step B: install stcli:"
 echo "    curl -fsSL https://cli.supertrace.ai/install.sh | sh"
 echo "    source ~/.bashrc"
 echo "Then README step C: just lab-up, then just lab-verify."
-echo "SSH ports 2401 (nokia) and 2402 (arista) auto-forward — VS Code Ports tab, or"
+echo "SSH ports 2401 (nokia) and 2402 (sonic) auto-forward — VS Code Ports tab, or"
 echo "'gh codespace ports forward'."
