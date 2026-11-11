@@ -8,10 +8,10 @@ mgmt:
   ipv4-subnet: 172.20.23.0/24
 
 # Two devices, two links:
-#   arista (cEOS) is fully configured: BGP toward nokia on Ethernet1, an
-#   802.1Q trunk with three VLANs on Ethernet2.
-#   nokia (SR Linux) starts blank apart from SSH access and its two ports
-#   turned on; the workshop configures both of its links.
+#   nokia (SR Linux) is fully configured: BGP toward sonic on ethernet-1/1,
+#   an 802.1Q trunk with three VLAN gateways on ethernet-1/2.
+#   sonic (SONiC) starts blank apart from the lab login; the workshop
+#   configures both of its links.
 topology:
   nodes:
     nokia:
@@ -20,20 +20,14 @@ topology:
       startup-config: configs/nokia.cfg
       mgmt-ipv4: 172.20.23.2   # fixed, so the README can give each device's IP
       ports: ["2401:22"]
-    arista:
-      kind: arista_ceos
-      # Imported locally from arista.com by `just ceos-pull`; not in any registry.
-      image: arista/ceos:4.36.2F
-      startup-config: configs/arista.cfg
+    sonic:
+      kind: sonic-vs
+      # SONiC's official virtual switch plus the lab login (lab/images/sonic/).
+      image: ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511
       mgmt-ipv4: 172.20.23.3
       ports: ["2402:22"]
-      # EOS finds iptables-restore on PATH, where /usr/local/sbin comes first.
-      # The shim drops conntrack-helper rules that Docker Desktop's kernel
-      # can't load; without it SSH to arista never answers. See the script.
-      binds:
-        - images/ceos-shim/iptables-restore:/usr/local/sbin/iptables-restore:ro
-        - images/ceos-shim/iptables-restore:/usr/local/sbin/ip6tables-restore:ro
 
+  # sonic's eth1 is the wire behind its Ethernet0 port, eth2 behind Ethernet4.
   links:
-    - endpoints: ["nokia:e1-1", "arista:eth1"]   # layer 3: eBGP, 10.0.0.0/31
-    - endpoints: ["nokia:e1-2", "arista:eth2"]   # layer 2: 802.1Q trunk
+    - endpoints: ["nokia:e1-1", "sonic:eth1"]   # layer 3: eBGP, 10.0.0.0/31
+    - endpoints: ["nokia:e1-2", "sonic:eth2"]   # layer 2: 802.1Q trunk
