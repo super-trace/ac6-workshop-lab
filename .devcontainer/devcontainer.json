@@ -1,6 +1,6 @@
 {
 	"name": "AC6 workshop lab (SR Linux + Arista cEOS)",
-	"image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+	"build": { "dockerfile": "Dockerfile" },
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {
 			"version": "latest"
@@ -24,12 +24,13 @@
 		"memory": "16gb"
 	},
 	"privileged": true,
-	"forwardPorts": [2401, 2402, 8000],
+	"forwardPorts": [2401, 2402, 8000, 8001],
 	"portsAttributes": {
 		"8000": { "label": "NetBox", "onAutoForward": "silent" },
+		"8001": { "label": "NetBox MCP", "onAutoForward": "silent" },
 		"2401": { "label": "nokia SSH" },
 		"2402": { "label": "arista SSH" }
 	},
-	"onCreateCommand": "bash .devcontainer/on-create.sh",
-	"postCreateCommand": "bash .devcontainer/setup.sh"
+	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh",
+	"postCreateCommand": "just ceos-pull"
 }

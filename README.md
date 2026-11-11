@@ -58,7 +58,8 @@ You'll sign in the first time you run `stcli`, once the lab is up.
 
 ## 3. Start and verify
 
-Start the lab (about 2 minutes):
+Start the lab (about 3 minutes). This also starts NetBox and its MCP server
+(see [step 7](#7-netbox)):
 
 ```sh
 just lab-up
@@ -71,7 +72,8 @@ just lab-verify
 ```
 
 `lab-verify` checks the starting point: arista
-configured, nokia blank, both links up, and SSH to both. It ends with **LAB
+configured, nokia blank, both links up, SSH to both, and NetBox and its MCP
+server answering. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
@@ -216,22 +218,121 @@ prefixes:
 just check-bgp
 ```
 
-### Optional: layer 2 on your own
+### Scenario 3: NetBox, drift and updating the source of truth
 
-Finished early? There's one more link to bring up, and this time there are
-no prompts to copy. Work it out with `stcli` in your own words.
+Start a fresh conversation. Both devices stay connected:
 
-The second link, arista's `Ethernet2` to nokia's `ethernet-1/2`, is a layer
-2 trunk. arista already carries several VLANs on it, each with a gateway
-address on arista. nokia's end is still at factory defaults.
+```
+/new
+```
+
+NetBox is the lab's source of truth: it documents what arista should look
+like. Like every real NetBox, it has drifted: in a few places it no longer
+matches the network. In this scenario the agent finds where NetBox and
+arista disagree, asks you which side is right, and fixes the side that's
+wrong.
+
+<!-- TODO(mahir): /netbox connect needs an stcli release that includes
+super-trace/stcli#194; the Codespace installs the latest release. -->
+
+Connect `stcli` to NetBox. It asks for the API token; paste the lab's
+token, `nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`. The
+token stays in the Codespace, like an SSH password: `stcli` never sends it
+to the agent.
+
+```
+/netbox connect http://localhost:8000
+```
+
+Ask what NetBox knows. Reads from NetBox run without asking you:
+
+```
+What does NetBox document for arista? List its interfaces, IP addresses and VLANs.
+```
+
+Compare NetBox with the real device:
+
+```
+Compare arista's running configuration with NetBox and show me every difference.
+```
+
+A good answer is a table of discrepancies, and a question: for each one,
+which side is right? It won't change either side until you answer. Decide
+item by item. Where arista is right, NetBox is stale:
+
+```
+For every difference where arista is right, update NetBox to match.
+```
+
+The agent proposes one changeset. **Apply these changes to NetBox?** shows
+every field it will change, `current → new`, with the reason for each.
+Nothing is written until you press `y`.
+
+Where NetBox is right, arista has drifted. Have the agent fix arista
+instead; that's a device change, with its own approval.
+
+Check the result in the NetBox UI (**Ports** tab → port 8000, login
+`admin` / `ac6-workshop`): each change is in **Operations → Change Log**,
+with the agent's reason as its message. In a terminal outside `stcli`, this
+confirms it. It ends with **NETBOX MATCHES ARISTA** once NetBox no longer
+disagrees with arista anywhere arista is right:
+
+```sh
+just check-netbox
+```
+
+Have the agent walk through it:
+
+```
+Explain what you changed in NetBox and why.
+```
+
+To run this scenario again, put NetBox back as it was seeded, drift
+included (seconds; the devices are untouched):
+
+```sh
+just reset-netbox
+```
+
+<details>
+<summary>Facilitator reference: what NetBox gets wrong</summary>
+
+| Object | NetBox says | arista has | Right side | Fix |
+| --- | --- | --- | --- | --- |
+| VLAN 130 name | `SECURITY` | `CAMERAS` | arista | update the VLAN in NetBox |
+| Loopback1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | arista | create the interface and its address in NetBox |
+| Vlan120 gateway | `10.120.0.254/24` | `10.120.0.1/24` | arista | update the address in NetBox |
+| Ethernet2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the documented standard) | set the description on arista |
+
+`just check-netbox` checks the first three. The fourth is there so the
+agent has to ask, rather than assume the device always wins; either answer
+is fine. Everything else in NetBox matches arista: the site `lab`, the
+device and its platform, Management0, Ethernet1, Loopback0, VLANs 110 and
+120, and the other addresses. nokia isn't in NetBox: attendees build it in
+Scenario 2.
+
+</details>
+
+### Scenario 4: skills
+
+<!-- TODO: placeholder; the skills feature is still being built. -->
+
+Coming soon.
+
+### Scenario 5: choose your own adventure, layer 2
+
+The second link between the devices, arista's `Ethernet2` to nokia's
+`ethernet-1/2`, is a layer 2 trunk. arista already carries several VLANs on
+it, each with a gateway address. nokia's end is at factory defaults.
 
 **The goal:** nokia reaches arista's gateway in every VLAN, and arista
 learns nokia's MAC address in each one. arista needs no changes.
 
-Scenario 2's flow works here too: start fresh with `/new`, test the link
-and find out why it fails, see what arista expects, review the nokia config
-before applying it, then test again. The first ping in each VLAN may lose
-a packet while ARP resolves.
+There are no prompts to copy this time: work it out with `stcli` in your own
+words. Scenario 2's flow works here too: start fresh with `/new`, test the
+link and find out why it fails, see what arista expects (NetBox documents
+the VLANs too), review the nokia config before applying it, then test again.
+The first ping in each VLAN may lose a packet while ARP resolves.
 
 When you think it's working, check from a terminal outside `stcli`. It ends
 with **LAYER 2 IS UP**:
@@ -254,6 +355,14 @@ just reset-nokia
 Or redeploy both devices from scratch:
 
 ```sh
+just lab-up
+```
+
+If the lab is stuck, tear everything down and start it again. NetBox keeps
+its data:
+
+```sh
+just lab-down
 just lab-up
 ```
 
@@ -326,33 +435,30 @@ For a device's native CLI outside `stcli`, run `just lab-cli arista` or
 
 ## 7. NetBox
 
-```sh
-just netbox-up
-```
-
-NetBox is where device data exported with `stcli` will land; that export
-feature is still being built. This starts a NetBox on port 8000, separate
-from the lab. The first start
-takes two to three minutes. NetBox starts empty: no sites, device types or
-devices.
+NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
+it on port 8000, with NetBox Labs' read-only MCP server beside it on port
+8001. `stcli` connects to NetBox itself with `/netbox connect`. NetBox
+starts seeded with arista as documented, drift included (see Scenario 3).
+It keeps what you change, even across a `just lab-down`; `just
+reset-netbox` puts it back as seeded. To start just NetBox and the MCP
+server without the lab, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
 - **Log in:** `admin` / `ac6-workshop`.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
+- **MCP server:** `http://localhost:8001/mcp` (streamable HTTP, no
+  authentication). It reads NetBox with the admin token above. Port 8001
+  stays private in a Codespace.
 - **Share it:** the recipe makes port 8000 public when the Codespace allows
   it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
   Visibility → Public**. Anyone with the URL can then log in with the
   password above, so keep it to this disposable lab.
 
-`just netbox-down` stops NetBox and deletes its data.
+`just netbox-down` stops NetBox and the MCP server and deletes NetBox's
+data; the next `just lab-up` seeds it again.
 
 ## 8. Finish
-
-```sh
-just netbox-down   # if you started NetBox
-just lab-down
-```
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.

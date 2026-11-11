@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Runs as onCreateCommand, before setup.sh (postCreateCommand) and before the
-# first terminal opens. Codespaces shows setup.sh's output only in the
-# creation log, so this makes every new interactive shell run
-# setup-progress.sh, which streams that output while setup is still going.
+# Runs first in onCreateCommand, before setup.sh. Both run at prebuild time
+# when the repository has a Codespaces prebuild, so a Codespace made from it
+# starts with the lab images already pulled. Without a prebuild they run at
+# creation; Codespaces shows setup.sh's output only in the creation log, so
+# this makes every new interactive shell run setup-progress.sh, which streams
+# that output while setup is still going.
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"

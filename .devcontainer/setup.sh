@@ -25,7 +25,7 @@ step() {
 }
 trap 'echo "!! setup failed during: ${current_step}" >&2' ERR
 
-# just — not preinstalled on the base devcontainer image. postCreateCommand
+# just — not preinstalled on the base devcontainer image. onCreateCommand
 # runs as the non-root default user (vscode), which can't write to
 # /usr/local/bin directly — sudo (passwordless for this user, standard on
 # devcontainer base images) is required here.
@@ -35,7 +35,7 @@ curl --proto '=https' --tlsv1.2 -fS --progress-bar https://just.systems/install.
 just --version
 
 # docker-in-docker's nested dockerd starts in the background and isn't
-# necessarily ready the moment postCreateCommand runs — confirmed live
+# necessarily ready the moment onCreateCommand runs — confirmed live
 # ("failed to connect to the docker API ... no such file or directory" on
 # an otherwise-clean build). Wait for the socket rather than racing it.
 step "Waiting for dockerd"
@@ -49,7 +49,8 @@ echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'
 # Codespaces supplies registry credentials for this repository's private package.
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
-just lab-setup
+# A prebuild can't read the private cEOS image; postCreateCommand pulls it.
+AC6_CEOS_OPTIONAL=1 just lab-setup
 
 step "Summary"
 docker images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'
