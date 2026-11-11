@@ -31,6 +31,5 @@
 		"2401": { "label": "nokia SSH" },
 		"2402": { "label": "arista SSH" }
 	},
-	"onCreateCommand": "bash .devcontainer/on-create.sh",
-	"postCreateCommand": "bash .devcontainer/setup.sh"
+	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh"
 }
