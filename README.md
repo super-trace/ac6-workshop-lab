@@ -31,7 +31,7 @@ codespace on main**. The repository requires a **4-core / 16 GB RAM**
 machine, so smaller machine types aren't offered.
 
 Wait for automatic setup to finish. It installs the lab images, `just`, and
-SSH configuration, and sets up NetBox's database (about 6 minutes of it). The **GitHub Codespaces** terminal that opens
+SSH configuration. The **GitHub Codespaces** terminal that opens
 first shows only a pointer to the creation log; to watch setup live, click
 **+** in the terminal panel (or pick the **bash** terminal in the list). That
 terminal follows setup step by step and says when it's done.
@@ -392,8 +392,7 @@ server without the lab, run `just netbox-up`.
   password above, so keep it to this disposable lab.
 
 `just netbox-down` stops NetBox and the MCP server and deletes NetBox's
-data; the next `just lab-up` then sets up a fresh database, which takes
-about 6 minutes in a Codespace.
+data; the next `just lab-up` starts it empty again.
 
 ## 8. Finish
 

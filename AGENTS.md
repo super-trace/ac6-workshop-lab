@@ -26,7 +26,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just netbox-up` / `just netbox-down`: start NetBox and the MCP server without the lab / stop both and delete NetBox's data.
 - `just lab-down`: tear down the lab, NetBox and the MCP server, keeping NetBox's database. The workshop is one-way: attendees aren't told to run it; it's a reset for anyone stuck (`lab-down`, then `lab-up`).
 
-NetBox's first start runs its migrations (~2 minutes on a laptop, ~6 in a Codespace), so `.devcontainer/setup.sh` does it during Codespace creation (`scripts/netbox-up.sh --prepare`) and `lab-down` keeps the volumes, keeping `lab-up` at ~3 minutes.
+NetBox's own first-start migrations take ~6 minutes in a Codespace, so Postgres instead loads `lab/netbox/initdb/netbox.sql.gz`, an already-migrated database, on an empty volume; NetBox then starts in seconds. After changing the NetBox image in `lab/netbox/compose.yml`, regenerate the dump with `scripts/netbox-snapshot.sh` (it deletes NetBox's data).
 
 ## Coding Style & Naming Conventions
 

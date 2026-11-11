@@ -21,15 +21,22 @@ services:
       # The browser's origin, so logging in works through a Codespace's
       # forwarded URL; scripts/netbox-up.sh sets it.
       CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000}
+      # initdb/'s dump already has the admin user and token, so skip the
+      # startup step (a whole Django start) that creates them.
+      # scripts/netbox-snapshot.sh sets this to false to create them.
+      SKIP_SUPERUSER: ${NETBOX_SKIP_SUPERUSER:-true}
     user: "netbox:root"
     ports:
       - "8000:8080"
     healthcheck:
       test: /opt/netbox/health.sh
-      # The first boot runs every database migration: ~2 minutes on a laptop,
-      # ~6 in a Codespace (which is why setup.sh does it ahead of time).
-      # Checks that pass end the grace period early, so warm boots aren't slower.
+      # Generous for a start without initdb/'s dump, which runs every
+      # migration (~6 minutes in a Codespace). Checks that pass end the grace
+      # period early, so normal starts aren't slower.
       start_period: 900s
+      # Check every second while starting, so dependants don't wait for the
+      # next 5-second check once NetBox is up.
+      start_interval: 1s
       timeout: 3s
       interval: 5s
     volumes:
@@ -41,9 +48,9 @@ services:
   # 8001 private in a Codespace.
   netbox-mcp:
     image: docker.io/netboxlabs/netbox-mcp-server:1.2.1
+    # It only contacts NetBox on a tool call, so it can boot alongside it.
     depends_on:
-      netbox:
-        condition: service_healthy
+      - netbox
     environment:
       NETBOX_URL: http://netbox:8080/
       # The admin token from netbox.env; nbt_ tokens are sent as Bearer.
@@ -58,6 +65,7 @@ services:
       # an error to MCP but proves the server is listening.
       test: ["CMD", "python", "-c", "import urllib.request as u, urllib.error as e\ntry: u.urlopen('http://127.0.0.1:8000/mcp', timeout=2)\nexcept e.HTTPError: pass"]
       start_period: 30s
+      start_interval: 1s
       timeout: 3s
       interval: 2s
       retries: 15
@@ -71,11 +79,16 @@ services:
     healthcheck:
       test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
       start_period: 20s
+      start_interval: 1s
       timeout: 30s
       interval: 2s
       retries: 15
     volumes:
       - netbox-postgres:/var/lib/postgresql
+      # A freshly migrated NetBox database, loaded only when the volume is
+      # empty, so NetBox's first start skips ~800 migrations (~6 minutes in
+      # a Codespace). Regenerate with scripts/netbox-snapshot.sh.
+      - ./initdb:/docker-entrypoint-initdb.d:ro
 
   redis:
     image: docker.io/valkey/valkey:9.1-alpine

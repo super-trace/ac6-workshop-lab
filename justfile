@@ -89,8 +89,8 @@ lab-cli NODE='arista':
 lab-down:
     @{{clab_run}} destroy -t topology.clab.yml
     @rm -f ~/.ac6-workshop-known-hosts
-    @# Keep NetBox's volumes: a fresh database costs ~6 minutes of migrations
-    @# on the next lab-up in a Codespace. netbox-down deletes them.
+    @# Keep NetBox's volumes, so whatever was put into NetBox survives the
+    @# reset. netbox-down deletes them.
     @docker compose -f lab/netbox/compose.yml down
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"

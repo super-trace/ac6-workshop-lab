@@ -5,21 +5,18 @@
 # Codespace, also make port 8000 (NetBox) public so anyone with the URL can
 # open it; port 8001 (MCP) stays private. Safe to re-run.
 #
-# NetBox's first start runs its database migrations: under 2 minutes on a
-# laptop, ~6 in a Codespace. So Codespace setup runs this once (--prepare),
-# lab-down keeps the database, and lab-up only waits for a warm start.
+# A first start loads lab/netbox/initdb/'s already-migrated database, so it
+# takes seconds rather than the minutes NetBox's own migrations would.
 #
-#   --background  start the containers and return at once, so `just lab-up`
-#                 can boot NetBox while containerlab deploys; a later run
-#                 without it waits for both to be healthy.
-#   --prepare     wait until healthy and leave it running, without the
-#                 banner (setup.sh).
+# --background starts the containers and returns at once, so `just lab-up`
+# can boot NetBox while containerlab deploys; a later run without it waits
+# for both to be healthy and prints the banner.
 set -euo pipefail
 
 mode="${1:-}"
 case "$mode" in
-    ""|--background|--prepare) ;;
-    *) echo "usage: netbox-up.sh [--background|--prepare]" >&2; exit 2 ;;
+    ""|--background) ;;
+    *) echo "usage: netbox-up.sh [--background]" >&2; exit 2 ;;
 esac
 
 cd "$(dirname "$0")/../lab/netbox"
@@ -57,19 +54,8 @@ if [ -f "$pid_file" ]; then
     rm -f "$pid_file"
 fi
 
-# Say why the wait may be long, unless NetBox is already answering.
-if [ "$(docker inspect -f '{{.State.Health.Status}}' ac6-netbox-netbox-1 2>/dev/null)" != "healthy" ]; then
-    echo "NetBox: waiting for it to answer (a first start sets up its database:"
-    echo "        up to ~7 minutes in a Codespace, ~2 on a laptop)."
-fi
-
 # --wait returns once NetBox and the MCP server answer their health checks.
 docker compose up -d --wait --wait-timeout 900
-
-if [ "$mode" = "--prepare" ]; then
-    echo "NetBox: database ready."
-    exit 0
-fi
 
 public=""
 if [ "${CODESPACES:-}" = "true" ] && [ -n "${CODESPACE_NAME:-}" ]; then
