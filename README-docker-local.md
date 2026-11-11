@@ -1,16 +1,14 @@
 # Run the workshop locally with Docker
 
-The same six-node topology runs locally: SR Linux at JFK (`sw-jfk`) and
-`rtr-ewr`, cEOS at IAD (`sw-iad`) and `rtr-phl`, and Linux clients at both
-sites.
-
-![Routing topology](lab/diagrams/routing-topology.png)
+The same two-device lab runs locally: `arista` (cEOS, configured) and
+`nokia` (SR Linux, blank), joined by a BGP link and a layer 2 trunk. See the
+[main README](README.md) for the diagram and the exercises.
 
 ## Prepare
 
 Install Git, Docker, `just`, GitHub CLI (`gh`), and a native `stcli` binary.
-Allocate **4 CPU cores / 16 GB RAM** to the lab machine. On macOS, use
-OrbStack and allocate these resources to its Linux VM. On Linux, use
+Allocate **4 CPU cores / 8 GB RAM** to the lab machine. On macOS, use
+OrbStack or Docker Desktop and allocate these resources to its Linux VM. On Linux, use
 Docker Engine on a machine with these resources. The cEOS package
 supports both AMD64 and ARM64; Docker selects your native architecture.
 
@@ -26,8 +24,7 @@ gh auth token | docker login ghcr.io -u "$(gh api user --jq .login)" --password-
 just lab-setup
 ```
 
-`lab-setup` pulls the network OS images, builds the Linux client image,
-and installs the shared lab key and SSH aliases under `~/.ssh/`.
+`lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
 It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
 
@@ -35,12 +32,15 @@ The containerlab helper requires privileged Docker access.
 
 ```sh
 just lab-up
-just verify
 ```
 
-Wait for startup configuration to finish. Expect Established BGP sessions,
-successful client pings, and SSH access to all nodes. Initial image
-downloads and device startup can take several minutes.
+```sh
+just lab-verify
+```
+
+Expect arista configured, nokia blank, both links up, SSH access to both,
+and NetBox and its MCP server answering. Initial image downloads and device
+startup can take several minutes.
 
 ## Connect
 
@@ -55,47 +55,37 @@ export PATH="$HOME/.local/bin:$PATH"
 stcli --version
 ```
 
-Then sign in and start a session on one device:
+Then start `stcli`:
 
 ```sh
-stcli login
-stcli sw-jfk
+stcli
 ```
 
-Inside `stcli`, add the other devices to the same session, one per line:
-
-```
-/add sw-iad
-/add rtr-phl
-/add rtr-ewr
-/add client-jfk
-/add client-iad
-```
-
-`stcli sw-jfk sw-iad` would open each device in its own tab, a separate
-session. The main [README](README.md#4-connect-to-the-network) covers the
-agent-driven way to connect, approvals, and the scenarios.
-
-`stcli login` prints a verification link with the code filled in; if this
-machine has no browser, open the link on another one. Add
+The first run signs you in: it prints a verification link with the code
+filled in; if this machine has no browser, open the link on another one.
+From there, follow the exercises in the main
+[README](README.md#4-workshop-exercises). Add
 `~/.local/bin` to your shell's PATH to keep the installed CLI available in
-new terminals. For a router's native CLI, run `just lab-cli rtr-ewr`. List
+new terminals. For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.
 
 ## NetBox
 
-`just netbox-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), empty apart from that login; see the
-[main README](README.md#7-netbox) for the API token. `just netbox-down`
-stops it and deletes its data.
+`just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
+`ac6-workshop`), seeded with arista for Scenario 3, and its MCP server at
+http://localhost:8001/mcp; see the [main README](README.md#7-netbox) for
+the API token. `just netbox-up` starts just those two; `just reset-netbox`
+puts NetBox back as seeded; `just netbox-down` stops them and deletes
+NetBox's data.
 
 ## Finish
 
 ```sh
-just netbox-down   # if you started NetBox
 just lab-down
+just netbox-down   # lab-down keeps NetBox's data; this deletes it
 just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2406 (and NetBox's 8000) on your computer.
+running: both use SSH ports 2401–2402 (and NetBox's 8000 and 8001) on your
+computer.

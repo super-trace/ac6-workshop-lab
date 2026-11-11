@@ -1,8 +1,15 @@
-# Routing diagram
+# Topology diagram
 
-`routing-topology.png` shows the four eBGP routers, their WAN links, and
-the client subnets. Its generator reads router IDs and AS numbers from
-`lab/configs`. Update the layout and link labels in
+> **Out of date.** The image shows the lab before arista and nokia swapped
+> roles (arista is now configured, nokia blank), and the generator reads
+> `nokia.cfg`, which is now blank. The README uses its ASCII diagram until
+> the generator is updated and the image re-rendered.
+
+`routing-topology.png` is the README's diagram: nokia and arista, the BGP
+link and VLAN trunk between them, and their management IPs. Its generator
+reads addresses, AS numbers, VLANs, and gateways from `lab/configs/nokia.cfg`
+and management IPs from `lab/topology.clab.yml`; arista starts blank, so its
+side comes from nokia's neighbor settings. Update the layout and labels in
 `scripts/routing-diagram.py` when changing the topology.
 
 From the workshop repository folder:
