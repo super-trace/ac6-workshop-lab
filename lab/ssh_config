@@ -1,7 +1,7 @@
 # AC6 workshop lab — Include this file from ~/.ssh/config:
 #   Include /path/to/workshop/lab/ssh_config
-# Then: stcli nokia / stcli arista, or connect by management IP:
-#   nokia 172.20.23.2, arista 172.20.23.3 (fixed in topology.clab.yml).
+# Then: stcli nokia / stcli sonic, or connect by management IP:
+#   nokia 172.20.23.2, sonic 172.20.23.3 (fixed in topology.clab.yml).
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
@@ -10,20 +10,24 @@
 # flow writes the accepted key back and re-verifies against it, so /dev/null
 # would make every "trust this host key?" prompt loop forever.
 #
-# Both nodes log in as `stcli` with the shared, non-secret lab key (`admin`
-# is a reserved username on SR Linux and can't take an ssh-key). `just
-# lab-setup` copies the key to ~/.ssh/ac6-workshop-key.
-Host nokia arista 172.20.23.2 172.20.23.3
+# Both nodes have one login, oldprotocol / newbrain. The names `nokia` and
+# `sonic` (what the lab scripts use) log in with the shared, non-secret lab
+# key, which `just lab-setup` copies to ~/.ssh/ac6-workshop-key. The IPs get
+# no key, so `connect oldprotocol@172.20.23.3` asks for the password, as the
+# workshop wants.
+Host nokia sonic 172.20.23.2 172.20.23.3
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
+    User oldprotocol
+Host nokia sonic
     IdentityFile ~/.ssh/ac6-workshop-key
-    User stcli
+    IdentitiesOnly yes
 
 # The management IPs go through the same forwarded ports as the names:
 # Docker Desktop on macOS can't route to container IPs at all, so this keeps
 # "connect 172.20.23.2" working locally as well as in a Codespace.
 Host nokia 172.20.23.2
     Port 2401
-Host arista 172.20.23.3
+Host sonic 172.20.23.3
     Port 2402

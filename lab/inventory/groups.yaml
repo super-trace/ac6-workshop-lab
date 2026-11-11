@@ -1,6 +1,6 @@
 ---
-# Platforms: select one with @arista_ceos or @nokia_srlinux.
-arista_ceos:
-  platform: arista_ceos
+# Platforms: select one with @nokia_srlinux or @sonic.
 nokia_srlinux:
   platform: nokia_srlinux
+sonic:
+  platform: linux

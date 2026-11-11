@@ -1,18 +1,18 @@
 # containerlab runs in a sidecar container; scripts/clab.sh explains how.
 clab_image := "ghcr.io/srl-labs/clab:latest"
-# Private: Codespaces pulls it with the attendee's credentials (see ceos-pull).
-ceos_image := "ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F"
+# SONiC's official virtual switch plus the lab login; scripts/sonic-image.sh builds it.
+sonic_image := "ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511"
 clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 # ANSI colors for the recipe intros; raw strings, so printf expands the
-# escapes. Vendors keep one color each: SR Linux blue, cEOS magenta. The banners' own colors live in scripts/banner.sh.
+# escapes. Vendors keep one color each: SR Linux blue, SONiC cyan. The banners' own colors live in scripts/banner.sh.
 reset := '\033[0m'
 bold := '\033[1m'
 yellow := '\033[1;33m'
 green := '\033[1;32m'
 note := '\033[92m'
 srl := '\033[94m'
-ceos := '\033[95m'
+sonic := '\033[96m'
 
 [private]
 default:
@@ -23,23 +23,27 @@ default:
 lab-up:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
-        "one Nokia and one Arista, plus NetBox and its MCP server." \
+        "one Nokia and one SONiC, plus NetBox and its MCP server." \
         "Expect this to take ~3 minutes."
     @printf '\n'
-    @# A prebuilt Codespace pulls cEOS after creation; make sure it's here.
-    @just ceos-pull
+    @# Refresh the SSH aliases and key from this checkout, so a `git pull`
+    @# that changes lab/ssh_config takes effect without rerunning lab-setup.
+    @./scripts/install-ssh.sh >/dev/null
+    @# The SONiC image: already here, else pulled from ghcr, else built here
+    @# from SONiC's official build (once, about 3 minutes).
+    @just sonic-ensure
     @# NetBox boots while containerlab deploys; netbox-up.sh waits for it below.
     @./scripts/netbox-up.sh --background
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
     @# stcli and ssh at a dedicated known_hosts file; wiping it here keeps a
     @# redeploy from looking like a man-in-the-middle to either of them.
     @rm -f ~/.ac6-workshop-known-hosts
-    @# --reconfigure: start every node from lab/configs/. Without it cEOS boots
-    @# from the config it saved last time, so workshop changes survive.
+    @# --reconfigure: start every node from scratch, so nothing saved inside
+    @# a node during the workshop survives a redeploy.
     @{{clab_run}} deploy --reconfigure -t topology.clab.yml
     @echo ""
     @just lab-status
-    @# Waits for both devices, saves nokia's blank baseline for reset-nokia,
+    @# Waits for both devices, saves sonic's blank baseline for reset-sonic,
     @# and waits for SSH.
     @./scripts/lab-ready.sh
     @printf '\n'
@@ -47,10 +51,10 @@ lab-up:
     @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n'
-    @printf '    {{bold}}arista{{reset}}  {{ceos}}Arista cEOS{{reset}}     configured: BGP on Ethernet1, VLAN trunk on Ethernet2\n'
-    @printf '    {{bold}}nokia{{reset}}   {{srl}}Nokia SR Linux{{reset}}  blank: ethernet-1/1 and ethernet-1/2 unconfigured\n\n'
-    @printf '    Links: arista Ethernet1 <-> nokia e1-1 (BGP)\n'
-    @printf '           arista Ethernet2 <-> nokia e1-2 (layer 2 trunk)\n'
+    @printf '    {{bold}}nokia{{reset}}  {{srl}}Nokia SR Linux{{reset}}  configured: BGP on ethernet-1/1, VLAN trunk on ethernet-1/2\n'
+    @printf '    {{bold}}sonic{{reset}}  {{sonic}}SONiC{{reset}}           blank: Ethernet0 and Ethernet4 unconfigured\n\n'
+    @printf '    Links: nokia ethernet-1/1 <-> sonic Ethernet0 (BGP)\n'
+    @printf '           nokia ethernet-1/2 <-> sonic Ethernet4 (layer 2 trunk)\n'
     @printf '    NetBox: port 8000; MCP server: http://localhost:8001/mcp\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
@@ -58,11 +62,11 @@ lab-up:
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "nokia": ...\n'
     @printf '\n    Next: {{green}}just lab-verify{{reset}}\n'
 
-# check the baseline: arista configured, nokia blank, links and SSH up, NetBox and MCP answering (~10 seconds)
+# check the baseline: nokia configured, sonic blank, links and SSH up, NetBox and MCP answering (~10 seconds)
 [group('lab')]
 lab-verify:
     @./scripts/banner.sh intro "just lab-verify" \
-        "This command checks the lab baseline: arista configured, nokia" \
+        "This command checks the lab baseline: nokia configured, sonic" \
         "blank, both links up, NetBox and its MCP server answering." \
         "Expect this to take ~10 seconds."
     @printf '\n'
@@ -77,15 +81,15 @@ verify: lab-verify
 lab-status:
     @{{clab_run}} inspect -t topology.clab.yml
 
-# open a node's own CLI: nokia or arista
+# open a node's own CLI: nokia or sonic
 [group('lab')]
-lab-cli NODE='arista':
+lab-cli NODE='nokia':
     #!/usr/bin/env bash
     set -euo pipefail
     case "{{NODE}}" in
       nokia)  docker exec -it clab-ac6-workshop-nokia sr_cli ;;
-      arista) docker exec -it clab-ac6-workshop-arista Cli -p 15 ;;
-      *) echo "unknown node {{NODE}} (nokia or arista)" >&2; exit 1 ;;
+      sonic)  docker exec -it -u oldprotocol -w /home/oldprotocol clab-ac6-workshop-sonic bash -l ;;
+      *) echo "unknown node {{NODE}} (nokia or sonic)" >&2; exit 1 ;;
     esac
 
 # reset for anyone stuck: tear down the lab and NetBox (keeps NetBox's data), then lab-up
@@ -99,22 +103,22 @@ lab-down:
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
-# check the BGP exercise: arista <-> nokia session Established
+# check the BGP exercise: nokia <-> sonic session Established, routes installed
 [group('exercises')]
 check-bgp:
     @./scripts/check-bgp.sh
 
-# check the layer 2 exercise: nokia reaches arista in VLANs 110, 120 and 130
+# check the layer 2 exercise: sonic reaches nokia in VLANs 110, 120 and 130
 [group('exercises')]
 check-l2:
     @./scripts/check-l2.sh
 
-# wipe nokia back to blank to run the exercises again (seconds; arista untouched)
+# wipe sonic back to blank to run the exercises again (seconds; nokia untouched)
 [group('exercises')]
-reset-nokia:
-    @./scripts/reset-nokia.sh
+reset-sonic:
+    @./scripts/reset-sonic.sh
 
-# check the NetBox exercise: NetBox matches arista where it was stale
+# check the NetBox exercise: NetBox matches nokia where it was stale
 [group('exercises')]
 check-netbox:
     @./scripts/check-netbox.sh
@@ -125,7 +129,7 @@ reset-netbox:
     @docker compose -f lab/netbox/compose.yml down -v
     @./scripts/netbox-up.sh
 
-# start NetBox on port 8000, seeded with arista, and its MCP server on 8001 (lab-up does this too)
+# start NetBox on port 8000, seeded with nokia, and its MCP server on 8001 (lab-up does this too)
 [group('netbox')]
 netbox-up:
     @./scripts/banner.sh intro "just netbox-up" \
@@ -145,27 +149,28 @@ netbox-down:
 # pull the lab images and install SSH config
 [group('setup')]
 lab-setup:
-    @# The private cEOS image supports native AMD64 and ARM64 Docker engines.
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
+    just sonic-ensure
     docker compose -f lab/netbox/compose.yml pull
-    just ceos-pull
     ./scripts/install-ssh.sh
 
-# Pull the private cEOS image unless it's already here. A Codespaces prebuild
-# has no credentials for it (unauthorized), so Codespace setup sets
-# AC6_CEOS_OPTIONAL=1 and pulls it again at creation, as the attendee.
+# Use the local SONiC image if it matches this checkout, else pull it, else build it here.
 [private]
-ceos-pull:
+sonic-ensure:
     #!/usr/bin/env bash
     set -euo pipefail
-    docker image inspect "{{ceos_image}}" >/dev/null 2>&1 && exit 0
-    if docker pull "{{ceos_image}}"; then exit 0; fi
-    if [ -n "${AC6_CEOS_OPTIONAL:-}" ]; then
-        echo "cEOS not pulled now (expected in a Codespaces prebuild); it is pulled when the Codespace is created." >&2
-        exit 0
-    fi
-    exit 1
+    want="$(./scripts/sonic-recipe.sh)"
+    stamp() { docker image inspect --format '{{{{index .Config.Labels "ac6.recipe"}}' "{{sonic_image}}" 2>/dev/null || true; }
+    [ "$(stamp)" = "$want" ] && exit 0
+    if docker pull -q "{{sonic_image}}" >/dev/null 2>&1 && [ "$(stamp)" = "$want" ]; then exit 0; fi
+    echo "Building the SONiC image from SONiC's official build (once per lab change, about 3 minutes)."
+    ./scripts/sonic-image.sh "{{sonic_image}}"
+
+# maintainers: build the SONiC image from SONiC's official build (add --push to publish it)
+[group('setup')]
+sonic-image *ARGS:
+    ./scripts/sonic-image.sh "{{sonic_image}}" {{ARGS}}
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
 [group('setup')]

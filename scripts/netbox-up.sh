@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start the workshop's NetBox and its MCP server (lab/netbox/compose.yml),
-# seed NetBox with arista as documented (scripts/netbox-seed.sh, once: what
+# seed NetBox with nokia as documented (scripts/netbox-seed.sh, once: what
 # attendees change is kept until `just netbox-down` or `just reset-netbox`),
 # and print how to reach both. In a
 # Codespace, also make port 8000 (NetBox) public so anyone with the URL can
@@ -71,10 +71,10 @@ printf '\n'
 ../../scripts/banner.sh green "NETBOX IS UP"
 printf '\n'
 printf '    %sURL%s       %s\n' "$bold" "$reset" "$url"
-printf '    %sLogin%s     admin / ac6-workshop\n' "$bold" "$reset"
+printf '    %sLogin%s     oldprotocol / newbrain\n' "$bold" "$reset"
 printf '    %sAPI token%s Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000\n' "$bold" "$reset"
 printf '    %sMCP%s       http://localhost:8001/mcp (streamable HTTP, read-only, no auth)\n' "$bold" "$reset"
-printf '\n    NetBox documents arista: the source of truth for Scenario 3.\n'
+printf '\n    NetBox documents nokia: the source of truth for Scenario 3.\n'
 printf '    %sjust reset-netbox%s puts it back as seeded.\n' "$green" "$reset"
 if [ "${CODESPACES:-}" = "true" ]; then
     if [ -n "$public" ]; then

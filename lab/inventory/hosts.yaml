@@ -9,9 +9,9 @@ nokia:
   port: 2401
   groups: [nokia_srlinux]
   data:
-    role: blank
-arista:
-  port: 2402
-  groups: [arista_ceos]
-  data:
     role: configured
+sonic:
+  port: 2402
+  groups: [sonic]
+  data:
+    role: blank

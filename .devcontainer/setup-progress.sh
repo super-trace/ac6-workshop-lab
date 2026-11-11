@@ -11,7 +11,11 @@ log=/tmp/ac6-workshop-setup.log
 # running, setup_pid from the state file.
 read_state() {
     phase=none setup_pid=""
-    read -r phase setup_pid < "$state_file" 2>/dev/null || true
+    # /tmp doesn't survive into a Codespace made from a prebuild, or a
+    # restart, so the file is often missing. 2>/dev/null goes first: bash
+    # opens redirections left to right, and a missing file reported by
+    # `< "$state_file"` would otherwise reach the terminal.
+    read -r phase setup_pid 2>/dev/null < "$state_file" || true
 }
 setup_running() { [[ -n "$setup_pid" ]] && kill -0 "$setup_pid" 2>/dev/null; }
 

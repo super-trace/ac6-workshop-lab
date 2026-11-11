@@ -1,7 +1,7 @@
 # Run the workshop locally with Docker
 
-The same two-device lab runs locally: `arista` (cEOS, configured) and
-`nokia` (SR Linux, blank), joined by a BGP link and a layer 2 trunk. See the
+The same two-device lab runs locally: `nokia` (SR Linux, configured) and
+`sonic` (SONiC, blank), joined by a BGP link and a layer 2 trunk. See the
 [main README](README.md) for the diagram and the exercises.
 
 ## Prepare
@@ -9,26 +9,23 @@ The same two-device lab runs locally: `arista` (cEOS, configured) and
 Install Git, Docker, `just`, GitHub CLI (`gh`), and a native `stcli` binary.
 Allocate **4 CPU cores / 8 GB RAM** to the lab machine. On macOS, use
 OrbStack or Docker Desktop and allocate these resources to its Linux VM. On Linux, use
-Docker Engine on a machine with these resources. The cEOS package
-supports both AMD64 and ARM64; Docker selects your native architecture.
-
-Authenticate GitHub CLI with an account that can access this repository
-and its private container package:
+Docker Engine on a machine with these resources. The SONiC image is
+AMD64 only: on an Apple silicon Mac, Docker runs it under emulation, so
+`sonic` takes a few minutes longer to start.
 
 ```sh
-gh auth login
-gh auth refresh --scopes read:packages
-git clone git@github.com:super-trace/ac6-workshop-lab.git
+git clone https://github.com/super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
-gh auth token | docker login ghcr.io -u "$(gh api user --jq .login)" --password-stdin
-just lab-setup
 ```
 
-`lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
-It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
 
 ## Start and check
+
+`just lab-up` does all the setup itself: it installs the shared lab key and
+SSH aliases under `~/.ssh/`, gets the SONiC image (pulled, or built locally
+from SONiC's official build the first time, about 3 minutes), and starts
+both devices and NetBox. It does not install `stcli`; see Connect below.
 
 ```sh
 just lab-up
@@ -38,7 +35,7 @@ just lab-up
 just lab-verify
 ```
 
-Expect arista configured, nokia blank, both links up, SSH access to both,
+Expect nokia configured, sonic blank, both links up, SSH access to both,
 and NetBox and its MCP server answering. Initial image downloads and device
 startup can take several minutes.
 
@@ -67,13 +64,13 @@ stcli
 The first run signs you in: it prints a verification link with the code
 filled in; if this machine has no browser, open the link on another one.
 From there, follow the exercises in the main
-[README](README.md#d-workshop-exercises). For a router's native CLI, run `just lab-cli arista`. List
+[README](README.md#d-workshop-exercises). For a router's native CLI, run `just lab-cli nokia` or `just lab-cli sonic`. List
 all commands with `just --list`.
 
 ## NetBox
 
-`just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), seeded with arista for Scenario 3, and its MCP server at
+`just lab-up` starts NetBox at http://localhost:8000 (login `oldprotocol` /
+`newbrain`), seeded with nokia for Scenario 3, and its MCP server at
 http://localhost:8001/mcp; see the [main README](README.md#g-netbox) for
 the API token. `just netbox-up` starts just those two; `just reset-netbox`
 puts NetBox back as seeded; `just netbox-down` stops them and deletes
