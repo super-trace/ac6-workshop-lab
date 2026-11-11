@@ -24,7 +24,9 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
 - `just reset-nokia`: return nokia to blank in seconds (a saved checkpoint) without redeploying arista.
 - `just netbox-up` / `just netbox-down`: start NetBox and the MCP server without the lab / stop both and delete NetBox's data.
-- `just lab-down`: tear down the lab, NetBox and the MCP server.
+- `just lab-down`: tear down the lab, NetBox and the MCP server, keeping NetBox's database. The workshop is one-way: attendees aren't told to run it; it's a reset for anyone stuck (`lab-down`, then `lab-up`).
+
+NetBox's first start runs its migrations (~2 minutes on a laptop, ~6 in a Codespace), so `.devcontainer/setup.sh` does it during Codespace creation (`scripts/netbox-up.sh --prepare`) and `lab-down` keeps the volumes, keeping `lab-up` at ~3 minutes.
 
 ## Coding Style & Naming Conventions
 

@@ -4,7 +4,8 @@
 # REST API work without it) and one Valkey for both of NetBox's Redis
 # databases instead of two. Plus netbox-mcp, NetBox Labs' MCP server, so an
 # agent can read NetBox over MCP. `just lab-up` starts it all (through
-# scripts/netbox-up.sh); `just netbox-down` and `just lab-down` remove it.
+# scripts/netbox-up.sh); `just lab-down` stops it and keeps the database;
+# `just netbox-down` deletes it.
 name: ac6-netbox
 
 services:
@@ -25,10 +26,10 @@ services:
       - "8000:8080"
     healthcheck:
       test: /opt/netbox/health.sh
-      # The first boot runs every database migration, and under `just lab-up`
-      # it shares the CPU with cEOS and SR Linux booting: 120s wasn't enough.
-      # Checks that pass end the grace period early, so normal boots aren't slower.
-      start_period: 300s
+      # The first boot runs every database migration: ~2 minutes on a laptop,
+      # ~6 in a Codespace (which is why setup.sh does it ahead of time).
+      # Checks that pass end the grace period early, so warm boots aren't slower.
+      start_period: 900s
       timeout: 3s
       interval: 5s
     volumes:

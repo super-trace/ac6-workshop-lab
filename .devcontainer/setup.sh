@@ -14,7 +14,7 @@ trap 'status=$?; if (( status == 0 )); then echo done; else echo failed; fi > "$
 # step prints a numbered, timestamped banner, so the creation log (Codespaces:
 # View Creation Log, or `gh codespace logs`) shows which step is running and
 # how long each took. The ERR trap names the step that failed.
-total_steps=4
+total_steps=5
 step_number=0
 current_step="starting"
 step() {
@@ -50,6 +50,12 @@ echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
 just lab-setup
+
+# NetBox's first start runs its database migrations, ~6 minutes here. Do it
+# now, while attendees install stcli, so `just lab-up` finds it warm. It's
+# left running; lab-up picks it up.
+step "Setting up NetBox's database (~6 minutes, first start only)"
+./scripts/netbox-up.sh --prepare
 
 step "Summary"
 docker images --format '{{.Repository}}:{{.Tag}}  {{.Size}}'

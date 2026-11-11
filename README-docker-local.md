@@ -39,8 +39,9 @@ just lab-verify
 ```
 
 Expect arista configured, nokia blank, both links up, SSH access to both,
-and NetBox and its MCP server answering. Initial image downloads and device
-startup can take several minutes.
+and NetBox and its MCP server answering. Initial image downloads, device
+startup and NetBox's first start (it sets up its database) can take several
+minutes.
 
 ## Connect
 
@@ -81,6 +82,7 @@ stops them and deletes NetBox's data.
 
 ```sh
 just lab-down
+just netbox-down   # lab-down keeps NetBox's data; this deletes it
 just cleanup-ssh
 ```
 

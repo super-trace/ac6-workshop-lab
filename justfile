@@ -47,7 +47,7 @@ lab-up:
     @printf '    {{bold}}nokia{{reset}}   {{srl}}Nokia SR Linux{{reset}}  blank: ethernet-1/1 and ethernet-1/2 unconfigured\n\n'
     @printf '    Links: arista Ethernet1 <-> nokia e1-1 (BGP)\n'
     @printf '           arista Ethernet2 <-> nokia e1-2 (layer 2 trunk)\n'
-    @printf '    NetBox: port 8000, empty; MCP server: http://localhost:8001/mcp\n'
+    @printf '    NetBox: port 8000; MCP server: http://localhost:8001/mcp\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node nokia: ...\n'
@@ -84,12 +84,14 @@ lab-cli NODE='arista':
       *) echo "unknown node {{NODE}} (nokia or arista)" >&2; exit 1 ;;
     esac
 
-# tear down the lab, NetBox and its MCP server (deletes NetBox's data)
+# reset for anyone stuck: tear down the lab and NetBox (keeps NetBox's data), then lab-up
 [group('lab')]
 lab-down:
     @{{clab_run}} destroy -t topology.clab.yml
     @rm -f ~/.ac6-workshop-known-hosts
-    @docker compose -f lab/netbox/compose.yml down -v
+    @# Keep NetBox's volumes: a fresh database costs ~6 minutes of migrations
+    @# on the next lab-up in a Codespace. netbox-down deletes them.
+    @docker compose -f lab/netbox/compose.yml down
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 

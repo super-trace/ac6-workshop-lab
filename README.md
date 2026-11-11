@@ -31,7 +31,7 @@ codespace on main**. The repository requires a **4-core / 16 GB RAM**
 machine, so smaller machine types aren't offered.
 
 Wait for automatic setup to finish. It installs the lab images, `just`, and
-SSH configuration. The **GitHub Codespaces** terminal that opens
+SSH configuration, and sets up NetBox's database (about 6 minutes of it). The **GitHub Codespaces** terminal that opens
 first shows only a pointer to the creation log; to watch setup live, click
 **+** in the terminal panel (or pick the **bash** terminal in the list). That
 terminal follows setup step by step and says when it's done.
@@ -295,6 +295,14 @@ Or redeploy both devices from scratch:
 just lab-up
 ```
 
+If the lab is stuck, tear everything down and start it again. NetBox keeps
+its data:
+
+```sh
+just lab-down
+just lab-up
+```
+
 <details>
 <summary>Facilitator reference: what arista has configured</summary>
 
@@ -367,7 +375,8 @@ For a device's native CLI outside `stcli`, run `just lab-cli arista` or
 NetBox is where device data exported with `stcli` will land; that export
 feature is still being built. `just lab-up` starts it on port 8000, with
 NetBox Labs' read-only MCP server beside it on port 8001. NetBox starts
-empty: no sites, device types or devices. To start just NetBox and the MCP
+empty: no sites, device types or devices. It keeps what you add, even across
+a `just lab-down`. To start just NetBox and the MCP
 server without the lab, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
@@ -383,13 +392,10 @@ server without the lab, run `just netbox-up`.
   password above, so keep it to this disposable lab.
 
 `just netbox-down` stops NetBox and the MCP server and deletes NetBox's
-data; `just lab-down` does the same along with the lab.
+data; the next `just lab-up` then sets up a fresh database, which takes
+about 6 minutes in a Codespace.
 
 ## 8. Finish
-
-```sh
-just lab-down
-```
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.
