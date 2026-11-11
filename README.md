@@ -216,72 +216,36 @@ prefixes:
 just check-bgp
 ```
 
-### Scenario 3: layer 2
+### Optional: layer 2 on your own
 
-Start a fresh conversation. Both devices stay connected:
+Finished early? There's one more link to bring up, and this time there are
+no prompts to copy. Work it out with `stcli` in your own words.
 
-```
-/new
-```
+The second link, arista's `Ethernet2` to nokia's `ethernet-1/2`, is a layer
+2 trunk. arista already carries several VLANs on it, each with a gateway
+address on arista. nokia's end is still at factory defaults.
 
-The second link, the Arista's `Ethernet2` to nokia's `ethernet-1/2`, is a
-layer 2 link: the Arista already treats it as a trunk carrying several
-VLANs, each with a gateway address on the Arista. The Nokia's end is still
-at factory defaults.
+**The goal:** nokia reaches arista's gateway in every VLAN, and arista
+learns nokia's MAC address in each one. arista needs no changes.
 
-Test the link. This should fail: the Nokia isn't carrying any of the
-Arista's VLANs yet. A good answer works out which VLANs and gateways the
-Arista has, tries to reach them, and explains why it can't.
+Scenario 2's flow works here too: start fresh with `/new`, test the link
+and find out why it fails, see what arista expects, review the nokia config
+before applying it, then test again. The first ping in each VLAN may lose
+a packet while ARP resolves.
 
-```
-Test layer 2 connectivity between the Arista's Ethernet2 and the Nokia's ethernet-1/2.
-```
-
-Generate the config: the Arista's existing trunk as the reference, and the
-Nokia side to match it, with an address in each VLAN so the Nokia can reach
-the Arista's gateways:
-
-```
-Show me the Arista's trunk and VLAN configuration on Ethernet2, then generate the matching Nokia SR Linux configuration for ethernet-1/2, with an address in each VLAN. Don't apply anything yet.
-```
-
-Apply it. Check that each command names the Nokia before you approve it;
-the Arista needs no changes:
-
-```
-Apply that config block to the Nokia, one command at a time, in order. Don't run anything in parallel.
-```
-
-Test again. The first ping in each VLAN may lose a packet while ARP
-resolves:
-
-```
-Test layer 2 connectivity between the two devices again.
-```
-
-Confirm every VLAN is up, from both ends:
-
-```
-Confirm the Nokia can reach the Arista's gateway in every VLAN, and that the Arista has learned the Nokia's MAC address in each one.
-```
-
-Have the agent walk through it:
-
-```
-Explain what you did.
-```
-
-In a terminal outside `stcli`, this confirms the result. It ends with
-**LAYER 2 IS UP** once the Nokia reaches the Arista's gateway in every VLAN:
+When you think it's working, check from a terminal outside `stcli`. It ends
+with **LAYER 2 IS UP**:
 
 ```sh
 just check-l2
 ```
 
+Stuck? Ask a facilitator; the reference below has hints.
+
 ### Start over
 
 Wipe nokia back to blank in seconds, leaving arista alone, then start again
-from Scenario 2:
+from Scenario 2 (this also clears any layer 2 config):
 
 ```sh
 just reset-nokia
