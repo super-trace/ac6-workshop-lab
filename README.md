@@ -100,11 +100,15 @@ computer's browser (the one-time code is already filled in) and wait for
 **Signed in.** in the Codespace terminal. Credentials are saved in the
 Codespace and refreshed automatically.
 
-**1.2** Connect to arista by its management IP:
+**1.2** Connect to arista by its management IP, as the lab user:
 
 ```
-connect 172.20.23.3
+connect oldprotocol@172.20.23.3
 ```
+
+> [!NOTE]
+> When `stcli` asks for the password, type **`newbrain`**. Both devices use
+> the same login: user `oldprotocol`, password `newbrain`.
 
 **1.3** Find the login config:
 
@@ -182,8 +186,11 @@ Do it for Nokia SR Linux.
 session:
 
 ```
-/add 172.20.23.2
+/add oldprotocol@172.20.23.2
 ```
+
+> [!NOTE]
+> Password: **`newbrain`**
 
 **2.6** Review the full change before anything runs:
 
@@ -233,17 +240,21 @@ matches the network. In this scenario the agent finds where NetBox and
 arista disagree, asks you which side is right, and fixes the side that's
 wrong.
 
-<!-- TODO(mahir): /netbox connect needs an stcli release that includes
-super-trace/stcli#194; the Codespace installs the latest release. -->
-
-**3.2** Connect `stcli` to NetBox. It asks for the API token; paste the lab's
-token, `nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`. The
-token stays in the Codespace, like an SSH password: `stcli` never sends it
-to the agent.
+**3.2** Connect `stcli` to NetBox:
 
 ```
 /netbox connect http://localhost:8000
 ```
+
+> [!NOTE]
+> When it asks for the API token, paste the lab's token:
+>
+> ```
+> nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000
+> ```
+>
+> The token stays in the Codespace, like an SSH password: `stcli` never sends
+> it to the agent.
 
 **3.3** Ask what NetBox knows. Reads from NetBox run without asking you:
 
@@ -395,22 +406,23 @@ Other ways to connect, beyond the workshop's steps.
 `stcli` in plain language (the easiest way):
 
 ```
-Can you please connect to arista and nokia?
+Can you please connect to oldprotocol@172.20.23.3 and oldprotocol@172.20.23.2?
 ```
 
-**E.2** It asks before each connection; press **Enter** to confirm each one. Or add
-devices yourself with `/add`, one per line, which skips the confirmation:
+**E.2** It asks before each connection; press **Enter** to confirm each one, then
+type the password, `newbrain`. Or add devices yourself with `/add`, one per
+line, which skips the confirmation:
 
 ```
-/add arista
-/add nokia
+/add oldprotocol@172.20.23.3
+/add oldprotocol@172.20.23.2
 ```
 
-`stcli arista nokia` is not the same thing: it opens each device in its own
+`stcli oldprotocol@172.20.23.3 oldprotocol@172.20.23.2` is not the same thing: it opens each device in its own
 tab, and every tab is a separate session with its own agent.
 
-Each device also answers on its management IP: `connect 172.20.23.3` for
-arista, `connect 172.20.23.2` for nokia.
+Every connection uses the lab login, `oldprotocol` / `newbrain`:
+`oldprotocol@172.20.23.3` is arista, `oldprotocol@172.20.23.2` is nokia.
 
 For a device's native CLI outside `stcli`, run `just lab-cli arista` or
 `just lab-cli nokia`.
