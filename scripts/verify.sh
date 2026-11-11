@@ -61,15 +61,18 @@ for node in arista nokia; do
 done
 
 echo
-heading "NetBox (expect the API to answer on port 8000 with the admin token)"
+heading "NetBox (expect the API to answer on port 8000 and to document arista)"
 netbox_token="nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000"
 out="$(curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
     http://localhost:8000/api/status/ || true)"
 version="$(sed -nE 's/.*"netbox-version": *"([^"]+)".*/\1/p' <<<"$out")"
-if [ -n "$version" ]; then
-    echo "   NetBox ${version}: ok"
-else
+if [ -z "$version" ]; then
     fail "NetBox not answering on http://localhost:8000 — run 'just netbox-up'"
+elif curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+    "http://localhost:8000/api/dcim/devices/?name=arista&brief=1" | grep -q '"count":1'; then
+    echo "   NetBox ${version}: ok, arista documented"
+else
+    fail "NetBox ${version} answers but does not document arista — run 'just reset-netbox'"
 fi
 
 echo

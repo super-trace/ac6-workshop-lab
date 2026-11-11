@@ -72,10 +72,11 @@ all commands with `just --list`.
 ## NetBox
 
 `just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), empty apart from that login, and its MCP server at
+`ac6-workshop`), seeded with arista for Scenario 3, and its MCP server at
 http://localhost:8001/mcp; see the [main README](README.md#7-netbox) for
-the API token. `just netbox-up` starts just those two; `just netbox-down`
-stops them and deletes NetBox's data.
+the API token. `just netbox-up` starts just those two; `just reset-netbox`
+puts NetBox back as seeded; `just netbox-down` stops them and deletes
+NetBox's data.
 
 ## Finish
 

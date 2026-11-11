@@ -110,7 +110,18 @@ check-l2:
 reset-nokia:
     @./scripts/reset-nokia.sh
 
-# start an empty NetBox on port 8000 and its MCP server on 8001 (lab-up does this too)
+# check the NetBox exercise: NetBox matches arista where it was stale
+[group('exercises')]
+check-netbox:
+    @./scripts/check-netbox.sh
+
+# put NetBox back as seeded, drift included, to run the NetBox exercise again (seconds)
+[group('exercises')]
+reset-netbox:
+    @docker compose -f lab/netbox/compose.yml down -v
+    @./scripts/netbox-up.sh
+
+# start NetBox on port 8000, seeded with arista, and its MCP server on 8001 (lab-up does this too)
 [group('netbox')]
 netbox-up:
     @./scripts/banner.sh intro "just netbox-up" \
