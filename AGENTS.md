@@ -16,8 +16,8 @@ Two-node AC6 workshop lab: `nokia` (SR Linux, fully configured) and `sonic` (SON
 Run commands from the repository root, with Docker and `just` installed:
 
 - `just --list`: list recipes.
-- `just lab-setup`: fetch images and install lab SSH configuration.
-- `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and, if the SONiC image is neither local nor pullable, builds it (`sonic-ensure`, then `scripts/sonic-image.sh`).
+- `just lab-setup`: fetch images and install lab SSH configuration ahead of time (the Codespace prebuild runs it). `lab-up` does both itself, so attendees never need it.
+- `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and makes sure the SONiC image matches the checkout (`sonic-ensure`): the image carries a hash of its recipe (`scripts/sonic-recipe.sh`, label `ac6.recipe`), and a missing or stale one is pulled again or rebuilt with `scripts/sonic-image.sh`.
 - `just lab-status`: inspect running nodes.
 - `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API and an MCP tool call through to NetBox.
 - `just lab-cli <node>`: open a device's native CLI.

@@ -151,18 +151,20 @@ netbox-down:
 lab-setup:
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    docker pull {{sonic_image}} || just sonic-image
+    just sonic-ensure
     docker compose -f lab/netbox/compose.yml pull
     ./scripts/install-ssh.sh
 
-# Use the local SONiC image, else pull it, else build it here.
+# Use the local SONiC image if it matches this checkout, else pull it, else build it here.
 [private]
 sonic-ensure:
     #!/usr/bin/env bash
     set -euo pipefail
-    docker image inspect "{{sonic_image}}" >/dev/null 2>&1 && exit 0
-    docker pull -q "{{sonic_image}}" >/dev/null 2>&1 && exit 0
-    echo "SONiC image not on ghcr yet; building it here from SONiC's official build (one time, about 3 minutes)."
+    want="$(./scripts/sonic-recipe.sh)"
+    stamp() { docker image inspect --format '{{{{index .Config.Labels "ac6.recipe"}}' "{{sonic_image}}" 2>/dev/null || true; }
+    [ "$(stamp)" = "$want" ] && exit 0
+    if docker pull -q "{{sonic_image}}" >/dev/null 2>&1 && [ "$(stamp)" = "$want" ]; then exit 0; fi
+    echo "Building the SONiC image from SONiC's official build (once per lab change, about 3 minutes)."
     ./scripts/sonic-image.sh "{{sonic_image}}"
 
 # maintainers: build the SONiC image from SONiC's official build (add --push to publish it)

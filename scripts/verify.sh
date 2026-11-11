@@ -60,8 +60,10 @@ heading "SSH (expect each alias to answer, as stcli connects)"
 for node in nokia sonic; do
     if ssh -o BatchMode=yes -o ConnectTimeout=10 "${node}" "show version" >/dev/null 2>&1; then
         echo "   ${node}: ok"
+    elif [ "${node}" = sonic ] && ! docker exec "${lab}-sonic" supervisorctl status sshd 2>/dev/null | grep -q RUNNING; then
+        fail "ssh sonic failed: sshd isn't running on sonic — run 'just lab-up'"
     else
-        fail "ssh ${node} failed — run 'just lab-setup' to install the SSH aliases"
+        fail "ssh ${node} failed — run 'just lab-up', which reinstalls the SSH aliases"
     fi
 done
 

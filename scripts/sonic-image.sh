@@ -33,6 +33,7 @@ docker run --rm --platform linux/amd64 --entrypoint cat "$base" /etc/sonic/sonic
 
 # Context is lab/, for the shared lab key.
 docker build --platform linux/amd64 --build-arg "BASE=${base}" \
+    --label "ac6.recipe=$(./scripts/sonic-recipe.sh)" \
     -f lab/images/sonic/Dockerfile -t "$image" lab
 echo "Built ${image}."
 

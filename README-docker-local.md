@@ -16,17 +16,16 @@ AMD64 only: on an Apple silicon Mac, Docker runs it under emulation, so
 ```sh
 git clone https://github.com/super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
-just lab-setup
 ```
 
-If `lab-setup` can't pull the SONiC image, it builds it locally instead
-(SONiC's official build plus the lab login, about 3 minutes).
-
-`lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
-It does not install `stcli`; see Connect below.
 The containerlab helper requires privileged Docker access.
 
 ## Start and check
+
+`just lab-up` does all the setup itself: it installs the shared lab key and
+SSH aliases under `~/.ssh/`, gets the SONiC image (pulled, or built locally
+from SONiC's official build the first time, about 3 minutes), and starts
+both devices and NetBox. It does not install `stcli`; see Connect below.
 
 ```sh
 just lab-up
