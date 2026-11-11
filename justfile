@@ -1,5 +1,7 @@
 # containerlab runs in a sidecar container; scripts/clab.sh explains how.
 clab_image := "ghcr.io/srl-labs/clab:latest"
+# Private: Codespaces pulls it with the attendee's credentials (see ceos-pull).
+ceos_image := "ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F"
 clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 # ANSI colors for the recipe intros; raw strings, so printf expands the
@@ -24,6 +26,8 @@ lab-up:
         "one Nokia and one Arista, plus NetBox and its MCP server." \
         "Expect this to take ~3 minutes."
     @printf '\n'
+    @# A prebuilt Codespace pulls cEOS after creation; make sure it's here.
+    @just ceos-pull
     @# NetBox boots while containerlab deploys; netbox-up.sh waits for it below.
     @./scripts/netbox-up.sh --background
     @# Every node gets a fresh host key on every deploy. lab/ssh_config points
@@ -144,9 +148,24 @@ lab-setup:
     @# The private cEOS image supports native AMD64 and ARM64 Docker engines.
     docker pull {{clab_image}}
     docker pull ghcr.io/nokia/srlinux:25.3.2
-    docker pull ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
     docker compose -f lab/netbox/compose.yml pull
+    just ceos-pull
     ./scripts/install-ssh.sh
+
+# Pull the private cEOS image unless it's already here. A Codespaces prebuild
+# has no credentials for it (unauthorized), so Codespace setup sets
+# AC6_CEOS_OPTIONAL=1 and pulls it again at creation, as the attendee.
+[private]
+ceos-pull:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker image inspect "{{ceos_image}}" >/dev/null 2>&1 && exit 0
+    if docker pull "{{ceos_image}}"; then exit 0; fi
+    if [ -n "${AC6_CEOS_OPTIONAL:-}" ]; then
+        echo "cEOS not pulled now (expected in a Codespaces prebuild); it is pulled when the Codespace is created." >&2
+        exit 0
+    fi
+    exit 1
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
 [group('setup')]
