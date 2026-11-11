@@ -18,9 +18,11 @@ services:
         condition: service_healthy
     env_file: netbox.env
     environment:
-      # The browser's origin, so logging in works through a Codespace's
-      # forwarded URL; scripts/netbox-up.sh sets it.
-      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000}
+      # Origins NetBox accepts a login form from (space-separated). The
+      # Codespaces relay rewrites the browser's Origin header to
+      # http://localhost:8000, so trust that as well as the forwarded URL
+      # that scripts/netbox-up.sh sets.
+      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000} http://localhost:8000
       # initdb/'s dump already has the admin user and token, so skip the
       # startup step (a whole Django start) that creates them.
       # scripts/netbox-snapshot.sh sets this to false to create them.
