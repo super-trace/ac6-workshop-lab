@@ -46,10 +46,11 @@ done
 docker info >/dev/null 2>&1 || { echo "dockerd never became ready" >&2; exit 1; }
 echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'))"
 
-# Codespaces supplies registry credentials for this repository's private package.
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
-# A prebuild can't read the private cEOS image; postCreateCommand pulls it.
+# cEOS comes from arista.com with the repo's ARISTA_TOKEN Codespaces secret
+# (see scripts/ceos-pull.sh). Without it, setup still finishes and
+# postCreateCommand or `just lab-up` fetches it with the attendee's token.
 AC6_CEOS_OPTIONAL=1 just lab-setup
 
 step "Summary"

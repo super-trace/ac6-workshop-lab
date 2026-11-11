@@ -23,5 +23,5 @@
 		"2402": { "label": "arista SSH" }
 	},
 	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh",
-	"postCreateCommand": "just ceos-pull"
+	"postCreateCommand": "AC6_CEOS_OPTIONAL=1 just ceos-pull"
 }

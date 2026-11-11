@@ -71,7 +71,7 @@ printf '\n'
 ../../scripts/banner.sh green "NETBOX IS UP"
 printf '\n'
 printf '    %sURL%s       %s\n' "$bold" "$reset" "$url"
-printf '    %sLogin%s     admin / ac6-workshop\n' "$bold" "$reset"
+printf '    %sLogin%s     oldprotocol / newbrain\n' "$bold" "$reset"
 printf '    %sAPI token%s Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000\n' "$bold" "$reset"
 printf '    %sMCP%s       http://localhost:8001/mcp (streamable HTTP, read-only, no auth)\n' "$bold" "$reset"
 printf '\n    NetBox documents arista: the source of truth for Scenario 3.\n'

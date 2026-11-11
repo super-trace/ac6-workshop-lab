@@ -10,3 +10,13 @@ RUN sed -i \
         -e 's#http://security.ubuntu.com/ubuntu/\?#http://mirror.math.princeton.edu/pub/ubuntu/ http://ftp.osuosl.org/pub/ubuntu/#' \
         /etc/apt/sources.list.d/ubuntu.sources \
     && grep '^URIs' /etc/apt/sources.list.d/ubuntu.sources
+
+# Arista's eos-downloader (ardl): `just ceos-pull` uses it to fetch cEOS-lab
+# from arista.com with an ARISTA_TOKEN. We don't host the image ourselves.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3-venv \
+    && rm -rf /var/lib/apt/lists/* \
+    && python3 -m venv /opt/ardl \
+    && /opt/ardl/bin/pip install --no-cache-dir eos-downloader==0.16.0 \
+    && ln -s /opt/ardl/bin/ardl /usr/local/bin/ardl \
+    && ardl --version

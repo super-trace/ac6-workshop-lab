@@ -35,9 +35,9 @@ already have. The repository requires a **4-core / 16 GB RAM** machine, so
 smaller machine types aren't offered.
 
 The Codespace opens in about a minute with the lab images, `just` and SSH
-configuration already in place. The Arista image (about 4 GB) finishes
-downloading in the background; `just lab-up` waits for it if it's still
-going.
+configuration already in place, including the Arista cEOS image. If
+`just lab-up` says cEOS is missing, it prints how to fetch it from
+arista.com with your own (free) Arista account.
 
 ## B. Install stcli
 
@@ -284,7 +284,7 @@ Where NetBox is right, arista has drifted. Have the agent fix arista
 instead; that's a device change, with its own approval.
 
 **3.6** Check the result in the NetBox UI (**Ports** tab → port 8000, login
-`admin` / `ac6-workshop`): each change is in **Operations → Change Log**,
+`oldprotocol` / `newbrain`): each change is in **Operations → Change Log**,
 with the agent's reason as its message. In a terminal outside `stcli`, this
 confirms it. It ends with **NETBOX MATCHES ARISTA** once NetBox no longer
 disagrees with arista anywhere arista is right:
@@ -458,7 +458,7 @@ server without the lab, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
-- **Log in:** `admin` / `ac6-workshop`.
+- **Log in:** `oldprotocol` / `newbrain`, the same as the devices.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
 - **MCP server:** `http://localhost:8001/mcp` (streamable HTTP, no
   authentication). It reads NetBox with the admin token above. Port 8001

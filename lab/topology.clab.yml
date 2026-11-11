@@ -22,7 +22,8 @@ topology:
       ports: ["2401:22"]
     arista:
       kind: arista_ceos
-      image: ghcr.io/super-trace/ac6-workshop-lab/ceos:4.36.2F
+      # Imported locally from arista.com by `just ceos-pull`; not in any registry.
+      image: arista/ceos:4.36.2F
       startup-config: configs/arista.cfg
       mgmt-ipv4: 172.20.23.3
       ports: ["2402:22"]

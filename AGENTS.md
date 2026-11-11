@@ -52,4 +52,6 @@ Keep licensed vendor archives, personal credentials, and login tokens out of com
 
 ## Public launch
 
-`super-trace/stcli-releases` is public: both READMEs install stcli with `curl -fsSL https://cli.supertrace.ai/install.sh | sh`, as cli.supertrace.ai shows, and the Codespace no longer asks for access to it. This repository will become public too; test the Codespace link and installation without a GitHub login when it does. The cEOS image stays a private package, which is why a prebuild skips it and `postCreateCommand` pulls it (see the `ceos-pull` recipe).
+`super-trace/stcli-releases` is public: both READMEs install stcli with `curl -fsSL https://cli.supertrace.ai/install.sh | sh`, as cli.supertrace.ai shows, and the Codespace no longer asks for access to it. This repository will become public too; test the Codespace link and installation without a GitHub login when it does. We never host or push the cEOS image (Arista's licence doesn't allow redistribution): `scripts/ceos-pull.sh` downloads it from arista.com with an `ARISTA_TOKEN` and imports it locally as `arista/ceos:4.36.2F`. The prebuild uses the repository's `ARISTA_TOKEN` Codespaces secret; locally, attendees use their own token or `just ceos-import <tar>`.
+
+Every login in the lab is `oldprotocol` / `newbrain`: both devices (plus SR Linux's built-in admin and linuxadmin), and NetBox. Changing NetBox's means editing `lab/netbox/netbox.env` and rerunning `scripts/netbox-snapshot.sh`.

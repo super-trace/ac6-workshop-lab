@@ -9,20 +9,23 @@ The same two-device lab runs locally: `arista` (cEOS, configured) and
 Install Git, Docker, `just`, GitHub CLI (`gh`), and a native `stcli` binary.
 Allocate **4 CPU cores / 8 GB RAM** to the lab machine. On macOS, use
 OrbStack or Docker Desktop and allocate these resources to its Linux VM. On Linux, use
-Docker Engine on a machine with these resources. The cEOS package
-supports both AMD64 and ARM64; Docker selects your native architecture.
+Docker Engine on a machine with these resources.
 
-Authenticate GitHub CLI with an account that can access this repository
-and its private container package:
+The Arista cEOS image comes from arista.com under your own free Arista
+account; this repository doesn't host it. Create an access token on your
+[arista.com profile](https://www.arista.com/en/users/profile), and install Arista's downloader (`pip install
+eos-downloader==0.16.0`, or have `uv` or `pipx`; `just` uses whichever it
+finds). It fetches the AMD64 or ARM64 build to match your Docker engine.
 
 ```sh
-gh auth login
-gh auth refresh --scopes read:packages
-git clone git@github.com:super-trace/ac6-workshop-lab.git
+git clone https://github.com/super-trace/ac6-workshop-lab.git
 cd ac6-workshop-lab
-gh auth token | docker login ghcr.io -u "$(gh api user --jq .login)" --password-stdin
-just lab-setup
+ARISTA_TOKEN=<your arista.com token> just lab-setup
 ```
+
+Already downloaded `cEOS64-lab-4.36.2F.tar.xz` (or `cEOSarm-lab-…` on
+ARM64) from arista.com? Run `just ceos-import path/to/the.tar.xz`, then
+`just lab-setup` without the token.
 
 `lab-setup` pulls the network OS images and installs the shared lab key and SSH aliases under `~/.ssh/`.
 It does not install `stcli`; see Connect below.
@@ -72,8 +75,8 @@ all commands with `just --list`.
 
 ## NetBox
 
-`just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
-`ac6-workshop`), seeded with arista for Scenario 3, and its MCP server at
+`just lab-up` starts NetBox at http://localhost:8000 (login `oldprotocol` /
+`newbrain`), seeded with arista for Scenario 3, and its MCP server at
 http://localhost:8001/mcp; see the [main README](README.md#g-netbox) for
 the API token. `just netbox-up` starts just those two; `just reset-netbox`
 puts NetBox back as seeded; `just netbox-down` stops them and deletes
