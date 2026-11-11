@@ -67,14 +67,14 @@ stcli
 The first run signs you in: it prints a verification link with the code
 filled in; if this machine has no browser, open the link on another one.
 From there, follow the exercises in the main
-[README](README.md#4-workshop-exercises). For a router's native CLI, run `just lab-cli arista`. List
+[README](README.md#d-workshop-exercises). For a router's native CLI, run `just lab-cli arista`. List
 all commands with `just --list`.
 
 ## NetBox
 
 `just lab-up` starts NetBox at http://localhost:8000 (login `admin` /
 `ac6-workshop`), seeded with arista for Scenario 3, and its MCP server at
-http://localhost:8001/mcp; see the [main README](README.md#7-netbox) for
+http://localhost:8001/mcp; see the [main README](README.md#g-netbox) for
 the API token. `just netbox-up` starts just those two; `just reset-netbox`
 puts NetBox back as seeded; `just netbox-down` stops them and deletes
 NetBox's data.
