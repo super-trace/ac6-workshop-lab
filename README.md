@@ -1,4 +1,4 @@
-# AC6 workshop lab | Old Protocol New Brain
+# Old Protocol New Brain | AC6 workshop lab
 
 Slides: [supertrace.ai/ac6-deck](http://supertrace.ai/ac6-deck)
 
