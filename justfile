@@ -18,12 +18,12 @@ sonic := '\033[96m'
 default:
     @just --list --unsorted
 
-# deploy both nodes fresh from lab/configs/, plus NetBox and its MCP server (~3 minutes)
+# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes)
 [group('lab')]
 lab-up:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
-        "one Nokia and one SONiC, plus NetBox and its MCP server." \
+        "one Nokia and one SONiC, plus NetBox." \
         "Expect this to take ~3 minutes."
     @printf '\n'
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
@@ -55,7 +55,7 @@ lab-up:
     @printf '    {{bold}}sonic{{reset}}  {{sonic}}SONiC{{reset}}           blank: Ethernet0 and Ethernet4 unconfigured\n\n'
     @printf '    Links: nokia ethernet-1/1 <-> sonic Ethernet0 (BGP)\n'
     @printf '           nokia ethernet-1/2 <-> sonic Ethernet4 (layer 2 trunk)\n'
-    @printf '    NetBox: port 8000; MCP server: http://localhost:8001/mcp\n'
+    @printf '    NetBox: port 8000; GitHub MCP: http://localhost:8002/mcp/readonly\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node nokia: ...\n'
@@ -67,7 +67,7 @@ lab-up:
 lab-verify:
     @./scripts/banner.sh intro "just lab-verify" \
         "This command checks the lab baseline: nokia configured, sonic" \
-        "blank, both links up, NetBox and its MCP server answering." \
+        "blank, both links up, NetBox and GitHub's MCP server answering." \
         "Expect this to take ~10 seconds."
     @printf '\n'
     @./scripts/verify.sh
@@ -134,17 +134,17 @@ reset-netbox:
     @docker compose -f lab/netbox/compose.yml down -v
     @./scripts/netbox-up.sh
 
-# start NetBox on port 8000, seeded with nokia, and its MCP server on 8001 (lab-up does this too)
+# start NetBox on port 8000, seeded with nokia, and the GitHub MCP proxy (lab-up does this too)
 [group('netbox')]
 netbox-up:
     @./scripts/banner.sh intro "just netbox-up" \
         "Starting NetBox, the source of truth stcli exports device data to," \
-        "and its MCP server. Expect ~2–3 minutes the first time, then a" \
+        "and the GitHub MCP proxy. Expect ~2–3 minutes the first time, then a" \
         "few seconds."
     @printf '\n'
     @./scripts/netbox-up.sh
 
-# stop NetBox and its MCP server and delete NetBox's data
+# stop NetBox and the GitHub MCP proxy and delete NetBox's data
 [group('netbox')]
 netbox-down:
     @docker compose -f lab/netbox/compose.yml down -v

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Start the workshop's NetBox and its MCP server (lab/netbox/compose.yml),
+# Start the workshop's NetBox and the GitHub MCP proxy (lab/netbox/compose.yml),
 # seed NetBox with nokia as documented (scripts/netbox-seed.sh, once: what
 # attendees change is kept until `just netbox-down` or `just reset-netbox`),
 # and print how to reach both. In a
 # Codespace, also make port 8000 (NetBox) public so anyone with the URL can
-# open it; port 8001 (MCP) stays private. Safe to re-run.
+# open it; the GitHub MCP proxy listens on localhost only. Safe to re-run.
 #
 # A first start loads lab/netbox/initdb/'s already-migrated database, so it
 # takes seconds rather than the minutes NetBox's own migrations would.
@@ -42,7 +42,7 @@ pid_file="${TMPDIR:-/tmp}/ac6-netbox-up.pid"
 log_file="${TMPDIR:-/tmp}/ac6-netbox-up.log"
 
 if [ "$mode" = "--background" ]; then
-    docker compose up -d --quiet-pull >"$log_file" 2>&1 &
+    docker compose up -d --quiet-pull --remove-orphans >"$log_file" 2>&1 &
     echo $! >"$pid_file"
     disown
     echo "NetBox: starting in the background."
@@ -55,8 +55,8 @@ if [ -f "$pid_file" ]; then
     rm -f "$pid_file"
 fi
 
-# --wait returns once NetBox and the MCP server answer their health checks.
-docker compose up -d --wait --wait-timeout 900
+# --wait returns once NetBox answers its health check.
+docker compose up -d --remove-orphans --wait --wait-timeout 900
 
 NETBOX_URL=http://localhost:8000 ../../scripts/netbox-seed.sh
 
@@ -73,7 +73,6 @@ printf '\n'
 printf '    %sURL%s       %s\n' "$bold" "$reset" "$url"
 printf '    %sLogin%s     oldprotocol / newbrain\n' "$bold" "$reset"
 printf '    %sAPI token%s Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000\n' "$bold" "$reset"
-printf '    %sMCP%s       http://localhost:8001/mcp (streamable HTTP, read-only, no auth)\n' "$bold" "$reset"
 printf '    %sGitHub MCP%s http://localhost:8002/mcp/readonly (proxy, adds your GITHUB_TOKEN)\n' "$bold" "$reset"
 printf '\n    NetBox documents nokia: the source of truth for Scenario 3.\n'
 printf '    %sjust reset-netbox%s puts it back as seeded.\n' "$green" "$reset"

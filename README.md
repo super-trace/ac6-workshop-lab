@@ -21,7 +21,7 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
               │ documents nokia (drift included); sonic isn't in it yet
   ┌───────────┴─────────────────────────────────────────────────────────────┐
   │ netbox                              source of truth                     │
-  │ NetBox 4.7 · UI and API on :8000    MCP server on :8001/mcp             │
+  │ NetBox 4.7 · UI and API on :8000                                        │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -80,8 +80,8 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 
 ## C. Start and verify
 
-**C.1** Start the lab (about 3 minutes). This also starts NetBox and its MCP server
-(see [G. NetBox](#g-netbox)):
+**C.1** Start the lab (about 3 minutes). This also starts NetBox (see
+[G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
 
 ```sh
 just lab-up
@@ -94,8 +94,8 @@ just lab-verify
 ```
 
 `lab-verify` checks the starting point: nokia
-configured, sonic blank, both links up, SSH to both, and NetBox, its MCP
-server and GitHub's MCP server answering. It ends with **LAB
+configured, sonic blank, both links up, SSH to both, and NetBox and
+GitHub's MCP server answering. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
@@ -688,26 +688,22 @@ The two devices feel different once you're in:
 ## G. NetBox
 
 NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
-it on port 8000, with NetBox Labs' read-only MCP server beside it on port
-8001. `stcli` connects to NetBox itself with `/netbox connect`. NetBox
+it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
 starts seeded with nokia as documented, drift included (see Scenario 3).
 It keeps what you change, even across a `just lab-down`; `just
-reset-netbox` puts it back as seeded. To start just NetBox and the MCP
-server without the lab, run `just netbox-up`.
+reset-netbox` puts it back as seeded. To start just NetBox without the lab,
+run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
 - **Log in:** `oldprotocol` / `newbrain`, the same as the devices.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
-- **MCP server:** `http://localhost:8001/mcp` (streamable HTTP, no
-  authentication). It reads NetBox with the admin token above. Port 8001
-  stays private in a Codespace.
 - **Share it:** the recipe makes port 8000 public when the Codespace allows
   it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
   Visibility → Public**. Anyone with the URL can then log in with the
   password above, so keep it to this disposable lab.
 
-`just netbox-down` stops NetBox and the MCP server and deletes NetBox's
+`just netbox-down` stops NetBox and deletes NetBox's
 data; the next `just lab-up` seeds it again.
 
 ## H. Troubleshooting
