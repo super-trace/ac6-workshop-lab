@@ -394,11 +394,12 @@ before you approve it. Expect a handful of approvals:
 Apply sonic-bgp.conf to sonic, plus the description fixes, one command at a time, in order. Don't run anything in parallel.
 ```
 
-**D.2.8** Ping again and check the session. The ping should now succeed, and BGP
-should be Established:
+**D.2.8** Check your work. The ping should now succeed, BGP should be
+Established, and sonic's descriptions should pass the standard: `Ethernet0`
+reads `BGP: eBGP peer AS65001`, and `Ethernet8` has none:
 
 ```
-Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
+Ping the BGP peer at 10.0.0.1 again, verify that BGP is up, and check that sonic now follows our interface standards.
 ```
 
 **D.2.9** Everything you just did is on the record. Open the dashboard at
