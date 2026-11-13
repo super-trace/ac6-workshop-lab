@@ -236,7 +236,22 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-**D.1.10** Audit nokia against the standard:
+> [!TIP]
+> **Memory or skill?** You've now made one of each.
+>
+> | | Memory (D.1.7) | Skill (D.1.9) |
+> | --- | --- | --- |
+> | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
+> | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
+> | Size | A sentence | As long as the procedure needs |
+> | Example | "Include rollback commands with every change" | Your team's interface standard |
+> | Where to see it | [Memory page](https://cli.supertrace.ai/app/memory) | [Skills page](https://cli.supertrace.ai/app/skills) |
+>
+> Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
+> *a job* gets done, it's a skill.
+
+**D.1.10** Audit nokia against the standard. You don't name the skill: the
+agent picks it up because the question is about interface standards:
 
 ```
 Does nokia follow our interface standards? Show me a table of anything that doesn't.
@@ -307,11 +322,24 @@ Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
 **D.2.6** sonic has no configuration yet, but someone has been labelling its
-ports. Audit them with your skill:
+ports. This time, start the skill yourself from your skill library:
+
+> [!WARNING]
+> **TODO (Mahir):** `/skills` is still being built. Check this step's
+> syntax against what ships.
+
+```
+/skills
+```
+
+Pick **interface-standards**, then ask:
 
 ```
 Does sonic follow our interface standards? Show me a table of anything that doesn't.
 ```
+
+D.1.10 used the skill because the question matched it; here you chose it.
+Either way, it's the same standard on a different vendor's switch.
 
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
