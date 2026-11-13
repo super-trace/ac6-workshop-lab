@@ -264,10 +264,18 @@ Does nokia follow our interface standards? Show me a table of anything that does
 ```
 
 A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
-peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
-3 fixes it.
+peer switch`, but a trunk should list its VLANs.
 
-**D.1.12** Tell us how it went:
+**D.1.12** Fix it. This changes nokia, so it stops for your approval: SR
+Linux stages the change and commits it, and the dialog shows both:
+
+```
+Fix that description on nokia so it follows the standard.
+```
+
+Run D.1.11's prompt again if you want proof: nokia now follows the standard.
+
+**D.1.13** Tell us how it went:
 
 ```
 /feedback
@@ -478,15 +486,8 @@ The agent proposes one changeset. **Apply these changes to NetBox?** shows
 every field it will change, `current → new`, with the reason for each.
 Nothing is written until you press `y`.
 
-Where NetBox is right, nokia has drifted. Have the agent fix nokia
-instead; that's a device change, with its own approval. Your
-`interface-standards` skill settles one of them: the `ethernet-1/2`
-description you found in Scenario 1. NetBox lists the trunk's VLANs, as the
-standard says, so NetBox is right and nokia changes:
-
-```
-Where our interface standards say which side is right, follow them, and fix nokia.
-```
+The `ethernet-1/2` description you fixed in Scenario 1 isn't on the list:
+NetBox already had it the way the standard says, so the two now agree.
 
 **D.3.9** Check the result in the NetBox tab you opened (reload it): each change
 is in **Operations → Change Log**, with the agent's reason as its message.
@@ -521,12 +522,12 @@ I need."* or *"I'd want it to connect to ___ next."*
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
-| ethernet-1/2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the team standard: a trunk lists its VLANs) | set the description on nokia |
 
-`just check-netbox` checks the first three. The fourth is there so the
-agent has to ask, rather than assume the device always wins; the
-`interface-standards` skill from Scenario 1 answers it, but either answer
-passes the check. Everything else in NetBox matches nokia: the site `lab`, the
+`just check-netbox` checks all three. NetBox also describes `ethernet-1/2`
+as `TRUNK: VLANs 110,120,130`, which nokia matches once attendees fix it in
+D.1.12. Anyone who skipped that sees a fourth difference where NetBox is
+right (the team standard says a trunk lists its VLANs); the agent should
+ask, and fix nokia rather than NetBox. Either way the check passes. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
 NetBox: attendees build it in Scenario 2.
