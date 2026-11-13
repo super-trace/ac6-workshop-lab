@@ -220,12 +220,13 @@ It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
 
-**D.1.10** Turn the [team standards](#team-standards) into a skill. Copy the
-whole block, standard included, and paste it into `stcli` as one message;
-the line breaks stay in the input until you press **Enter**:
+**D.1.10** Your boss just sent round the [team standards](#team-standards).
+Check nokia against them. Copy the whole block, standard included, and paste
+it into `stcli` as one message; the line breaks stay in the input until you
+press **Enter**:
 
 ```
-Make a skill called interface-standards from our team's standard below. Use it whenever you configure, audit or document interfaces on any device, or compare a device with NetBox.
+My boss just added some team standards for interface descriptions:
 
 Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - Roles: BGP, TRUNK, LOOPBACK, LAN.
@@ -235,6 +236,25 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
 - Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
 - A port with nothing connected has no description. Management ports are exempt.
+
+Can you check my nokia and see if I'm in line? Show me a table of anything that isn't.
+```
+
+A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
+peer switch`, but a trunk should list its VLANs.
+
+**D.1.11** Fix it. This changes nokia, so it stops for your approval: SR
+Linux stages the change and commits it, and the dialog shows both:
+
+```
+Fix the nokia.
+```
+
+**D.1.12** You'll need these standards again, on every device. Save them as
+a skill, straight from this conversation:
+
+```
+Remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
 ```
 
 `stcli` shows the whole draft before anything is saved. Read it, then press
@@ -242,10 +262,23 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
+**D.1.13** See your skill library:
+
+> [!WARNING]
+> **TODO (Mahir):** `/skills` is still being built. Check this step's
+> syntax against what ships.
+
+```
+/skills
+```
+
+`interface-standards` is there. Pick it to run it on demand; you'll also
+see the agent reach for it by itself in Scenario 2.
+
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
 >
-> | | Memory (D.1.9) | Skill (D.1.10) |
+> | | Memory (D.1.9) | Skill (D.1.12) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
 > | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
@@ -256,26 +289,7 @@ can see or edit it on the dashboard's
 > Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
 > *a job* gets done, it's a skill.
 
-**D.1.11** Audit nokia against the standard. You don't name the skill: the
-agent picks it up because the question is about interface standards:
-
-```
-Does nokia follow our interface standards? Show me a table of anything that doesn't.
-```
-
-A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
-peer switch`, but a trunk should list its VLANs.
-
-**D.1.12** Fix it. This changes nokia, so it stops for your approval: SR
-Linux stages the change and commits it, and the dialog shows both:
-
-```
-Fix that description on nokia so it follows the standard.
-```
-
-Run D.1.11's prompt again if you want proof: nokia now follows the standard.
-
-**D.1.13** Tell us how it went:
+**D.1.14** Tell us how it went:
 
 ```
 /feedback
@@ -336,24 +350,14 @@ Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
 **D.2.6** sonic has no configuration yet, but someone has been labelling its
-ports. This time, start the skill yourself from your skill library:
-
-> [!WARNING]
-> **TODO (Mahir):** `/skills` is still being built. Check this step's
-> syntax against what ships.
-
-```
-/skills
-```
-
-Pick **interface-standards**, then ask:
+ports. Audit them. You don't name the skill: the agent picks it up because
+the question is about interface standards:
 
 ```
 Does sonic follow our interface standards? Show me a table of anything that doesn't.
 ```
 
-D.1.11 used the skill because the question matched it; here you chose it.
-Either way, it's the same standard on a different vendor's switch.
+It's the same standard you set on nokia, now on a different vendor's switch.
 
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
@@ -523,11 +527,11 @@ I need."* or *"I'd want it to connect to ___ next."*
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
-| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.12) | nokia | update the description in NetBox |
+| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.11) | nokia | update the description in NetBox |
 
 `just check-netbox` checks all four. The fourth only shows up if attendees
-fixed nokia in D.1.12; NetBox is seeded with nokia's original, off-standard
-description. Anyone who skipped D.1.12 sees no difference there, and the
+fixed nokia in D.1.11; NetBox is seeded with nokia's original, off-standard
+description. Anyone who skipped D.1.11 sees no difference there, and the
 check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
