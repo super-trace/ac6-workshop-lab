@@ -158,12 +158,21 @@ Show me the configuration snippets behind the routing you just diagnosed.
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**1.8** Turn the [team standards](#team-standards) into a skill. Copy this
-prompt, then paste the standard from the top of this page underneath it, in
-the same message:
+**1.8** Turn the [team standards](#team-standards) into a skill. Copy the
+whole block, standard included, and paste it into `stcli` as one message;
+the line breaks stay in the input until you press **Enter**:
 
 ```
 Make a skill called interface-standards from our team's standard below. Use it whenever you configure, audit or document interfaces on any device, or compare a device with NetBox.
+
+Interface descriptions follow ROLE: detail.
+- Roles: BGP, TRUNK, LOOPBACK, LAN.
+- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
+- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
+- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
+- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
+- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
+- A port with nothing connected has no description. Management ports are exempt.
 ```
 
 `stcli` shows the whole draft before anything is saved. Read it, then press

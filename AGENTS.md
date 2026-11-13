@@ -22,7 +22,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API and an MCP tool call through to NetBox.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
-- `just check-standards`: confirm Scenario 2's standards audit fixed sonic's descriptions. `lab-ready.sh` seeds two off-standard ones (`Ethernet0`, `Ethernet8`) before saving sonic's baseline, so `reset-sonic` puts them back. Keep the README's "Team standards" block, the seed, `scripts/check-standards.sh` and the Scenario 1–3 audit steps in step.
+- `just check-standards`: confirm Scenario 2's standards audit fixed sonic's descriptions. `lab-ready.sh` seeds two off-standard ones (`Ethernet0`, `Ethernet8`) before saving sonic's baseline, so `reset-sonic` puts them back. Keep the README's "Team standards" block and its copy in Scenario 1's skill prompt (1.8), the seed, `scripts/check-standards.sh` and the Scenario 1–3 audit steps in step.
 - `just reset-sonic`: return sonic to blank in seconds without redeploying nokia. `lab-ready.sh` saves sonic's CONFIG_DB and FRR config after boot; `scripts/sonic-reset.py` diffs CONFIG_DB back to it (SONiC's `config replace` rejects the virtual switch's default config, and `config reload` needs systemd), then FRR's files are restored and bgpd restarted.
 - `just check-netbox` / `just reset-netbox`: confirm NetBox matches nokia where the seed left it stale / put NetBox back as seeded, drift included.
 - `just netbox-up` / `just netbox-down`: start NetBox and the MCP server without the lab / stop both and delete NetBox's data.
