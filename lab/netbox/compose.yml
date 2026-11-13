@@ -65,6 +65,11 @@ services:
       - --change-host-header
       - --header-up
       - "Authorization: Bearer {env.GITHUB_TOKEN}"
+      # Read-only on every path, not only /mcp/readonly: GitHub's full
+      # /mcp/ endpoint includes write tools, and this header limits it to the
+      # read-only set. It replaces any value a client sends.
+      - --header-up
+      - "X-MCP-Readonly: true"
     ports:
       - "127.0.0.1:8002:8002"
 

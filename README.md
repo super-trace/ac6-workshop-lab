@@ -691,8 +691,8 @@ NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
 it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
 starts seeded with nokia as documented, drift included (see Scenario 3).
 It keeps what you change, even across a `just lab-down`; `just
-reset-netbox` puts it back as seeded. To start just NetBox without the lab,
-run `just netbox-up`.
+reset-netbox` puts it back as seeded. To start NetBox and the GitHub MCP proxy
+without the devices, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).

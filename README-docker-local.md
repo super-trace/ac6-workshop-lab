@@ -27,6 +27,14 @@ SSH aliases under `~/.ssh/`, gets the SONiC image (pulled, or built locally
 from SONiC's official build the first time, about 3 minutes), and starts
 both devices and NetBox. It does not install `stcli`; see Connect below.
 
+Scenario 3 uses GitHub's MCP server through a local proxy that signs in with
+a `GITHUB_TOKEN` (a Codespace has one). Export one first, for example from
+the GitHub CLI:
+
+```sh
+export GITHUB_TOKEN="$(gh auth token)"
+```
+
 ```sh
 just lab-up
 ```
@@ -71,10 +79,10 @@ all commands with `just --list`.
 
 `just lab-up` starts NetBox at http://localhost:8000 (login `oldprotocol` /
 `newbrain`), seeded with nokia for Scenario 3; see the
-[main README](README.md#g-netbox) for the API token. GitHub's MCP server
-needs a `GITHUB_TOKEN` exported before `just lab-up` (a Codespace has one).
-`just netbox-up` starts just NetBox; `just reset-netbox`
-puts NetBox back as seeded; `just netbox-down` stops them and deletes
+[main README](README.md#g-netbox) for the API token. `just netbox-up` starts
+NetBox and the GitHub MCP proxy without the devices; run it after exporting
+`GITHUB_TOKEN` to give a running lab's proxy the token. `just reset-netbox`
+puts NetBox back as seeded; `just netbox-down` stops both and deletes
 NetBox's data.
 
 ## Finish
