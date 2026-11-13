@@ -30,7 +30,7 @@ Run commands from the repository root, with Docker and `just` installed:
 
 NetBox's own first-start migrations take ~6 minutes in a Codespace, so Postgres instead loads `lab/netbox/initdb/netbox.sql.gz`, an already-migrated database, on an empty volume; NetBox then starts in seconds. After changing the NetBox image in `lab/netbox/compose.yml`, regenerate the dump with `scripts/netbox-snapshot.sh` (it deletes NetBox's data).
 
-`scripts/netbox-seed.sh` (run by `netbox-up.sh`) seeds NetBox once, curl only, with nokia as documented plus the Scenario 3 drift; the `workshop-seed` tag, created last, marks a finished seed. Keep the seed, `scripts/check-netbox.sh` and the README's Scenario 3 facilitator table in step.
+`scripts/netbox-seed.sh` (run by `netbox-up.sh`) seeds NetBox once, curl only, with nokia as documented plus the Scenario 3 drift, and the SONiC manufacturer, device type, platform and `switch` role that D.3.10 needs to add sonic (sonic itself is never seeded); the `workshop-seed` tag, created last, marks a finished seed. Keep the seed, `scripts/check-netbox.sh` and the README's Scenario 3 facilitator table in step.
 
 ## Coding Style & Naming Conventions
 

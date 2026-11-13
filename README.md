@@ -492,8 +492,11 @@ Then connect `stcli` to NetBox:
 **D.3.7** Ask what NetBox knows. Reads from NetBox run without asking you:
 
 ```
-What does NetBox document for nokia? List its interfaces, IP addresses and VLANs.
+What does NetBox document about our network? List every site, device, interface, IP address and VLAN. Is anything we're connected to missing?
 ```
+
+A good answer lists the site `lab` and nokia, and points out that sonic
+isn't in NetBox at all.
 
 **D.3.8** Compare NetBox with the real device:
 
@@ -502,8 +505,8 @@ Compare nokia's running configuration with NetBox and show me every difference.
 ```
 
 **D.3.9** A good answer is a table of discrepancies, and a question: for each one,
-which side is right? It won't change either side until you answer. Decide
-item by item. Where nokia is right, NetBox is stale:
+which side is right? It won't change either side until you answer. Here the
+device is the source of truth, so NetBox is what's stale:
 
 ```
 For every difference where nokia is right, update NetBox to match.
@@ -515,25 +518,43 @@ Nothing is written until you press `y`.
 
 One of them is your own work: the `ethernet-1/2` description you fixed in
 Scenario 1. nokia follows the standard now, and NetBox still has the old
-text. The device is the source of truth, so NetBox changes.
+text, so NetBox changes.
 
-**D.3.10** Check the result in the NetBox tab you opened (reload it): each change
-is in **Operations → Change Log**, with the agent's reason as its message.
+**D.3.10** Now document sonic, from the switch itself:
 
-**D.3.11** Have the agent walk through it:
+```
+Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
+```
+
+Expect about three approvals: the device first, then its interfaces, then
+the addresses, because each needs the one before it to exist. Reload the
+NetBox tab: sonic is under **Devices**, with every change in **Operations →
+Change Log** and the agent's reason as its message.
+
+**D.3.11** One standard, two vendors, and your source of truth. Check them
+all at once:
+
+```
+Check nokia, sonic and NetBox against our interface standards, and fix anything that doesn't follow them.
+```
+
+If you fixed nokia in Scenario 1 and sonic in Scenario 2, there's nothing
+left to fix: a clean answer is the win. All three agree.
+
+**D.3.12** Have the agent walk through it:
 
 ```
 Explain what you changed in NetBox and why.
 ```
 
-**D.3.12** Finish with a big one: audit the security of both devices. It
+**D.3.13** Finish with a big one: audit the security of both devices. It
 takes a few minutes:
 
 ```
 Do a full security audit across both devices, give me a TLDR of what to focus on, and save the full report to security-audit.md.
 ```
 
-**D.3.13** Tell us how it went:
+**D.3.14** Tell us how it went:
 
 ```
 /feedback
@@ -558,7 +579,8 @@ description. Anyone who skipped D.1.9 sees no difference there, and the
 check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
-NetBox: attendees build it in Scenario 2.
+NetBox: attendees add it in D.3.10. The seed has what that needs ready: a
+SONiC manufacturer, device type and platform, and a `switch` role.
 
 </details>
 
