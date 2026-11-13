@@ -124,7 +124,7 @@ starts here.
 
 ## D. Workshop exercises
 
-Work through these in order, in one `stcli` tab. Copy each prompt into
+Work through these in order, in one `stcli`. Copy each prompt into
 `stcli` as written. Each scenario starts with `/clear`, which clears the
 conversation but keeps your devices connected, so one scenario's answers
 don't steer the next. Your skill and anything you ask `stcli` to remember
@@ -702,8 +702,8 @@ line, which skips the confirmation:
 /add oldprotocol@172.20.23.3
 ```
 
-`stcli oldprotocol@172.20.23.2 oldprotocol@172.20.23.3` is not the same thing: it opens each device in its own
-tab, and every tab is a separate session with its own agent.
+`stcli oldprotocol@172.20.23.2 oldprotocol@172.20.23.3` does the same from the
+shell: both devices join one session.
 
 Every connection uses the lab login, `oldprotocol` / `newbrain`:
 `oldprotocol@172.20.23.2` is nokia, `oldprotocol@172.20.23.3` is sonic.
@@ -731,15 +731,14 @@ The two devices feel different once you're in:
   a device stops at **Approve this command?**, with the device named beside
   the command. Destructive commands also ask you to type a confirmation
   phrase.
-- **Run a command yourself:** `!sonic show ip bgp summary`. With several
+- **Run a command yourself:** `!oldprotocol@sonic show ip bgp summary`. With several
   devices in the session, name the device first; a bare `!` lists the names.
 - **Manage devices:** `/disconnect sonic` closes one device;
   `/connect sonic` dials it again.
 - **Start fresh:** `/clear` clears the conversation and keeps the connected
-  devices.
-- **Tabs are separate sessions.** Switch with
-  `/switch`, `ctrl+←/→` or `alt+1..9`; a background tab shows `!` when it is
-  waiting for your approval.
+  devices; `/new` starts a completely new session with no devices.
+- **One `stcli`, one session.** For a second session, run a second `stcli` in
+  another terminal.
 
 ## G. NetBox
 
