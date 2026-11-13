@@ -486,8 +486,9 @@ The agent proposes one changeset. **Apply these changes to NetBox?** shows
 every field it will change, `current → new`, with the reason for each.
 Nothing is written until you press `y`.
 
-The `ethernet-1/2` description you fixed in Scenario 1 isn't on the list:
-NetBox already had it the way the standard says, so the two now agree.
+One of them is your own work: the `ethernet-1/2` description you fixed in
+Scenario 1. nokia follows the standard now, and NetBox still has the old
+text. The device is the source of truth, so NetBox changes.
 
 **D.3.9** Check the result in the NetBox tab you opened (reload it): each change
 is in **Operations → Change Log**, with the agent's reason as its message.
@@ -522,12 +523,12 @@ I need."* or *"I'd want it to connect to ___ next."*
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
+| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.12) | nokia | update the description in NetBox |
 
-`just check-netbox` checks all three. NetBox also describes `ethernet-1/2`
-as `TRUNK: VLANs 110,120,130`, which nokia matches once attendees fix it in
-D.1.12. Anyone who skipped that sees a fourth difference where NetBox is
-right (the team standard says a trunk lists its VLANs); the agent should
-ask, and fix nokia rather than NetBox. Either way the check passes. Everything else in NetBox matches nokia: the site `lab`, the
+`just check-netbox` checks all four. The fourth only shows up if attendees
+fixed nokia in D.1.12; NetBox is seeded with nokia's original, off-standard
+description. Anyone who skipped D.1.12 sees no difference there, and the
+check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
 NetBox: attendees build it in Scenario 2.

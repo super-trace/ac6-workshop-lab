@@ -65,9 +65,10 @@ iface() {
 }
 mgmt0="$(iface mgmt0 1000base-t "" ',"mgmt_only":true')"
 e11="$(iface ethernet-1/1 25gbase-x-sfp28 "BGP: eBGP peer AS65002")"
-# Drift, NetBox's side wins: the documented description standard names the
-# trunk's VLANs; nokia still says "TRUNK: to peer switch".
-e12="$(iface ethernet-1/2 25gbase-x-sfp28 "TRUNK: VLANs 110,120,130" ",\"mode\":\"tagged\",\"tagged_vlans\":[${v110},${v120},${v130}]")"
+# Matches nokia as deployed, off-standard description included. Scenario 1
+# (D.1.12) fixes nokia's to "TRUNK: VLANs 110,120,130", which leaves NetBox
+# stale for Scenario 3 to update from the device.
+e12="$(iface ethernet-1/2 25gbase-x-sfp28 "TRUNK: to peer switch" ",\"mode\":\"tagged\",\"tagged_vlans\":[${v110},${v120},${v130}]")"
 lo0="$(iface lo0 virtual "LOOPBACK: router-id 10.255.0.1")"
 # Drift: lo1 (172.16.10.1/24, the LAN nokia advertises) is missing.
 # One routed subinterface per VLAN, each the VLAN's gateway.
