@@ -45,6 +45,24 @@ nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
 address the workshop gives it, since sonic starts with no addresses on
 either link. Connect to each device by its management IP.
 
+### Team standards
+
+Every network team has conventions that live in a wiki or in people's
+heads. This is the lab team's standard for interface descriptions. In
+Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
+applies it on every device, in every scenario, without being reminded.
+
+```
+Interface descriptions follow ROLE: detail, except VLAN gateways (below).
+- Roles: BGP, TRUNK, LOOPBACK, LAN.
+- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
+- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
+- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
+- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
+- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
+- A port with nothing connected has no description. Management ports are exempt.
+```
+
 ## B. Install stcli
 
 **B.1** In the Codespace terminal, install `stcli`, the same way as on
@@ -116,24 +134,6 @@ A ping or other long-running command can be stopped with **Esc**.
 
 Each scenario ends with `/feedback`: tell us what worked and what didn't, in
 a sentence. We read every one.
-
-### Team standards
-
-Every network team has conventions that live in a wiki or in people's
-heads. This is the lab team's standard for interface descriptions. In
-Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
-applies it on every device, in every scenario, without being reminded.
-
-```
-Interface descriptions follow ROLE: detail, except VLAN gateways (below).
-- Roles: BGP, TRUNK, LOOPBACK, LAN.
-- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
-- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
-- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
-- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
-- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
-- A port with nothing connected has no description. Management ports are exempt.
-```
 
 ### Scenario 1: one device, talk to your network
 
