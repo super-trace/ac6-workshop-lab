@@ -8,7 +8,7 @@ Two-node AC6 workshop lab: `nokia` (SR Linux, fully configured) and `sonic` (SON
 - `lab/inventory/`: a Nornir inventory of the lab devices. `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/sonic/`: the lab's SONiC image, SONiC's official `docker-sonic-vs` plus the lab login, sshd and bgpd. `just sonic-image --push` rebuilds it from SONiC's pipeline and publishes `ghcr.io/super-trace/ac6-workshop-lab/sonic-vs` (a public package; SONiC is Apache-2.0).
 - `scripts/`: verification, exercise checks, and setup helpers; `justfile` wraps them.
-- `lab/netbox/`: NetBox and NetBox Labs' MCP server (Compose file and settings). `lab-up` starts both; its network is pinned to `172.20.24.0/24` so it can't overlap containerlab's `172.20.23.0/24`.
+- `lab/netbox/`: NetBox, NetBox Labs' MCP server, and `github-mcp`, a Caddy proxy that serves GitHub's read-only MCP server at `http://localhost:8002/mcp/readonly` with the `GITHUB_TOKEN` of the shell that ran `lab-up` (Scenario 3's `/mcp add`; localhost only) (Compose file and settings). `lab-up` starts both; its network is pinned to `172.20.24.0/24` so it can't overlap containerlab's `172.20.23.0/24`.
 - `.devcontainer/`: Codespaces configuration.
 
 ## Build, Test, and Development Commands
@@ -19,10 +19,9 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-setup`: fetch images and install lab SSH configuration ahead of time (the Codespace prebuild runs it). `lab-up` does both itself, so attendees never need it.
 - `just lab-up`: deploy the topology and start NetBox (port 8000) and its MCP server (port 8001, `/mcp`). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and makes sure the SONiC image matches the checkout (`sonic-ensure`): the image carries a hash of its recipe (`scripts/sonic-recipe.sh`, label `ac6.recipe`), and a missing or stale one is pulled again or rebuilt with `scripts/sonic-image.sh`.
 - `just lab-status`: inspect running nodes.
-- `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API and an MCP tool call through to NetBox.
+- `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API, an MCP tool call through to NetBox, and the GitHub MCP proxy's handshake.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
-- `just mcp-github`: add GitHub's read-only MCP server (`api.githubcopilot.com/mcp/readonly`) to stcli's `config.json` with the Codespace's `GITHUB_TOKEN`, bash only (the host has no `jq` or `python3`); used by Scenario 3.
 - `just check-standards`: confirm Scenario 2's standards audit fixed sonic's descriptions. `lab-ready.sh` seeds two off-standard ones (`Ethernet0`, `Ethernet8`) before saving sonic's baseline, so `reset-sonic` puts them back. Keep the README's "Team standards" block and its copy in Scenario 1's skill prompt (1.10), the seed, `scripts/check-standards.sh` and the Scenario 1–3 audit steps in step.
 - `just reset-sonic`: return sonic to blank in seconds without redeploying nokia. `lab-ready.sh` saves sonic's CONFIG_DB and FRR config after boot; `scripts/sonic-reset.py` diffs CONFIG_DB back to it (SONiC's `config replace` rejects the virtual switch's default config, and `config reload` needs systemd), then FRR's files are restored and bgpd restarted.
 - `just check-netbox` / `just reset-netbox`: confirm NetBox matches nokia where the seed left it stale / put NetBox back as seeded, drift included.

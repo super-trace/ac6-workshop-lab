@@ -94,8 +94,8 @@ just lab-verify
 ```
 
 `lab-verify` checks the starting point: nokia
-configured, sonic blank, both links up, SSH to both, and NetBox and its MCP
-server answering. It ends with **LAB
+configured, sonic blank, both links up, SSH to both, and NetBox, its MCP
+server and GitHub's MCP server answering. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
@@ -382,30 +382,25 @@ approvals felt ___."*
 
 ### Scenario 3: plug in the tools you already use
 
-You'll give `stcli` two tools: GitHub over MCP, and NetBox, your source of
-truth, which it reads and fixes.
+You'll give `stcli` two tools you already use: GitHub over MCP, and NetBox,
+your source of truth, which it reads and fixes.
 
-**3.1** MCP servers connect when `stcli` starts, so leave it with **Ctrl+C**
-twice. In the terminal, add GitHub's read-only MCP server. Your Codespace
-already has a GitHub token, and it never appears on screen:
-
-```sh
-just mcp-github
-```
-
-**3.2** Start `stcli` again and reconnect both devices. Ask in plain language;
-press **Enter** to confirm each connection. Both use the lab's SSH key, so
-there's no password:
-
-```sh
-stcli
-```
+**3.1** Start a fresh conversation. Both devices stay connected:
 
 ```
-Connect to oldprotocol@nokia and oldprotocol@sonic.
+/new
 ```
 
-**3.3** Check GitHub is there:
+**3.2** Plug GitHub in. MCP is how `stcli` uses tools beyond your devices, and
+GitHub runs an MCP server. `just lab-up` already set it up for you, signed in
+with your Codespace's GitHub account, so it's one command, with no token to
+paste:
+
+```
+/mcp add github http://localhost:8002/mcp/readonly
+```
+
+**3.3** Check it's there:
 
 ```
 /mcp list
@@ -426,7 +421,14 @@ run without asking.
 should look like. Like every real NetBox, it has drifted: in a few places it
 no longer matches the network. The agent finds where NetBox and nokia
 disagree, asks you which side is right, and fixes the side that's wrong.
-Connect `stcli` to NetBox:
+
+First, open NetBox yourself, so you can watch it change. In the Codespace's
+**Ports** tab, hover over port **8000 (NetBox)** and click the globe icon
+(**Open in Browser**), or open the NetBox URL `just lab-up` printed. Log in
+as `oldprotocol` / `newbrain`, then look at **Devices → nokia** and its
+interfaces. Keep the tab open.
+
+Then connect `stcli` to NetBox:
 
 ```
 /netbox connect http://localhost:8000
@@ -476,8 +478,8 @@ standard says, so NetBox is right and nokia changes:
 Where our interface standards say which side is right, follow them, and fix nokia.
 ```
 
-**3.9** Check the result in the NetBox UI (**Ports** tab → port 8000, login
-`oldprotocol` / `newbrain`): each change is in **Operations → Change Log**,
+**3.9** Check the result in the NetBox tab you opened (reload it): each change
+is in **Operations → Change Log**,
 with the agent's reason as its message. In a terminal outside `stcli`, this
 confirms it. It ends with **NETBOX MATCHES NOKIA** once NetBox no longer
 disagrees with nokia anywhere nokia is right:
