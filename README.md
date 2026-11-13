@@ -348,6 +348,23 @@ The lab's entry for `sonic` names its address, user and SSH key, so if
 `ssh sonic` works in your terminal, it works in `stcli`. Your own aliases,
 keys and jump hosts carry over the same way.
 
+<details>
+<summary>What <code>sonic</code> means in the lab's SSH config</summary>
+
+```
+Host sonic
+    HostName 127.0.0.1
+    Port 2402
+    User oldprotocol
+    IdentityFile ~/.ssh/ac6-workshop-key
+```
+
+`127.0.0.1:2402` is the Codespace's forwarded port to sonic's SSH. `just
+lab-up` installs this in `~/.ssh/config` for you. On your own machine, it's
+the same shape with your device's address and your key.
+
+</details>
+
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
