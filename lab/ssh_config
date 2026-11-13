@@ -15,6 +15,10 @@
 # key, which `just lab-setup` copies to ~/.ssh/ac6-workshop-key. The IPs get
 # no key, so `connect oldprotocol@172.20.23.3` asks for the password, as the
 # workshop wants.
+#
+# stcli reads this file too, and rejects any keyword it doesn't implement
+# (IdentitiesOnly, for one) instead of ignoring it, so `/add oldprotocol@sonic`
+# would fail even though `ssh sonic` works. Keep to keywords stcli supports.
 Host nokia sonic 172.20.23.2 172.20.23.3
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
@@ -22,7 +26,6 @@ Host nokia sonic 172.20.23.2 172.20.23.3
     User oldprotocol
 Host nokia sonic
     IdentityFile ~/.ssh/ac6-workshop-key
-    IdentitiesOnly yes
 
 # The management IPs go through the same forwarded ports as the names:
 # Docker Desktop on macOS can't route to container IPs at all, so this keeps

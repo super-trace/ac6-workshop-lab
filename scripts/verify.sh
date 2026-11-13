@@ -107,3 +107,13 @@ if (( checks_failed )); then
     exit 1
 fi
 ./scripts/banner.sh green "LAB IS VERIFIED"
+
+# The README's Scenario 3 points here: a Codespace's forwarded URL can't be
+# linked from the README, so print it where attendees can click it.
+if [ "${CODESPACES:-}" = "true" ] && [ -n "${CODESPACE_NAME:-}" ]; then
+    netbox_url="https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+else
+    netbox_url="http://localhost:8000"
+fi
+echo
+echo "   Open NetBox: ${netbox_url}  (log in as oldprotocol / newbrain)"
