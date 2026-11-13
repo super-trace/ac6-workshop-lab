@@ -189,16 +189,22 @@ other end is configured yet:
 Show me routing on this device.
 ```
 
+**D.1.7** Pull the config behind the routing:
+
+```
+Show me the configuration snippets behind the routing you just diagnosed.
+```
+
 > [!WARNING]
 > **TODO (Mahir), before Monday 11/16:** try this alternative memory against
-> the one in D.1.7 (rollback commands) and keep the better one. If IOS wins,
-> update D.1.7's prompt and the payoff notes in D.2.3 and D.2.7.
+> the one in D.1.8 (rollback commands) and keep the better one. If IOS wins,
+> update D.1.8's prompt and the payoff notes in D.2.3 and D.2.7.
 >
 > ```
 > I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
 > ```
 
-**D.1.7** Tell `stcli` how you work. It remembers across sessions:
+**D.1.8** Tell `stcli` how you work. It remembers across sessions:
 
 ```
 Remember: when you propose a config change, always include the commands to roll it back.
@@ -208,13 +214,13 @@ It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
 
-**D.1.8** Check the firmware against the web:
+**D.1.9** Check the firmware against the web:
 
 ```
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**D.1.9** Turn the [team standards](#team-standards) into a skill. Copy the
+**D.1.10** Turn the [team standards](#team-standards) into a skill. Copy the
 whole block, standard included, and paste it into `stcli` as one message;
 the line breaks stay in the input until you press **Enter**:
 
@@ -239,7 +245,7 @@ can see or edit it on the dashboard's
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
 >
-> | | Memory (D.1.7) | Skill (D.1.9) |
+> | | Memory (D.1.8) | Skill (D.1.10) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
 > | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
@@ -250,7 +256,7 @@ can see or edit it on the dashboard's
 > Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
 > *a job* gets done, it's a skill.
 
-**D.1.10** Audit nokia against the standard. You don't name the skill: the
+**D.1.11** Audit nokia against the standard. You don't name the skill: the
 agent picks it up because the question is about interface standards:
 
 ```
@@ -261,7 +267,7 @@ A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
 3 fixes it.
 
-**D.1.11** Tell us how it went:
+**D.1.12** Tell us how it went:
 
 ```
 /feedback
@@ -338,7 +344,7 @@ Pick **interface-standards**, then ask:
 Does sonic follow our interface standards? Show me a table of anything that doesn't.
 ```
 
-D.1.10 used the skill because the question matched it; here you chose it.
+D.1.11 used the skill because the question matched it; here you chose it.
 Either way, it's the same standard on a different vendor's switch.
 
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
