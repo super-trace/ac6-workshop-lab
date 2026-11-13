@@ -189,13 +189,14 @@ other end is configured yet:
 Show me routing on this device.
 ```
 
-<!--
-TODO(mahir), before Monday 11/16: try the alternative memory below against
-this one (rollback commands) and keep the better one. If IOS wins, update
-D.1.7's prompt and the payoff notes in D.2.3 and D.2.7.
-
-  I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
--->
+> [!WARNING]
+> **TODO (Mahir), before Monday 11/16:** try this alternative memory against
+> the one in D.1.7 (rollback commands) and keep the better one. If IOS wins,
+> update D.1.7's prompt and the payoff notes in D.2.3 and D.2.7.
+>
+> ```
+> I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
+> ```
 
 **D.1.7** Tell `stcli` how you work. It remembers across sessions:
 
