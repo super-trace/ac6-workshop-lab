@@ -368,9 +368,26 @@ the same shape with your device's address and your key.
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
-**D.2.6** sonic has no configuration yet, but someone has been labelling its
-ports. Audit them. You don't name the skill: the agent picks it up because
-the question is about interface standards:
+**D.2.6** Apply the config you saved in D.2.4. Before anything runs, the
+plan comes with the commands to roll it back, because you asked `stcli` to
+remember that in Scenario 1. Then each command stops at **Approve this
+command?**; check that it names sonic before you approve it. Expect a
+handful of approvals:
+
+```
+Apply sonic-bgp.conf to sonic, one command at a time, in order. Don't run anything in parallel.
+```
+
+**D.2.7** Check the session. The ping should now succeed, and BGP should be
+Established:
+
+```
+Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
+```
+
+**D.2.8** BGP works, but someone has been labelling sonic's ports by hand.
+Audit them. You don't name the skill: the agent picks it up because the
+question is about interface standards:
 
 ```
 Does sonic follow our interface standards? Show me a table of anything that doesn't.
@@ -384,30 +401,20 @@ nothing is connected to it. It may also flag `Ethernet4`, which is connected
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
-**D.2.7** Apply it: the config you saved in D.2.4, plus the description fixes
-from D.2.6. Before anything runs, the plan comes with the commands to roll
-it back, because you asked `stcli` to remember that in Scenario 1. Then each
-command stops at **Approve this command?**; check that it names sonic
-before you approve it. Expect a handful of approvals:
+**D.2.9** Fix them, and prove it. Each change stops for your approval; when
+it's done, `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8` has
+no description:
 
 ```
-Apply sonic-bgp.conf to sonic, plus the description fixes, one command at a time, in order. Don't run anything in parallel.
+Fix those, and check that sonic now follows our interface standards.
 ```
 
-**D.2.8** Check your work. The ping should now succeed, BGP should be
-Established, and sonic's descriptions should pass the standard: `Ethernet0`
-reads `BGP: eBGP peer AS65001`, and `Ethernet8` has none:
-
-```
-Ping the BGP peer at 10.0.0.1 again, verify that BGP is up, and check that sonic now follows our interface standards.
-```
-
-**D.2.9** Everything you just did is on the record. Open the dashboard at
+**D.2.10** Everything you just did is on the record. Open the dashboard at
 [cli.supertrace.ai/app](https://cli.supertrace.ai/app), go to **Usage →
 Sessions**, and open this session: every command, which device it ran on,
 and each approval with who gave it.
 
-**D.2.10** Tell us how it went:
+**D.2.11** Tell us how it went:
 
 ```
 /feedback
