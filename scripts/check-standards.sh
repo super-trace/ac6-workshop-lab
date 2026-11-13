@@ -22,8 +22,12 @@ desc() {
 want="BGP: eBGP peer AS65001"
 got="$(desc Ethernet0)"
 [ "$got" = "$want" ] || fail "Ethernet0 should read \"${want}\", not \"${got}\""
-got="$(desc Ethernet8)"
-[ -z "$got" ] || fail "Ethernet8 has nothing connected, so no description, not \"${got}\""
+if ! grep -qE '^ +Ethernet8 ' <<<"$out"; then
+    fail "sonic didn't list Ethernet8; is the lab up?"
+else
+    got="$(desc Ethernet8)"
+    [ -z "$got" ] || fail "Ethernet8 has nothing connected, so no description, not \"${got}\""
+fi
 
 echo
 if (( failed )); then ./scripts/banner.sh red "SONIC IS OFF STANDARD"; exit 1; fi

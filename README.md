@@ -32,7 +32,7 @@ Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
 applies it on every device, in every scenario, without being reminded.
 
 ```
-Interface descriptions follow ROLE: detail.
+Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - Roles: BGP, TRUNK, LOOPBACK, LAN.
 - A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
 - A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
@@ -165,7 +165,7 @@ the line breaks stay in the input until you press **Enter**:
 ```
 Make a skill called interface-standards from our team's standard below. Use it whenever you configure, audit or document interfaces on any device, or compare a device with NetBox.
 
-Interface descriptions follow ROLE: detail.
+Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - Roles: BGP, TRUNK, LOOPBACK, LAN.
 - A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
 - A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
@@ -249,7 +249,9 @@ Does sonic follow our interface standards? Show me a table of anything that does
 
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
-nothing is connected to it.
+nothing is connected to it. It may also flag `Ethernet4`, which is connected
+but has no description: that's the layer 2 trunk, which Scenario 4
+configures and describes, so leave it for now.
 
 **2.7** Review the full change before anything runs:
 
