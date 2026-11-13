@@ -1,5 +1,5 @@
 # The lab's observability stack, for Scenario 4: gnmic streams gNMI telemetry
-# from both devices into Prometheus, Vector takes both devices' syslog into
+# from both devices into Prometheus, Alloy takes both devices' syslog into
 # Loki, Grafana shows both, and Grafana's MCP server lets stcli query them and
 # build dashboards. `just lab-up` starts it after containerlab has deployed
 # (through scripts/grafana-up.sh); `just lab-down` stops it and keeps
@@ -10,7 +10,7 @@ name: ac6-grafana
 
 # Every service joins containerlab's management network (lab/topology.clab.yml:
 # ac6, 172.20.23.0/24) with a fixed address: gnmic dials the devices there,
-# and the devices send syslog to Vector's address, which nokia's startup config
+# and the devices send syslog to Alloy's address, which nokia's startup config
 # and the SONiC image name. containerlab creates the network, so this stack
 # starts after the deploy.
 networks:
@@ -64,23 +64,25 @@ services:
     restart: unless-stopped
 
   # Receives both devices' syslog on UDP 1514 and pushes it to Loki
-  # (vector.yaml). Vector rather than Grafana Alloy: a sixth of the size, for
-  # the Codespace's disk.
-  syslog:
-    image: timberio/vector:0.60.0-alpine
-    command: ["--config", "/etc/vector/vector.yaml"]
+  # (config.alloy).
+  alloy:
+    image: grafana/alloy:v1.21.3
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --disable-reporting
     volumes:
-      - ./vector.yaml:/etc/vector/vector.yaml:ro
-    depends_on: [loki]
+      - ./config.alloy:/etc/alloy/config.alloy:ro
     networks:
       ac6:
         ipv4_address: 172.20.23.20
-    mem_limit: 128m
+    mem_limit: 192m
     cpus: 0.5
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:12.4.15
+    image: grafana/grafana:13.2.6
     environment:
       # The lab login, as on every lab device and NetBox.
       GF_SECURITY_ADMIN_USER: oldprotocol

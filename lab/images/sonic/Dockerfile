@@ -87,10 +87,10 @@ RUN apt-get update \
         'stderr_logfile=syslog' \
         >>/etc/supervisor/conf.d/supervisord.conf
 
-# Send sonic's syslog to the lab's Vector (lab/grafana/, 172.20.23.20), which
+# Send sonic's syslog to the lab's Alloy (lab/grafana/, 172.20.23.20), which
 # stores it in Loki, beside nokia's. UDP, so a stopped Grafana stack never
 # blocks the switch.
 RUN printf '%s\n' \
-        '# AC6 workshop: forward everything to Vector -> Loki (lab/grafana/).' \
+        '# AC6 workshop: forward everything to Alloy -> Loki (lab/grafana/).' \
         '*.* @172.20.23.20:1514;RSYSLOG_SyslogProtocol23Format' \
         >/etc/rsyslog.d/90-ac6-loki.conf

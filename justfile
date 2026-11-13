@@ -52,7 +52,7 @@ lab-up:
     @printf '\n'
     @./scripts/netbox-up.sh
     @printf '\n'
-    @# gnmic, Prometheus, Loki, Vector, Grafana and Grafana's MCP server, once
+    @# gnmic, Prometheus, Loki, Alloy, Grafana and Grafana's MCP server, once
     @# the devices they collect from are up.
     @./scripts/grafana-up.sh
     @printf '\n'
@@ -174,7 +174,7 @@ netbox-down:
     @printf '\n'
     @./scripts/banner.sh red "NETBOX IS DOWN"
 
-# start gnmic, Prometheus, Loki, Vector, Grafana (port 3000) and Grafana's MCP server; needs the lab up (lab-up does this too)
+# start gnmic, Prometheus, Loki, Alloy, Grafana (port 3000) and Grafana's MCP server; needs the lab up (lab-up does this too)
 [group('grafana')]
 grafana-up:
     @./scripts/banner.sh intro "just grafana-up" \

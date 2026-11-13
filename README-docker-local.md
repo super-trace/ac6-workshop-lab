@@ -92,7 +92,7 @@ NetBox's data.
 
 `just lab-up` starts Grafana at http://localhost:3000 (login `oldprotocol` /
 `newbrain`) for Scenario 4, with Prometheus (gNMI telemetry from both
-devices, through gnmic) and Loki (both devices' syslog, through Vector)
+devices, through gnmic) and Loki (both devices' syslog, through Alloy)
 already in it, and Grafana's MCP server at http://localhost:8003/mcp. See
 the [main README](README.md#h-grafana). Prometheus (port 9090) and Loki
 (port 3100) also listen on localhost, for looking under the hood.
