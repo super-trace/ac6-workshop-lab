@@ -66,7 +66,7 @@ iface() {
 mgmt0="$(iface mgmt0 1000base-t "" ',"mgmt_only":true')"
 e11="$(iface ethernet-1/1 25gbase-x-sfp28 "BGP: eBGP peer AS65002")"
 # Matches nokia as deployed, off-standard description included. Scenario 1
-# (D.1.10) fixes nokia's to "TRUNK: VLANs 110,120,130", which leaves NetBox
+# (D.1.9) fixes nokia's to "TRUNK: VLANs 110,120,130", which leaves NetBox
 # stale for Scenario 3 to update from the device.
 e12="$(iface ethernet-1/2 25gbase-x-sfp28 "TRUNK: to peer switch" ",\"mode\":\"tagged\",\"tagged_vlans\":[${v110},${v120},${v130}]")"
 lo0="$(iface lo0 virtual "LOOPBACK: router-id 10.255.0.1")"
