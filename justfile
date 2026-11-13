@@ -134,6 +134,11 @@ reset-netbox:
     @docker compose -f lab/netbox/compose.yml down -v
     @./scripts/netbox-up.sh
 
+# add GitHub's read-only MCP server to stcli, using the Codespace's GITHUB_TOKEN
+[group('exercises')]
+mcp-github:
+    @./scripts/mcp-github.sh
+
 # start NetBox on port 8000, seeded with nokia, and its MCP server on 8001 (lab-up does this too)
 [group('netbox')]
 netbox-up:

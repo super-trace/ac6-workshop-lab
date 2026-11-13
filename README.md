@@ -18,6 +18,11 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
   │                      │ e1-2           Ethernet4  │                      │
   │                      │ ───────────────────────── │                      │
   └──────────────────────┘    layer 2: VLAN trunk    └──────────────────────┘
+              │ documents nokia (drift included); sonic isn't in it yet
+  ┌───────────┴─────────────────────────────────────────────────────────────┐
+  │ netbox                              source of truth                     │
+  │ NetBox 4.7 · UI and API on :8000    MCP server on :8001/mcp             │
+  └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
@@ -104,6 +109,9 @@ don't steer the next.
 A ping or other long-running command can be stopped with **Esc**.
 
 ### Scenario 1: single device, basic queries, web search and a skill
+
+<!-- TODO: structured output. Scope what we show (tables? JSON? a parsed
+`show` turned into a table?) and give it a step here. -->
 
 **1.1** **Explore the Nokia.** Start `stcli`:
 
@@ -290,6 +298,38 @@ just check-bgp
 just check-standards
 ```
 
+<!-- TODO (flow): this MCP step's final position is decided in the flow
+pass; it sits here for now, before NetBox's built-in connection. -->
+
+### Plug in a tool you already use: GitHub over MCP
+
+MCP lets `stcli` use tools beyond your devices. GitHub runs an MCP server, and
+your Codespace already has a GitHub token, so there is nothing to sign up for.
+
+**M.1** In a terminal outside `stcli`, add GitHub's read-only MCP server. The
+token never appears on screen:
+
+```sh
+just mcp-github
+```
+
+**M.2** Restart `stcli` (`/new` isn't enough: MCP servers connect at startup)
+and check it's there:
+
+```
+/mcp list
+```
+
+**M.3** Ask GitHub something web search can't answer reliably: live issues on
+the routing daemon sonic runs.
+
+```
+List the open issues in FRRouting/frr that mention ebgp-requires-policy.
+```
+
+Each GitHub call stops at a confirm dialog first: press `y`. MCP tools never run
+without asking.
+
 ### Scenario 3: NetBox, drift and updating the source of truth
 
 **3.1** Start a fresh conversation. Both devices stay connected:
@@ -422,6 +462,9 @@ just check-l2
 ```
 
 Stuck? Ask a facilitator; the reference below has hints.
+
+<!-- TODO: feedback. Ships today; add the step here (and/or at the end of each
+scenario) once we know how attendees send it. -->
 
 ### Start over
 
