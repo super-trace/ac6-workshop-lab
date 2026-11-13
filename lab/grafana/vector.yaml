@@ -1,0 +1,36 @@
+# Both devices send syslog here (UDP 1514, this container's fixed address
+# 172.20.23.20): nokia from its startup config, sonic from the lab's SONiC
+# image. Vector parses either syslog format and pushes each line to Loki,
+# labelled with the device that sent it.
+data_dir: /var/lib/vector
+
+sources:
+  syslog:
+    type: syslog
+    mode: udp
+    address: 0.0.0.0:1514
+
+transforms:
+  # Every label needs a value, or Loki's sink drops the line.
+  labelled:
+    type: remap
+    inputs: [syslog]
+    source: |
+      .hostname = .hostname || "unknown"
+      .appname = .appname || "unknown"
+      .severity = .severity || "unknown"
+
+sinks:
+  loki:
+    type: loki
+    inputs: [labelled]
+    endpoint: http://loki:3100
+    encoding:
+      codec: text
+    labels:
+      job: syslog
+      device: "{{ hostname }}"
+      app: "{{ appname }}"
+      level: "{{ severity }}"
+    # Devices stamp their own times; accept them as they come.
+    out_of_order_action: accept

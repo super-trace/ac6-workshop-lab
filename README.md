@@ -43,7 +43,7 @@ work with:
               │ gNMI telemetry and syslog from both devices
   ┌───────────┴─────────────────────────────────────────────────────────────┐
   │ grafana                             metrics and logs                    │
-  │ gnmic → Prometheus · Alloy → Loki · Grafana UI on :3000                 │
+  │ gnmic → Prometheus · Vector → Loki · Grafana UI on :3000                │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 

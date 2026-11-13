@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start the lab's observability stack (lab/grafana/compose.yml): gnmic,
-# Prometheus, Loki, Alloy, Grafana and Grafana's MCP server. It joins
+# Prometheus, Loki, Vector, Grafana and Grafana's MCP server. It joins
 # containerlab's management network, so the lab must be deployed first. In a
 # Codespace, Grafana's links point at the forwarded port 3000, which this
 # makes public so the attendee's browser (and anyone they share the URL with)
@@ -35,7 +35,7 @@ export GRAFANA_ORIGIN="$url" GRAFANA_HOST="$host"
 # Everything but the MCP server first; --wait returns once Grafana answers its
 # health check.
 docker compose up -d --quiet-pull --remove-orphans --wait --wait-timeout 300 \
-    gnmic prometheus loki alloy grafana
+    gnmic prometheus loki syslog grafana
 
 # The MCP server signs in as the service account `stcli`, role Editor: it can
 # build dashboards and folders but not change datasources. Create the account
