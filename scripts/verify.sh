@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Baseline check: nokia is fully configured, sonic is reachable and blank,
-# both links are up, both SSH aliases work, and NetBox and its MCP server
-# answer.
+# both links are up, both SSH aliases work, and NetBox and the GitHub MCP
+# proxy answer.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -83,30 +83,23 @@ else
 fi
 
 echo
-heading "NetBox MCP (expect an MCP session and a tool call that reads NetBox)"
-# The streamable HTTP handshake: initialize returns a session ID, the client
-# confirms with notifications/initialized, then calls a tool. Listing sites
-# goes through the MCP server to NetBox, so it also proves the server's token.
-mcp="http://localhost:8001/mcp"
+heading "GitHub MCP (expect GitHub's MCP server through the proxy on port 8002)"
+# Only the handshake: a 200 proves the proxy is up and GitHub took the token.
 mcp_headers=(-H "Content-Type: application/json" -H "Accept: application/json, text/event-stream")
-session="$(curl -s --max-time 10 -D - -o /dev/null "${mcp_headers[@]}" \
+code="$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "${mcp_headers[@]}" \
     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"lab-verify","version":"1"}}}' \
-    "$mcp" | tr -d '\r' | awk -F': ' 'tolower($1) == "mcp-session-id" { print $2 }' || true)"
-if [ -z "$session" ]; then
-    fail "NetBox MCP server not answering on ${mcp} — run 'just netbox-up'"
-else
-    curl -s --max-time 10 -o /dev/null "${mcp_headers[@]}" -H "mcp-session-id: ${session}" \
-        -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' "$mcp" || true
-    out="$(curl -s --max-time 30 "${mcp_headers[@]}" -H "mcp-session-id: ${session}" \
-        -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"netbox_get_objects","arguments":{"object_type":"dcim.site","filters":{}}}}' \
-        "$mcp" || true)"
-    if grep -q '"isError":false' <<<"$out" && grep -q '"count":' <<<"$out"; then
-        echo "   MCP session ${session:0:8}…, netbox_get_objects: ok"
-    else
-        echo "$out"
-        fail "NetBox MCP server answered, but its call to NetBox failed — see 'docker logs ac6-netbox-netbox-mcp-1'"
-    fi
-fi
+    "http://localhost:8002/mcp/readonly" || true)"
+case "$code" in
+    200) echo "   GitHub answered: ok" ;;
+    401)
+        if [ "${CODESPACES:-}" = "true" ]; then
+            fail "GitHub refused the token — run 'just lab-up' again from a Codespace terminal"
+        else
+            echo "   GitHub refused: GITHUB_TOKEN wasn't set when the lab started (fine outside a Codespace; export one and run 'just netbox-up' to use it)"
+        fi
+        ;;
+    *) fail "GitHub MCP proxy not answering on port 8002 (HTTP ${code:-none}) — run 'just netbox-up'" ;;
+esac
 
 echo
 if (( checks_failed )); then

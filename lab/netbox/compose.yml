@@ -2,8 +2,8 @@
 # (Redis). Trimmed from netbox-community/netbox-docker's docker-compose.yml:
 # no netbox-worker (only background jobs need it; the import pages and the
 # REST API work without it) and one Valkey for both of NetBox's Redis
-# databases instead of two. Plus netbox-mcp, NetBox Labs' MCP server, so an
-# agent can read NetBox over MCP. `just lab-up` starts it all (through
+# databases instead of two. Plus github-mcp, a proxy to GitHub's MCP server
+# for Scenario 3. `just lab-up` starts it all (through
 # scripts/netbox-up.sh); `just lab-down` stops it and keeps the database;
 # `just netbox-down` deletes it.
 name: ac6-netbox
@@ -44,33 +44,34 @@ services:
     volumes:
       - netbox-media-files:/opt/netbox/netbox/media:rw
 
-  # Read-only MCP server for NetBox, on the streamable HTTP transport at
-  # http://localhost:8001/mcp. No MCP_AUTH_TOKEN: like NetBox's own
-  # credentials, it's a disposable lab, and scripts/netbox-up.sh leaves port
-  # 8001 private in a Codespace.
-  netbox-mcp:
-    image: docker.io/netboxlabs/netbox-mcp-server:1.2.1
-    # It only contacts NetBox on a tool call, so it can boot alongside it.
-    depends_on:
-      - netbox
+  # GitHub's read-only MCP server, as http://localhost:8002/mcp/readonly with
+  # no auth: this proxy adds the Codespace's GITHUB_TOKEN on the way out, so
+  # Scenario 3's `/mcp add` needs no header and the token never reaches stcli,
+  # its config.json or the screen. Compose takes GITHUB_TOKEN from the shell
+  # that runs `just lab-up`; without one, GitHub answers 401 and lab-verify
+  # says so. It carries a token, so it listens on localhost only: stcli runs
+  # on the same machine.
+  github-mcp:
+    image: docker.io/library/caddy:2.10-alpine
     environment:
-      NETBOX_URL: http://netbox:8080/
-      # The admin token from netbox.env; nbt_ tokens are sent as Bearer.
-      NETBOX_TOKEN: nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000
-      TRANSPORT: http
-      HOST: 0.0.0.0
-      PORT: "8000"
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    command:
+      - caddy
+      - reverse-proxy
+      - --from
+      - :8002
+      - --to
+      - https://api.githubcopilot.com
+      - --change-host-header
+      - --header-up
+      - "Authorization: Bearer {env.GITHUB_TOKEN}"
+      # Read-only on every path, not only /mcp/readonly: GitHub's full
+      # /mcp/ endpoint includes write tools, and this header limits it to the
+      # read-only set. It replaces any value a client sends.
+      - --header-up
+      - "X-MCP-Readonly: true"
     ports:
-      - "8001:8000"
-    healthcheck:
-      # Healthy once the HTTP endpoint answers at all: a bare GET on /mcp is
-      # an error to MCP but proves the server is listening.
-      test: ["CMD", "python", "-c", "import urllib.request as u, urllib.error as e\ntry: u.urlopen('http://127.0.0.1:8000/mcp', timeout=2)\nexcept e.HTTPError: pass"]
-      start_period: 30s
-      start_interval: 1s
-      timeout: 3s
-      interval: 2s
-      retries: 15
+      - "127.0.0.1:8002:8002"
 
   postgres:
     image: docker.io/postgres:18-alpine
