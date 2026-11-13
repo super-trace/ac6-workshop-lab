@@ -169,21 +169,27 @@ Device credentials never leave your Codespace.
 show me the config that controls the username and password on this box
 ```
 
-**D.1.4** Run a command yourself, without the agent. Note the software version:
+**D.1.4** That config holds every user's password hash. See what left the
+Codespace: open [cli.supertrace.ai/app/usage](https://cli.supertrace.ai/app/usage),
+go to **Sessions**, and open this session. The command and its output are
+there, but each password hash reads `[redacted]`: `stcli` strips them before
+anything leaves your machine.
+
+**D.1.5** Run a command yourself, without the agent. Note the software version:
 you'll ask about it shortly:
 
 ```
 !show version
 ```
 
-**D.1.5** Read the routing table. The BGP peer shows as down, because nothing on the
+**D.1.6** Read the routing table. The BGP peer shows as down, because nothing on the
 other end is configured yet:
 
 ```
 Show me routing on this device.
 ```
 
-**D.1.6** Tell `stcli` how you like your answers. It remembers across sessions:
+**D.1.7** Tell `stcli` how you like your answers. It remembers across sessions:
 
 ```
 From now on, when you show me interface or routing data, use a table.
@@ -193,13 +199,13 @@ It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
 
-**D.1.7** Check the firmware against the web:
+**D.1.8** Check the firmware against the web:
 
 ```
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**D.1.8** Turn the [team standards](#team-standards) into a skill. Copy the
+**D.1.9** Turn the [team standards](#team-standards) into a skill. Copy the
 whole block, standard included, and paste it into `stcli` as one message;
 the line breaks stay in the input until you press **Enter**:
 
@@ -221,7 +227,7 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-**D.1.9** Audit nokia against the standard:
+**D.1.10** Audit nokia against the standard:
 
 ```
 Does nokia follow our interface standards? Show me a table of anything that doesn't.
@@ -231,7 +237,7 @@ A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
 3 fixes it.
 
-**D.1.10** Tell us how it went:
+**D.1.11** Tell us how it went:
 
 ```
 /feedback
