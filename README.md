@@ -135,7 +135,7 @@ a sentence. We read every one.
 ### Scenario 1: one device, talk to your network
 
 You'll connect to nokia, ask it questions in plain language, run commands
-yourself, export what you find, and teach `stcli` your team's standard.
+yourself, and teach `stcli` your team's standard.
 
 **D.1.1** Connect to nokia by its management IP, as the lab user:
 
@@ -180,24 +180,7 @@ other end is configured yet:
 Show me routing on this device.
 ```
 
-**D.1.6** Export what you see. The agent writes files on this machine, and asks
-first: the dialog shows the whole file before it's written.
-
-```
-Export nokia's interfaces to nokia-interfaces.csv: name, admin state, oper state, description and IPv4 address.
-```
-
-Open `nokia-interfaces.csv` in the Codespace's file explorer. CSV is good for a
-spreadsheet; ask for `nokia-interfaces.json` instead if a script will read it.
-
-**D.1.7** Logs too. Reading the log file is a command `stcli` doesn't recognise,
-so it asks before it runs:
-
-```
-Save the last 100 lines of nokia's log to nokia.log, then tell me what stands out.
-```
-
-**D.1.8** Tell `stcli` how you like your answers. It remembers across sessions:
+**D.1.6** Tell `stcli` how you like your answers. It remembers across sessions:
 
 ```
 From now on, when you show me interface or routing data, use a table.
@@ -207,13 +190,13 @@ It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
 
-**D.1.9** Check the firmware against the web:
+**D.1.7** Check the firmware against the web:
 
 ```
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**D.1.10** Turn the [team standards](#team-standards) into a skill. Copy the
+**D.1.8** Turn the [team standards](#team-standards) into a skill. Copy the
 whole block, standard included, and paste it into `stcli` as one message;
 the line breaks stay in the input until you press **Enter**:
 
@@ -235,7 +218,7 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-**D.1.11** Audit nokia against the standard:
+**D.1.9** Audit nokia against the standard:
 
 ```
 Does nokia follow our interface standards? Show me a table of anything that doesn't.
@@ -245,13 +228,13 @@ A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
 3 fixes it.
 
-**D.1.12** Tell us how it went:
+**D.1.10** Tell us how it went:
 
 ```
 /feedback
 ```
 
-For example: *"Exporting to CSV straight from the CLI is handy."* or *"I
+For example: *"Turning our wiki standard into a skill took a minute."* or *"I
 wanted ___ and it didn't."*
 
 ### Scenario 2: two devices, build, convert and apply
@@ -283,11 +266,16 @@ agent should write it for Nokia SR Linux:
 Generate a configuration snippet to configure BGP on a peer to this device.
 ```
 
-**D.2.4** The peer is actually a SONiC switch. Convert the snippet:
+**D.2.4** The peer is actually a SONiC switch. Convert the snippet, and keep
+a copy. The agent writes files on this machine, and asks first: the dialog
+shows the whole file before it's written.
 
 ```
-Do it for SONiC.
+Do it for SONiC, and save it to sonic-bgp.conf.
 ```
+
+Open `sonic-bgp.conf` in the Codespace's file explorer: it's ready for a
+change ticket or a peer review.
 
 **D.2.5** Add the SONiC switch to the session. This time use its name, `sonic`:
 the lab's SSH config logs in to it with a key, so there's no password to
@@ -459,7 +447,7 @@ Explain what you changed in NetBox and why.
 takes a few minutes:
 
 ```
-Do a full security audit across both devices and give me a TLDR of what to focus on.
+Do a full security audit across both devices, give me a TLDR of what to focus on, and save the full report to security-audit.md.
 ```
 
 **D.3.12** Tell us how it went:
