@@ -754,9 +754,8 @@ without the devices, run `just netbox-up`.
   forwarded port 8000 (Ports tab → NetBox).
 - **Log in:** `oldprotocol` / `newbrain`, the same as the devices.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
-- **Share it:** the recipe makes port 8000 public when the Codespace allows
-  it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
-  Visibility → Public**. Anyone with the URL can then log in with the
+- **Share it:** port 8000 is private to you. To share it, in the Ports tab,
+  right-click port 8000 and pick **Port Visibility → Public**. Anyone with the URL can then log in with the
   password above, so keep it to this disposable lab.
 
 `just netbox-down` stops NetBox and deletes NetBox's

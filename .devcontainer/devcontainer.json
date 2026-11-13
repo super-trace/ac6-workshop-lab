@@ -19,7 +19,8 @@
 	"portsAttributes": {
 		"8000": { "label": "NetBox", "onAutoForward": "silent" },
 		"2401": { "label": "nokia SSH" },
-		"2402": { "label": "sonic SSH" }
+		"2402": { "label": "sonic SSH" },
+		"8002": { "label": "GitHub MCP proxy", "onAutoForward": "ignore" }
 	},
 	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh"
 }

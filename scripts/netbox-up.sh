@@ -2,9 +2,9 @@
 # Start the workshop's NetBox and the GitHub MCP proxy (lab/netbox/compose.yml),
 # seed NetBox with nokia as documented (scripts/netbox-seed.sh, once: what
 # attendees change is kept until `just netbox-down` or `just reset-netbox`),
-# and print how to reach both. In a
-# Codespace, also make port 8000 (NetBox) public so anyone with the URL can
-# open it; the GitHub MCP proxy listens on localhost only. Safe to re-run.
+# and print how to reach both. Both listen on localhost only; NetBox's login
+# and API token are public, so sharing port 8000 is left to the operator.
+# Safe to re-run.
 #
 # A first start loads lab/netbox/initdb/'s already-migrated database, so it
 # takes seconds rather than the minutes NetBox's own migrations would.
@@ -60,12 +60,6 @@ docker compose up -d --remove-orphans --wait --wait-timeout 900
 
 NETBOX_URL=http://localhost:8000 ../../scripts/netbox-seed.sh
 
-public=""
-if [ "${CODESPACES:-}" = "true" ] && [ -n "${CODESPACE_NAME:-}" ]; then
-    if gh codespace ports visibility 8000:public -c "$CODESPACE_NAME" >/dev/null 2>&1; then
-        public=yes
-    fi
-fi
 
 printf '\n'
 ../../scripts/banner.sh green "NETBOX IS UP"
@@ -77,11 +71,10 @@ printf '    %sGitHub MCP%s http://localhost:8002/mcp/readonly (proxy, adds your 
 printf '\n    NetBox documents nokia: the source of truth for Scenario 3.\n'
 printf '    %sjust reset-netbox%s puts it back as seeded.\n' "$green" "$reset"
 if [ "${CODESPACES:-}" = "true" ]; then
-    if [ -n "$public" ]; then
-        printf '\n    %sPort 8000 is public: anyone with the URL can open NetBox.%s\n' "$green" "$reset"
-    else
-        printf '\n    %sTo let others open it:%s Ports tab, right-click port 8000 (NetBox),\n' "$yellow" "$reset"
-        printf '    Port Visibility, Public.\n'
-    fi
+    printf '
+    %sTo let others open it:%s Ports tab, right-click port 8000 (NetBox),
+' "$yellow" "$reset"
+    printf '    Port Visibility, Public. Anyone with the URL can then change it.
+'
 fi
 printf '\n    Stop it with: %sjust netbox-down%s (also deletes its data)\n' "$green" "$reset"
