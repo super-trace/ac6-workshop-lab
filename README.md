@@ -1,4 +1,4 @@
-# AC6 workshop lab | Old Protocol New Brain
+# Old Protocol New Brain | AC6 workshop lab
 
 Slides: [supertrace.ai/ac6-deck](http://supertrace.ai/ac6-deck)
 
@@ -44,6 +44,24 @@ work with:
 nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
 address the workshop gives it, since sonic starts with no addresses on
 either link. Connect to each device by its management IP.
+
+### Team standards
+
+Every network team has conventions that live in a wiki or in people's
+heads. This is the lab team's standard for interface descriptions. In
+Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
+applies it on every device, in every scenario, without being reminded.
+
+```
+Interface descriptions follow ROLE: detail, except VLAN gateways (below).
+- Roles: BGP, TRUNK, LOOPBACK, LAN.
+- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
+- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
+- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
+- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
+- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
+- A port with nothing connected has no description. Management ports are exempt.
+```
 
 ## B. Install stcli
 
@@ -117,24 +135,6 @@ A ping or other long-running command can be stopped with **Esc**.
 Each scenario ends with `/feedback`: tell us what worked and what didn't, in
 a sentence. We read every one.
 
-### Team standards
-
-Every network team has conventions that live in a wiki or in people's
-heads. This is the lab team's standard for interface descriptions. In
-Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
-applies it on every device, in every scenario, without being reminded.
-
-```
-Interface descriptions follow ROLE: detail, except VLAN gateways (below).
-- Roles: BGP, TRUNK, LOOPBACK, LAN.
-- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
-- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
-- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
-- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
-- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
-- A port with nothing connected has no description. Management ports are exempt.
-```
-
 ### Scenario 1: one device, talk to your network
 
 You'll connect to nokia, ask it questions in plain language, run commands
@@ -176,50 +176,38 @@ there, but each password hash reads `[redacted]`: `stcli` strips them before
 anything leaves your machine.
 
 **D.1.5** Run a command yourself, without the agent. Note the software version:
-you'll ask about it shortly:
+you'll ask about it next:
 
 ```
 !show version
 ```
 
-**D.1.6** Read the routing table. The BGP peer shows as down, because nothing on the
+**D.1.6** Check that version against the web, while it's in front of you:
+
+```
+Search the web for any recent patches on this firmware version that I should be aware of.
+```
+
+**D.1.7** Read the routing table. The BGP peer shows as down, because nothing on the
 other end is configured yet:
 
 ```
 Show me routing on this device.
 ```
 
-> [!WARNING]
-> **TODO (Mahir), before Monday 11/16:** try this alternative memory against
-> the one in D.1.7 (rollback commands) and keep the better one. If IOS wins,
-> update D.1.7's prompt and the payoff notes in D.2.3 and D.2.7.
->
-> ```
-> I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
-> ```
-
-**D.1.7** Tell `stcli` how you work. It remembers across sessions:
+**D.1.8** Pull the config behind the routing:
 
 ```
-Remember: when you propose a config change, always include the commands to roll it back.
+Show me the configuration snippets behind the routing you just diagnosed.
 ```
 
-It says what it saved. You'll see it pay off in Scenario 2 without asking
-again; your memories are listed on the dashboard's
-[**Memory** page](https://cli.supertrace.ai/app/memory).
-
-**D.1.8** Check the firmware against the web:
-
-```
-Search the web for any recent patches on this firmware version that I should be aware of.
-```
-
-**D.1.9** Turn the [team standards](#team-standards) into a skill. Copy the
-whole block, standard included, and paste it into `stcli` as one message;
-the line breaks stay in the input until you press **Enter**:
+**D.1.9** Your boss just sent round the [team standards](#team-standards).
+Check nokia against them. Copy the whole block, standard included, and paste
+it into `stcli` as one message; the line breaks stay in the input until you
+press **Enter**:
 
 ```
-Make a skill called interface-standards from our team's standard below. Use it whenever you configure, audit or document interfaces on any device, or compare a device with NetBox.
+My boss just added some team standards for interface descriptions:
 
 Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - Roles: BGP, TRUNK, LOOPBACK, LAN.
@@ -229,6 +217,42 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 - A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
 - Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
 - A port with nothing connected has no description. Management ports are exempt.
+
+Can you check my nokia and see if I'm in line? Show me a table of anything that isn't.
+```
+
+A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
+peer switch`, but a trunk should list its VLANs.
+
+**D.1.10** Fix it. This changes nokia, so it stops for your approval: SR
+Linux stages the change and commits it, and the dialog shows both:
+
+```
+Fix the nokia.
+```
+
+**D.1.11** Before you move on: how would you undo that?
+
+```
+How would I revert that if I needed to?
+```
+
+**D.1.12** Rollback commands are worth seeing with every change, not only
+when you ask. Tell `stcli` once; it remembers across sessions:
+
+```
+From now on, whenever you propose a config change, include the commands to roll it back.
+```
+
+It says what it saved. You'll see it pay off in Scenario 2 without asking
+again; your memories are listed on the dashboard's
+[**Memory** page](https://cli.supertrace.ai/app/memory).
+
+**D.1.13** You'll need these standards again, on every device. Save them as
+a skill, straight from this conversation:
+
+```
+Also, remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
 ```
 
 `stcli` shows the whole draft before anything is saved. Read it, then press
@@ -236,10 +260,23 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
+**D.1.14** See your skill library:
+
+> [!WARNING]
+> **TODO (Mahir):** `/skills` is still being built. Check this step's
+> syntax against what ships.
+
+```
+/skills
+```
+
+`interface-standards` is there. Pick it to run it on demand; you'll also
+see the agent reach for it by itself in Scenario 2.
+
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
 >
-> | | Memory (D.1.7) | Skill (D.1.9) |
+> | | Memory (D.1.12) | Skill (D.1.13) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
 > | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
@@ -250,18 +287,7 @@ can see or edit it on the dashboard's
 > Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
 > *a job* gets done, it's a skill.
 
-**D.1.10** Audit nokia against the standard. You don't name the skill: the
-agent picks it up because the question is about interface standards:
-
-```
-Does nokia follow our interface standards? Show me a table of anything that doesn't.
-```
-
-A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
-peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
-3 fixes it.
-
-**D.1.11** Tell us how it went:
+**D.1.15** Tell us how it went:
 
 ```
 /feedback
@@ -310,36 +336,47 @@ Do it for SONiC, and save it to sonic-bgp.conf.
 Open `sonic-bgp.conf` in the Codespace's file explorer: it's ready for a
 change ticket or a peer review.
 
-**D.2.5** Add the SONiC switch to the session. This time use its name, `sonic`:
-the lab's SSH config logs in to it with a key, so there's no password to
-type:
+**D.2.5** Add the SONiC switch to the session. In D.1.1 you typed an IP and
+a password. This time, use the name, the way you'd type `ssh sonic`:
 
 ```
-/add oldprotocol@sonic
+/add sonic
 ```
+
+No password: `stcli` reads your `~/.ssh/config`, the same file `ssh` does.
+The lab's entry for `sonic` names its address, user and SSH key, so if
+`ssh sonic` works in your terminal, it works in `stcli`. Your own aliases,
+keys and jump hosts carry over the same way.
+
+<details>
+<summary>What <code>sonic</code> means in the lab's SSH config</summary>
+
+```
+Host sonic
+    HostName 127.0.0.1
+    Port 2402
+    User oldprotocol
+    IdentityFile ~/.ssh/ac6-workshop-key
+```
+
+`127.0.0.1:2402` is the Codespace's forwarded port to sonic's SSH. `just
+lab-up` installs this in `~/.ssh/config` for you. On your own machine, it's
+the same shape with your device's address and your key.
+
+</details>
 
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
 **D.2.6** sonic has no configuration yet, but someone has been labelling its
-ports. This time, start the skill yourself from your skill library:
-
-> [!WARNING]
-> **TODO (Mahir):** `/skills` is still being built. Check this step's
-> syntax against what ships.
-
-```
-/skills
-```
-
-Pick **interface-standards**, then ask:
+ports. Audit them. You don't name the skill: the agent picks it up because
+the question is about interface standards:
 
 ```
 Does sonic follow our interface standards? Show me a table of anything that doesn't.
 ```
 
-D.1.10 used the skill because the question matched it; here you chose it.
-Either way, it's the same standard on a different vendor's switch.
+It's the same standard you set on nokia, now on a different vendor's switch.
 
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
@@ -472,15 +509,9 @@ The agent proposes one changeset. **Apply these changes to NetBox?** shows
 every field it will change, `current → new`, with the reason for each.
 Nothing is written until you press `y`.
 
-Where NetBox is right, nokia has drifted. Have the agent fix nokia
-instead; that's a device change, with its own approval. Your
-`interface-standards` skill settles one of them: the `ethernet-1/2`
-description you found in Scenario 1. NetBox lists the trunk's VLANs, as the
-standard says, so NetBox is right and nokia changes:
-
-```
-Where our interface standards say which side is right, follow them, and fix nokia.
-```
+One of them is your own work: the `ethernet-1/2` description you fixed in
+Scenario 1. nokia follows the standard now, and NetBox still has the old
+text. The device is the source of truth, so NetBox changes.
 
 **D.3.9** Check the result in the NetBox tab you opened (reload it): each change
 is in **Operations → Change Log**, with the agent's reason as its message.
@@ -515,12 +546,12 @@ I need."* or *"I'd want it to connect to ___ next."*
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
-| ethernet-1/2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the team standard: a trunk lists its VLANs) | set the description on nokia |
+| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.10) | nokia | update the description in NetBox |
 
-`just check-netbox` checks the first three. The fourth is there so the
-agent has to ask, rather than assume the device always wins; the
-`interface-standards` skill from Scenario 1 answers it, but either answer
-passes the check. Everything else in NetBox matches nokia: the site `lab`, the
+`just check-netbox` checks all four. The fourth only shows up if attendees
+fixed nokia in D.1.10; NetBox is seeded with nokia's original, off-standard
+description. Anyone who skipped D.1.10 sees no difference there, and the
+check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
 NetBox: attendees build it in Scenario 2.

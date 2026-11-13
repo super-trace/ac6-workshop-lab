@@ -52,5 +52,11 @@ echo "   NetBox: ${addrs:-(no address on ethernet-1/2.120)}"
 [[ " $addrs " != *" 10.120.0.254/24 "* ]] || fail "NetBox still gives nokia's ethernet-1/2.120 the stale 10.120.0.254/24"
 
 echo
+heading "ethernet-1/2 description (nokia has \"TRUNK: VLANs 110,120,130\" once Scenario 1 fixed it)"
+desc="$(first description "$(get "dcim/interfaces/?device=nokia&name=ethernet-1/2&fields=description")")"
+echo "   NetBox: ${desc:-(no description)}"
+[[ "$desc" == "TRUNK: VLANs 110,120,130" ]] || fail "NetBox describes ethernet-1/2 as '${desc:-nothing}', not 'TRUNK: VLANs 110,120,130'"
+
+echo
 if (( failed )); then ./scripts/banner.sh red "NETBOX DOES NOT MATCH NOKIA"; exit 1; fi
 ./scripts/banner.sh green "NETBOX MATCHES NOKIA"
