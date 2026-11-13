@@ -237,15 +237,6 @@ Fix the nokia.
 How would I revert that if I needed to?
 ```
 
-> [!WARNING]
-> **TODO (Mahir), before Monday 11/16:** try this alternative memory against
-> the one in D.1.12 (rollback commands) and keep the better one. If IOS wins,
-> update D.1.12's prompt and the payoff notes in D.2.3 and D.2.7.
->
-> ```
-> I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
-> ```
-
 **D.1.12** Rollback commands are worth seeing with every change, not only
 when you ask. Tell `stcli` once; it remembers across sessions:
 
@@ -261,7 +252,7 @@ again; your memories are listed on the dashboard's
 a skill, straight from this conversation:
 
 ```
-Remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
+Also, remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
 ```
 
 `stcli` shows the whole draft before anything is saved. Read it, then press
