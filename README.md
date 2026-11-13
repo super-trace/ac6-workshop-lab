@@ -201,26 +201,7 @@ Show me routing on this device.
 Show me the configuration snippets behind the routing you just diagnosed.
 ```
 
-> [!WARNING]
-> **TODO (Mahir), before Monday 11/16:** try this alternative memory against
-> the one in D.1.9 (rollback commands) and keep the better one. If IOS wins,
-> update D.1.9's prompt and the payoff notes in D.2.3 and D.2.7.
->
-> ```
-> I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
-> ```
-
-**D.1.9** Tell `stcli` how you work. It remembers across sessions:
-
-```
-From now on, whenever you propose a config change, include the commands to roll it back.
-```
-
-It says what it saved. You'll see it pay off in Scenario 2 without asking
-again; your memories are listed on the dashboard's
-[**Memory** page](https://cli.supertrace.ai/app/memory).
-
-**D.1.10** Your boss just sent round the [team standards](#team-standards).
+**D.1.9** Your boss just sent round the [team standards](#team-standards).
 Check nokia against them. Copy the whole block, standard included, and paste
 it into `stcli` as one message; the line breaks stay in the input until you
 press **Enter**:
@@ -243,14 +224,40 @@ Can you check my nokia and see if I'm in line? Show me a table of anything that 
 A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs.
 
-**D.1.11** Fix it. This changes nokia, so it stops for your approval: SR
+**D.1.10** Fix it. This changes nokia, so it stops for your approval: SR
 Linux stages the change and commits it, and the dialog shows both:
 
 ```
 Fix the nokia.
 ```
 
-**D.1.12** You'll need these standards again, on every device. Save them as
+**D.1.11** Before you move on: how would you undo that?
+
+```
+How would I revert that if I needed to?
+```
+
+> [!WARNING]
+> **TODO (Mahir), before Monday 11/16:** try this alternative memory against
+> the one in D.1.12 (rollback commands) and keep the better one. If IOS wins,
+> update D.1.12's prompt and the payoff notes in D.2.3 and D.2.7.
+>
+> ```
+> I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
+> ```
+
+**D.1.12** Rollback commands are worth seeing with every change, not only
+when you ask. Tell `stcli` once; it remembers across sessions:
+
+```
+From now on, whenever you propose a config change, include the commands to roll it back.
+```
+
+It says what it saved. You'll see it pay off in Scenario 2 without asking
+again; your memories are listed on the dashboard's
+[**Memory** page](https://cli.supertrace.ai/app/memory).
+
+**D.1.13** You'll need these standards again, on every device. Save them as
 a skill, straight from this conversation:
 
 ```
@@ -262,7 +269,7 @@ Remember those standards as a skill called interface-standards. Use it whenever 
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-**D.1.13** See your skill library:
+**D.1.14** See your skill library:
 
 > [!WARNING]
 > **TODO (Mahir):** `/skills` is still being built. Check this step's
@@ -278,7 +285,7 @@ see the agent reach for it by itself in Scenario 2.
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
 >
-> | | Memory (D.1.9) | Skill (D.1.12) |
+> | | Memory (D.1.12) | Skill (D.1.13) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
 > | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
@@ -289,7 +296,7 @@ see the agent reach for it by itself in Scenario 2.
 > Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
 > *a job* gets done, it's a skill.
 
-**D.1.14** Tell us how it went:
+**D.1.15** Tell us how it went:
 
 ```
 /feedback
@@ -527,11 +534,11 @@ I need."* or *"I'd want it to connect to ___ next."*
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
-| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.11) | nokia | update the description in NetBox |
+| ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.10) | nokia | update the description in NetBox |
 
 `just check-netbox` checks all four. The fourth only shows up if attendees
-fixed nokia in D.1.11; NetBox is seeded with nokia's original, off-standard
-description. Anyone who skipped D.1.11 sees no difference there, and the
+fixed nokia in D.1.10; NetBox is seeded with nokia's original, off-standard
+description. Anyone who skipped D.1.10 sees no difference there, and the
 check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
