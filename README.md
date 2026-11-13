@@ -7,6 +7,20 @@ up.
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
+## A. Create a Codespace
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast)
+
+Open the link above:
+<https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast>.
+It creates your Codespace from a prebuilt image, or reopens the one you
+already have. The repository requires a **4-core / 16 GB RAM** machine, so
+smaller machine types aren't offered.
+
+The Codespace opens in about a minute with the lab images, `just` and SSH
+configuration already in place. While it starts, here's the lab you'll
+work with:
+
 ```
       mgmt 172.20.23.2                                   mgmt 172.20.23.3
   ┌──────────────────────┐                           ┌──────────────────────┐
@@ -28,37 +42,6 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
 nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
 address the workshop gives it, since sonic starts with no addresses on
 either link. Connect to each device by its management IP.
-
-## Team standards
-
-Every network team has conventions that live in a wiki or in people's
-heads. This is the lab team's standard for interface descriptions. In
-Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
-applies it on every device, in every scenario, without being reminded.
-
-```
-Interface descriptions follow ROLE: detail, except VLAN gateways (below).
-- Roles: BGP, TRUNK, LOOPBACK, LAN.
-- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
-- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
-- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
-- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
-- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
-- A port with nothing connected has no description. Management ports are exempt.
-```
-
-## A. Create a Codespace
-
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast)
-
-Open the link above:
-<https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast>.
-It creates your Codespace from a prebuilt image, or reopens the one you
-already have. The repository requires a **4-core / 16 GB RAM** machine, so
-smaller machine types aren't offered.
-
-The Codespace opens in about a minute with the lab images, `just` and SSH
-configuration already in place.
 
 ## B. Install stcli
 
@@ -131,6 +114,24 @@ A ping or other long-running command can be stopped with **Esc**.
 
 Each scenario ends with `/feedback`: tell us what worked and what didn't, in
 a sentence. We read every one.
+
+### Team standards
+
+Every network team has conventions that live in a wiki or in people's
+heads. This is the lab team's standard for interface descriptions. In
+Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
+applies it on every device, in every scenario, without being reminded.
+
+```
+Interface descriptions follow ROLE: detail, except VLAN gateways (below).
+- Roles: BGP, TRUNK, LOOPBACK, LAN.
+- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
+- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
+- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
+- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
+- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
+- A port with nothing connected has no description. Management ports are exempt.
+```
 
 ### Scenario 1: one device, talk to your network
 
