@@ -189,10 +189,18 @@ other end is configured yet:
 Show me routing on this device.
 ```
 
-**D.1.7** Tell `stcli` how you like your answers. It remembers across sessions:
+<!--
+TODO(mahir), before Monday 11/16: try the alternative memory below against
+this one (rollback commands) and keep the better one. If IOS wins, update
+D.1.7's prompt and the payoff notes in D.2.3 and D.2.7.
+
+  I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
+-->
+
+**D.1.7** Tell `stcli` how you work. It remembers across sessions:
 
 ```
-From now on, when you show me interface or routing data, use a table.
+Remember: when you propose a config change, always include the commands to roll it back.
 ```
 
 It says what it saved. You'll see it pay off in Scenario 2 without asking
@@ -308,14 +316,16 @@ A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
 nothing is connected to it. It may also flag `Ethernet4`, which is connected
 but has no description: that's the layer 2 trunk, which Scenario 4
-configures and describes, so leave it for now. The answer is a table
-because you asked `stcli` to remember that in Scenario 1.
+configures and describes, so leave it for now.
 
 **D.2.7** Review the full change before anything runs:
 
 ```
 Show me the complete SONiC config you would apply to the device you just added, including the description fixes. Don't apply anything yet.
 ```
+
+The plan comes with the commands to roll it back, because you asked `stcli`
+to remember that in Scenario 1.
 
 **D.2.8** Apply it. Each command stops at **Approve this command?**; check that it
 names sonic before you approve it. Expect a handful of approvals:
