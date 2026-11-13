@@ -24,6 +24,24 @@ nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
 address the workshop gives it, since sonic starts with no addresses on
 either link. Connect to each device by its management IP.
 
+## Team standards
+
+Every network team has conventions that live in a wiki or in people's
+heads. This is the lab team's standard for interface descriptions. In
+Scenario 1 you turn it into a `stcli` **skill**; from then on the agent
+applies it on every device, in every scenario, without being reminded.
+
+```
+Interface descriptions follow ROLE: detail.
+- Roles: BGP, TRUNK, LOOPBACK, LAN.
+- A BGP link names its peer's AS: "BGP: eBGP peer AS65002".
+- A trunk lists its VLANs: "TRUNK: VLANs 110,120,130".
+- A loopback names its job: "LOOPBACK: router-id 10.255.0.1".
+- A VLAN gateway reads "VLAN <id> <NAME> gateway": "VLAN 110 DATA gateway".
+- Describe physical ports, loopbacks and VLAN gateways; other subinterfaces need none.
+- A port with nothing connected has no description. Management ports are exempt.
+```
+
 ## A. Create a Codespace
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast)
@@ -85,7 +103,7 @@ don't steer the next.
 
 A ping or other long-running command can be stopped with **Esc**.
 
-### Scenario 1: single device, basic queries and web search
+### Scenario 1: single device, basic queries, web search and a skill
 
 **1.1** **Explore the Nokia.** Start `stcli`:
 
@@ -140,7 +158,30 @@ Show me the configuration snippets behind the routing you just diagnosed.
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**1.8** Audit the device. This one takes a few minutes, so it comes last:
+**1.8** Turn the [team standards](#team-standards) into a skill. Copy this
+prompt, then paste the standard from the top of this page underneath it, in
+the same message:
+
+```
+Make a skill called interface-standards from our team's standard below. Use it whenever you configure, audit or document interfaces on any device, or compare a device with NetBox.
+```
+
+`stcli` shows the whole draft before anything is saved. Read it, then press
+`y` to save it. It's yours from now on: it carries across `/new`, and you
+can see or edit it on the dashboard's **Skills** page.
+
+**1.9** Audit nokia against the standard:
+
+```
+Does nokia follow our interface standards? Show me a table of anything that doesn't.
+```
+
+A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
+peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
+3 fixes it.
+
+**1.10** Audit the device's security. This one takes a few minutes, so it
+comes last:
 
 ```
 Do a full security audit and give me a TLDR of what to focus on.
@@ -190,38 +231,52 @@ session:
 > [!NOTE]
 > Password: **`newbrain`**
 
-**2.6** Review the full change before anything runs:
+**2.6** sonic has no configuration yet, but someone has been labelling its
+ports. Audit them with your skill:
 
 ```
-Show me the complete SONiC config you would apply to the device you just added. Don't apply anything yet.
+Does sonic follow our interface standards? Show me a table of anything that doesn't.
 ```
 
-**2.7** Apply it. Each command stops at **Approve this command?**; check that it
+A good answer finds two problems: `Ethernet0` is described as `to nokia`,
+with no role or peer AS, and `Ethernet8` describes a BGP peer although
+nothing is connected to it.
+
+**2.7** Review the full change before anything runs:
+
+```
+Show me the complete SONiC config you would apply to the device you just added, including the description fixes. Don't apply anything yet.
+```
+
+**2.8** Apply it. Each command stops at **Approve this command?**; check that it
 names sonic before you approve it. Expect a handful of approvals:
 
 ```
 Apply that config to the SONiC switch, one command at a time, in order. Don't run anything in parallel.
 ```
 
-**2.8** Ping again and check the session. The ping should now succeed, and BGP
+**2.9** Ping again and check the session. The ping should now succeed, and BGP
 should be Established:
 
 ```
 Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
 ```
 
-**2.9** Have the agent walk through it:
+**2.10** Have the agent walk through it:
 
 ```
 Explain what you did.
 ```
 
-**2.10** In a terminal outside `stcli`, this confirms the result. It ends with **BGP
-IS UP** once the session is Established and sonic has installed nokia's
-prefixes:
+**2.11** In a terminal outside `stcli`, these confirm the result. The first
+ends with **BGP IS UP** once the session is Established and sonic has
+installed nokia's prefixes; the second ends with **SONIC MEETS THE
+STANDARD** once `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8`
+has no description:
 
 ```sh
 just check-bgp
+just check-standards
 ```
 
 ### Scenario 3: NetBox, drift and updating the source of truth
@@ -279,7 +334,14 @@ every field it will change, `current → new`, with the reason for each.
 Nothing is written until you press `y`.
 
 Where NetBox is right, nokia has drifted. Have the agent fix nokia
-instead; that's a device change, with its own approval.
+instead; that's a device change, with its own approval. Your
+`interface-standards` skill settles one of them: the `ethernet-1/2`
+description you found in Scenario 1. NetBox lists the trunk's VLANs, as the
+standard says, so NetBox is right and nokia changes:
+
+```
+Where our interface standards say which side is right, follow them, and fix nokia.
+```
 
 **3.6** Check the result in the NetBox UI (**Ports** tab → port 8000, login
 `oldprotocol` / `newbrain`): each change is in **Operations → Change Log**,
@@ -312,24 +374,19 @@ just reset-netbox
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
 | lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
-| ethernet-1/2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the documented standard) | set the description on nokia |
+| ethernet-1/2 description | `TRUNK: VLANs 110,120,130` | `TRUNK: to peer switch` | NetBox (the team standard: a trunk lists its VLANs) | set the description on nokia |
 
 `just check-netbox` checks the first three. The fourth is there so the
-agent has to ask, rather than assume the device always wins; either answer
-is fine. Everything else in NetBox matches nokia: the site `lab`, the
+agent has to ask, rather than assume the device always wins; the
+`interface-standards` skill from Scenario 1 answers it, but either answer
+passes the check. Everything else in NetBox matches nokia: the site `lab`, the
 device and its platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
 subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
 NetBox: attendees build it in Scenario 2.
 
 </details>
 
-### Scenario 4: skills
-
-<!-- TODO: placeholder; the skills feature is still being built. -->
-
-Coming soon.
-
-### Scenario 5: choose your own adventure, layer 2
+### Scenario 4: choose your own adventure, layer 2
 
 The second link between the devices, nokia's `ethernet-1/2` to sonic's
 `Ethernet4`, is a layer 2 trunk. nokia already carries several VLANs on it,
@@ -342,9 +399,11 @@ There are no prompts to copy this time: work it out with `stcli` in your own
 words. Scenario 2's flow works here too: start fresh with `/new`, test the
 link and find out why it fails, see what nokia expects (NetBox documents
 the VLANs too), review the sonic config before applying it, then test again.
-The first ping in each VLAN may lose a packet while ARP resolves.
+The first ping in each VLAN may lose a packet while ARP resolves. Your
+skill still applies: sonic's `Ethernet4` should end up described the way
+the standard describes a trunk.
 
-**5.1** When you think it's working, check from a terminal outside `stcli`. It ends
+**4.1** When you think it's working, check from a terminal outside `stcli`. It ends
 with **LAYER 2 IS UP**:
 
 ```sh
@@ -356,7 +415,9 @@ Stuck? Ask a facilitator; the reference below has hints.
 ### Start over
 
 **D.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
-from Scenario 2 (this also clears any layer 2 config):
+from Scenario 2 (this also clears any layer 2 config and puts back the
+off-standard descriptions). Your skill isn't touched; it lives in your
+account, not on a device:
 
 ```sh
 just reset-sonic
@@ -392,6 +453,15 @@ lab ports on. Interfaces, addresses and VLANs are `sudo config ...`
 (`config interface ip add Ethernet0 10.0.0.1/31`, `config vlan add 110`,
 `config vlan member add 110 Ethernet4`, `config interface ip add Vlan110
 10.110.0.2/24`). BGP is FRR, configured through `vtysh`.
+
+sonic starts with two descriptions that break the team standard, for
+Scenario 2's audit: `Ethernet0` reads `to nokia` (should be `BGP: eBGP peer
+AS65001`) and `Ethernet8`, with nothing connected, reads `BGP: eBGP peer
+AS65003` (should have none). This SONiC has no `config interface
+description`; `show interfaces description` reads them, and a description is
+a CONFIG_DB field: `sudo sonic-db-cli CONFIG_DB HSET "PORT|Ethernet0"
+description "BGP: eBGP peer AS65001"`. Clear one by setting it to `""`;
+deleting the field leaves the old text in `show`.
 
 FRR exchanges no eBGP routes until a policy allows them
 (`bgp ebgp-requires-policy`): the session comes up and shows `(Policy)`,

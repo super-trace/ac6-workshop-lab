@@ -108,6 +108,11 @@ lab-down:
 check-bgp:
     @./scripts/check-bgp.sh
 
+# check the standards audit: sonic's interface descriptions follow the team standard
+[group('exercises')]
+check-standards:
+    @./scripts/check-standards.sh
+
 # check the layer 2 exercise: sonic reaches nokia in VLANs 110, 120 and 130
 [group('exercises')]
 check-l2:

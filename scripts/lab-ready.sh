@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run after deploy: wait for both devices, make sure nokia's startup config
-# took, turn sonic's two lab ports on and save sonic's blank baseline for
-# `just reset-sonic`, then wait for SSH on both.
+# took, turn sonic's two lab ports on, seed its off-standard descriptions and
+# save sonic's blank baseline for `just reset-sonic`, then wait for SSH on
+# both.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -35,6 +36,13 @@ docker exec "${sonic}" supervisorctl start bgpd >/dev/null 2>&1 || true
 # cables are "plugged in"; the workshop configures everything else.
 docker exec "${sonic}" config interface startup Ethernet0
 docker exec "${sonic}" config interface startup Ethernet4
+# Two descriptions that break the team standard (README, "Team standards"),
+# for Scenario 2's audit to find: Ethernet0 has no role or peer AS, and
+# Ethernet8 describes a BGP peer though nothing is connected to it. They
+# configure nothing, so sonic is still blank. This SONiC has no `config
+# interface description`; a description is a CONFIG_DB field.
+docker exec "${sonic}" sonic-db-cli CONFIG_DB HSET 'PORT|Ethernet0' description 'to nokia' >/dev/null
+docker exec "${sonic}" sonic-db-cli CONFIG_DB HSET 'PORT|Ethernet8' description 'BGP: eBGP peer AS65003' >/dev/null
 # The blank baseline for reset-sonic: CONFIG_DB and FRR's config files.
 docker exec "${sonic}" bash -c \
     'sonic-cfggen -d --print-data > /etc/sonic/ac6-baseline.json &&
