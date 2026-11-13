@@ -76,7 +76,7 @@ terminal finds `stcli`:
 source ~/.bashrc
 ```
 
-You'll sign in the first time you run `stcli`, once the lab is up.
+You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 
 ## C. Start and verify
 
@@ -99,49 +99,73 @@ server answering. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it.
 
-## D. Workshop exercises
-
-Work through these in order, in one `stcli` tab. Copy each prompt into
-`stcli` as written. Each scenario starts with `/new`, which clears the
-conversation but keeps your devices connected, so one scenario's answers
-don't steer the next.
-
-A ping or other long-running command can be stopped with **Esc**.
-
-### Scenario 1: single device, basic queries, web search and a skill
-
-<!-- TODO: structured output. Scope what we show (tables? JSON? a parsed
-`show` turned into a table?) and give it a step here. -->
-
-**1.1** **Explore the Nokia.** Start `stcli`:
+**C.3** Start `stcli` and sign in:
 
 ```sh
 stcli
 ```
 
 The first time, it signs you in: open the verification link in your
-computer's browser (the one-time code is already filled in) and wait for
-**Signed in.** in the Codespace terminal. Credentials are saved in the
-Codespace and refreshed automatically.
+computer's browser (the one-time code is already filled in). A new account
+asks a few details first.
 
-**1.2** Connect to nokia by its management IP, as the lab user:
+> [!TIP]
+> In **Referral or promo code**, enter **`AUTOCON6`** for $6 of credit, on
+> top of the $5 every new account starts with. Valid until 11.17.26, once per
+> account.
+
+Wait for **Signed in.** in the Codespace terminal. Credentials are saved in
+the Codespace and refreshed automatically. Leave `stcli` open: Scenario 1
+starts here.
+
+## D. Workshop exercises
+
+Work through these in order, in one `stcli` tab. Copy each prompt into
+`stcli` as written. Each scenario starts with `/new`, which clears the
+conversation but keeps your devices connected, so one scenario's answers
+don't steer the next. Your skill and anything you ask `stcli` to remember
+carry across, because they belong to your account, not the conversation.
+
+A ping or other long-running command can be stopped with **Esc**.
+
+Each scenario ends with `/feedback`: tell us what worked and what didn't, in
+a sentence. We read every one.
+
+### Scenario 1: one device, talk to your network
+
+You'll connect to nokia, ask it questions in plain language, run commands
+yourself, export what you find, and teach `stcli` your team's standard.
+
+**1.1** Connect to nokia by its management IP, as the lab user:
 
 ```
 connect oldprotocol@172.20.23.2
 ```
 
 > [!NOTE]
-> When `stcli` asks for the password, type **`newbrain`**. Both devices use
-> the same login: user `oldprotocol`, password `newbrain`.
+> When `stcli` asks for the password, type **`newbrain`**. It's the same
+> login on every device: user `oldprotocol`, password `newbrain`.
 
-**1.3** Find the login config:
+Once it connects, `stcli` works out what it's talking to by itself: watch for
+**platform set to Nokia SR Linux**.
+
+**1.2** Your password went to nokia, not to the agent. Check:
+
+```
+What password did I use to log in to nokia?
+```
+
+`stcli` typed it on this machine, so the agent can't know it. Device
+credentials never leave your Codespace.
+
+**1.3** Ask nokia about itself:
 
 ```
 show me the config that controls the username and password on this box
 ```
 
-**1.4** Run a command directly on nokia, without the agent. Note the software
-version: you'll ask about it shortly:
+**1.4** Run a command yourself, without the agent. Note the software version:
+you'll ask about it shortly:
 
 ```
 !show version
@@ -154,19 +178,39 @@ other end is configured yet:
 Show me routing on this device.
 ```
 
-**1.6** Pull the config behind the routing:
+**1.6** Export what you see. The agent writes files on this machine, and asks
+first: the dialog shows the whole file before it's written.
 
 ```
-Show me the configuration snippets behind the routing you just diagnosed.
+Export nokia's interfaces to nokia-interfaces.csv: name, admin state, oper state, description and IPv4 address.
 ```
 
-**1.7** Check the firmware against the web:
+Open `nokia-interfaces.csv` in the Codespace's file explorer. CSV is good for a
+spreadsheet; ask for `nokia-interfaces.json` instead if a script will read it.
+
+**1.7** Logs too. Reading the log file is a command `stcli` doesn't recognise,
+so it asks before it runs:
+
+```
+Save the last 100 lines of nokia's log to nokia.log, then tell me what stands out.
+```
+
+**1.8** Tell `stcli` how you like your answers. It remembers across sessions:
+
+```
+From now on, when you show me interface or routing data, use a table.
+```
+
+It says what it saved. You'll see it pay off in Scenario 2 without asking
+again; your memories are listed on the dashboard's **Memory** page.
+
+**1.9** Check the firmware against the web:
 
 ```
 Search the web for any recent patches on this firmware version that I should be aware of.
 ```
 
-**1.8** Turn the [team standards](#team-standards) into a skill. Copy the
+**1.10** Turn the [team standards](#team-standards) into a skill. Copy the
 whole block, standard included, and paste it into `stcli` as one message;
 the line breaks stay in the input until you press **Enter**:
 
@@ -187,7 +231,7 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 `y` to save it. It's yours from now on: it carries across `/new`, and you
 can see or edit it on the dashboard's **Skills** page.
 
-**1.9** Audit nokia against the standard:
+**1.11** Audit nokia against the standard:
 
 ```
 Does nokia follow our interface standards? Show me a table of anything that doesn't.
@@ -197,16 +241,19 @@ A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs. Leave it for now; Scenario
 3 fixes it.
 
-**1.10** Audit the device's security. This one takes a few minutes, so it
-comes last:
+**1.12** Tell us how it went:
 
 ```
-Do a full security audit and give me a TLDR of what to focus on.
+/feedback
 ```
 
-Then ask it whatever you want; be curious.
+For example: *"Exporting to CSV straight from the CLI is handy."* or *"I
+wanted ___ and it didn't."*
 
-### Scenario 2: two devices, BGP
+### Scenario 2: two devices, build, convert and apply
+
+You'll build the config for nokia's BGP peer, convert it to another OS, add a
+second device, and apply the change one approval at a time.
 
 **2.1** Start a fresh conversation. nokia stays connected:
 
@@ -238,15 +285,16 @@ Generate a configuration snippet to configure BGP on a peer to this device.
 Do it for SONiC.
 ```
 
-**2.5** Connect to the SONiC switch by its management IP, so both devices are in one
-session:
+**2.5** Add the SONiC switch to the session. This time use its name, `sonic`:
+the lab's SSH config logs in to it with a key, so there's no password to
+type:
 
 ```
-/add oldprotocol@172.20.23.3
+/add oldprotocol@sonic
 ```
 
-> [!NOTE]
-> Password: **`newbrain`**
+Watch for **platform set to SONiC**. Both devices are now in one session,
+and each command shows which device it ran on.
 
 **2.6** sonic has no configuration yet, but someone has been labelling its
 ports. Audit them with your skill:
@@ -259,7 +307,8 @@ A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
 nothing is connected to it. It may also flag `Ethernet4`, which is connected
 but has no description: that's the layer 2 trunk, which Scenario 4
-configures and describes, so leave it for now.
+configures and describes, so leave it for now. The answer is a table
+because you asked `stcli` to remember that in Scenario 1.
 
 **2.7** Review the full change before anything runs:
 
@@ -281,13 +330,7 @@ should be Established:
 Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
 ```
 
-**2.10** Have the agent walk through it:
-
-```
-Explain what you did.
-```
-
-**2.11** In a terminal outside `stcli`, these confirm the result. The first
+**2.10** In a terminal outside `stcli`, these confirm the result. The first
 ends with **BGP IS UP** once the session is Established and sonic has
 installed nokia's prefixes; the second ends with **SONIC MEETS THE
 STANDARD** once `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8`
@@ -298,53 +341,92 @@ just check-bgp
 just check-standards
 ```
 
-<!-- TODO (flow): this MCP step's final position is decided in the flow
-pass; it sits here for now, before NetBox's built-in connection. -->
+**2.11** Save the work, so it survives a reboot. Saving changes the device, so
+each save asks first:
 
-### Plug in a tool you already use: GitHub over MCP
+```
+Save the running configuration on both devices so it survives a reboot.
+```
 
-MCP lets `stcli` use tools beyond your devices. GitHub runs an MCP server, and
-your Codespace already has a GitHub token, so there is nothing to sign up for.
+**2.12** Some commands can't be undone. For those, `stcli` wants you to type
+a phrase, not just press a key:
 
-**M.1** In a terminal outside `stcli`, add GitHub's read-only MCP server. The
-token never appears on screen:
+```
+Remove BGP from sonic.
+```
+
+If the agent checks with you first, say yes. The approval then asks you to
+**type `no router`**. Don't: press **Esc**. Nothing
+changes, and `just check-bgp` still passes. (If you do type it, `just
+reset-sonic` brings sonic back; see [Start over](#start-over).)
+
+**2.13** Have the agent walk through it:
+
+```
+Explain what you did.
+```
+
+**2.14** Everything you just did is on the record. Open the dashboard at
+[cli.supertrace.ai/app](https://cli.supertrace.ai/app), go to **Usage →
+Sessions**, and open this session: every command, which device it ran on,
+and each approval with who gave it.
+
+**2.15** Tell us how it went:
+
+```
+/feedback
+```
+
+For example: *"Converting the config to SONiC saved me real time."* or *"The
+approvals felt ___."*
+
+### Scenario 3: plug in the tools you already use
+
+You'll give `stcli` two tools: GitHub over MCP, and NetBox, your source of
+truth, which it reads and fixes.
+
+**3.1** MCP servers connect when `stcli` starts, so leave it with **Ctrl+C**
+twice. In the terminal, add GitHub's read-only MCP server. Your Codespace
+already has a GitHub token, and it never appears on screen:
 
 ```sh
 just mcp-github
 ```
 
-**M.2** Restart `stcli` (`/new` isn't enough: MCP servers connect at startup)
-and check it's there:
+**3.2** Start `stcli` again and reconnect both devices. Ask in plain language;
+press **Enter** to confirm each connection. Both use the lab's SSH key, so
+there's no password:
+
+```sh
+stcli
+```
+
+```
+Connect to oldprotocol@nokia and oldprotocol@sonic.
+```
+
+**3.3** Check GitHub is there:
 
 ```
 /mcp list
 ```
 
-**M.3** Ask GitHub something web search can't answer reliably: live issues on
-the routing daemon sonic runs.
+**3.4** In Scenario 2, sonic's BGP session came up but showed `(Policy)`
+before any routes arrived. That's FRR, the routing daemon sonic runs. Ask
+GitHub about it:
 
 ```
-List the open issues in FRRouting/frr that mention ebgp-requires-policy.
+Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP exchange no routes until a policy allows them?
 ```
 
-Each GitHub call stops at a confirm dialog first: press `y`. MCP tools never run
-without asking.
+Each GitHub call stops at a confirm dialog first: press `y`. MCP tools never
+run without asking.
 
-### Scenario 3: NetBox, drift and updating the source of truth
-
-**3.1** Start a fresh conversation. Both devices stay connected:
-
-```
-/new
-```
-
-NetBox is the lab's source of truth: it documents what nokia should look
-like. Like every real NetBox, it has drifted: in a few places it no longer
-matches the network. In this scenario the agent finds where NetBox and
-nokia disagree, asks you which side is right, and fixes the side that's
-wrong.
-
-**3.2** Connect `stcli` to NetBox:
+**3.5** Now NetBox. It's the lab's source of truth: it documents what nokia
+should look like. Like every real NetBox, it has drifted: in a few places it
+no longer matches the network. The agent finds where NetBox and nokia
+disagree, asks you which side is right, and fixes the side that's wrong.
+Connect `stcli` to NetBox:
 
 ```
 /netbox connect http://localhost:8000
@@ -357,22 +439,22 @@ wrong.
 > nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000
 > ```
 >
-> The token stays in the Codespace, like an SSH password: `stcli` never sends
+> The token stays in the Codespace, like your SSH password: `stcli` never sends
 > it to the agent.
 
-**3.3** Ask what NetBox knows. Reads from NetBox run without asking you:
+**3.6** Ask what NetBox knows. Reads from NetBox run without asking you:
 
 ```
 What does NetBox document for nokia? List its interfaces, IP addresses and VLANs.
 ```
 
-**3.4** Compare NetBox with the real device:
+**3.7** Compare NetBox with the real device:
 
 ```
 Compare nokia's running configuration with NetBox and show me every difference.
 ```
 
-**3.5** A good answer is a table of discrepancies, and a question: for each one,
+**3.8** A good answer is a table of discrepancies, and a question: for each one,
 which side is right? It won't change either side until you answer. Decide
 item by item. Where nokia is right, NetBox is stale:
 
@@ -394,7 +476,7 @@ standard says, so NetBox is right and nokia changes:
 Where our interface standards say which side is right, follow them, and fix nokia.
 ```
 
-**3.6** Check the result in the NetBox UI (**Ports** tab → port 8000, login
+**3.9** Check the result in the NetBox UI (**Ports** tab → port 8000, login
 `oldprotocol` / `newbrain`): each change is in **Operations → Change Log**,
 with the agent's reason as its message. In a terminal outside `stcli`, this
 confirms it. It ends with **NETBOX MATCHES NOKIA** once NetBox no longer
@@ -404,14 +486,30 @@ disagrees with nokia anywhere nokia is right:
 just check-netbox
 ```
 
-**3.7** Have the agent walk through it:
+**3.10** Have the agent walk through it:
 
 ```
 Explain what you changed in NetBox and why.
 ```
 
-**3.8** To run this scenario again, put NetBox back as it was seeded, drift
-included (seconds; the devices are untouched):
+**3.11** Finish with a big one: audit nokia's security. It takes a few
+minutes:
+
+```
+Do a full security audit of nokia and give me a TLDR of what to focus on.
+```
+
+**3.12** Tell us how it went:
+
+```
+/feedback
+```
+
+For example: *"Fixing NetBox drift with a reviewed changeset is exactly what
+I need."* or *"I'd want it to connect to ___ next."*
+
+To run this scenario again, put NetBox back as it was seeded, drift included
+(seconds; the devices are untouched):
 
 ```sh
 just reset-netbox
@@ -439,9 +537,10 @@ NetBox: attendees build it in Scenario 2.
 
 ### Scenario 4: choose your own adventure, layer 2
 
-The second link between the devices, nokia's `ethernet-1/2` to sonic's
-`Ethernet4`, is a layer 2 trunk. nokia already carries several VLANs on it,
-each with a gateway address. sonic's end is at factory defaults.
+Done early? The second link between the devices, nokia's `ethernet-1/2` to
+sonic's `Ethernet4`, is a layer 2 trunk. nokia already carries several
+VLANs on it, each with a gateway address. sonic's end is at factory
+defaults.
 
 **The goal:** sonic reaches nokia's gateway in every VLAN, and nokia learns
 sonic's address in each one. nokia needs no changes.
@@ -463,8 +562,7 @@ just check-l2
 
 Stuck? Ask a facilitator; the reference below has hints.
 
-<!-- TODO: feedback. Ships today; add the step here (and/or at the end of each
-scenario) once we know how attendees send it. -->
+**4.2** Tell us how it went: `/feedback`.
 
 ### Start over
 
