@@ -1,4 +1,6 @@
-# AC6 workshop lab
+# AC6 workshop lab | Old Protocol New Brain
+
+Slides: [supertrace.ai/ac6-deck](http://supertrace.ai/ac6-deck)
 
 A two-device network lab for working with `stcli`, running entirely in
 GitHub Codespaces: one Nokia SR Linux router that's already configured, one
