@@ -384,35 +384,29 @@ nothing is connected to it. It may also flag `Ethernet4`, which is connected
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
-**D.2.7** Review the full change before anything runs:
+**D.2.7** Apply it: the config you saved in D.2.4, plus the description fixes
+from D.2.6. Before anything runs, the plan comes with the commands to roll
+it back, because you asked `stcli` to remember that in Scenario 1. Then each
+command stops at **Approve this command?**; check that it names sonic
+before you approve it. Expect a handful of approvals:
 
 ```
-Show me the complete SONiC config you would apply to the device you just added, including the description fixes. Don't apply anything yet.
+Apply sonic-bgp.conf to sonic, plus the description fixes, one command at a time, in order. Don't run anything in parallel.
 ```
 
-The plan comes with the commands to roll it back, because you asked `stcli`
-to remember that in Scenario 1.
-
-**D.2.8** Apply it. Each command stops at **Approve this command?**; check that it
-names sonic before you approve it. Expect a handful of approvals:
-
-```
-Apply that config to the SONiC switch, one command at a time, in order. Don't run anything in parallel.
-```
-
-**D.2.9** Ping again and check the session. The ping should now succeed, and BGP
+**D.2.8** Ping again and check the session. The ping should now succeed, and BGP
 should be Established:
 
 ```
 Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
 ```
 
-**D.2.10** Everything you just did is on the record. Open the dashboard at
+**D.2.9** Everything you just did is on the record. Open the dashboard at
 [cli.supertrace.ai/app](https://cli.supertrace.ai/app), go to **Usage →
 Sessions**, and open this session: every command, which device it ran on,
 and each approval with who gave it.
 
-**D.2.11** Tell us how it went:
+**D.2.10** Tell us how it went:
 
 ```
 /feedback
