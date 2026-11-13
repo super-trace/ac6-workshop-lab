@@ -176,20 +176,26 @@ there, but each password hash reads `[redacted]`: `stcli` strips them before
 anything leaves your machine.
 
 **D.1.5** Run a command yourself, without the agent. Note the software version:
-you'll ask about it shortly:
+you'll ask about it next:
 
 ```
 !show version
 ```
 
-**D.1.6** Read the routing table. The BGP peer shows as down, because nothing on the
+**D.1.6** Check that version against the web, while it's in front of you:
+
+```
+Search the web for any recent patches on this firmware version that I should be aware of.
+```
+
+**D.1.7** Read the routing table. The BGP peer shows as down, because nothing on the
 other end is configured yet:
 
 ```
 Show me routing on this device.
 ```
 
-**D.1.7** Pull the config behind the routing:
+**D.1.8** Pull the config behind the routing:
 
 ```
 Show me the configuration snippets behind the routing you just diagnosed.
@@ -197,28 +203,22 @@ Show me the configuration snippets behind the routing you just diagnosed.
 
 > [!WARNING]
 > **TODO (Mahir), before Monday 11/16:** try this alternative memory against
-> the one in D.1.8 (rollback commands) and keep the better one. If IOS wins,
-> update D.1.8's prompt and the payoff notes in D.2.3 and D.2.7.
+> the one in D.1.9 (rollback commands) and keep the better one. If IOS wins,
+> update D.1.9's prompt and the payoff notes in D.2.3 and D.2.7.
 >
 > ```
 > I think in Cisco IOS. When you give me SR Linux or SONiC commands, add the IOS equivalent.
 > ```
 
-**D.1.8** Tell `stcli` how you work. It remembers across sessions:
+**D.1.9** Tell `stcli` how you work. It remembers across sessions:
 
 ```
-Remember: when you propose a config change, always include the commands to roll it back.
+From now on, whenever you propose a config change, include the commands to roll it back.
 ```
 
 It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
-
-**D.1.9** Check the firmware against the web:
-
-```
-Search the web for any recent patches on this firmware version that I should be aware of.
-```
 
 **D.1.10** Turn the [team standards](#team-standards) into a skill. Copy the
 whole block, standard included, and paste it into `stcli` as one message;
@@ -245,7 +245,7 @@ can see or edit it on the dashboard's
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
 >
-> | | Memory (D.1.8) | Skill (D.1.10) |
+> | | Memory (D.1.9) | Skill (D.1.10) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
 > | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
