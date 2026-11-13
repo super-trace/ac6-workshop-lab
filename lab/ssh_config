@@ -17,7 +17,7 @@
 # workshop wants.
 #
 # stcli reads this file too, and rejects any keyword it doesn't implement
-# (IdentitiesOnly, for one) instead of ignoring it, so `/add oldprotocol@sonic`
+# (IdentitiesOnly, for one) instead of ignoring it, so `/add sonic`
 # would fail even though `ssh sonic` works. Keep to keywords stcli supports.
 Host nokia sonic 172.20.23.2 172.20.23.3
     StrictHostKeyChecking no

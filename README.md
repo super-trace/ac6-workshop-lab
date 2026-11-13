@@ -336,13 +336,17 @@ Do it for SONiC, and save it to sonic-bgp.conf.
 Open `sonic-bgp.conf` in the Codespace's file explorer: it's ready for a
 change ticket or a peer review.
 
-**D.2.5** Add the SONiC switch to the session. This time use its name, `sonic`:
-the lab's SSH config logs in to it with a key, so there's no password to
-type:
+**D.2.5** Add the SONiC switch to the session. In D.1.1 you typed an IP and
+a password. This time, use the name, the way you'd type `ssh sonic`:
 
 ```
-/add oldprotocol@sonic
+/add sonic
 ```
+
+No password: `stcli` reads your `~/.ssh/config`, the same file `ssh` does.
+The lab's entry for `sonic` names its address, user and SSH key, so if
+`ssh sonic` works in your terminal, it works in `stcli`. Your own aliases,
+keys and jump hosts carry over the same way.
 
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
