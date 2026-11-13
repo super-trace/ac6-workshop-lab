@@ -12,6 +12,12 @@ mgmt:
 #   an 802.1Q trunk with three VLAN gateways on ethernet-1/2.
 #   sonic (SONiC) starts blank apart from the lab login; the workshop
 #   configures both of its links.
+#
+# configs/nokia.cfg has no comments: SR Linux logs every startup line, and the
+# agent can read that log. Its password lines (newbrain) are logged too, which
+# stcli shows as [redacted]. It names neither the peer's vendor nor its ports,
+# and LLDP is off, so Scenario 2's agent can't tell the peer is SONiC before
+# it is told.
 topology:
   nodes:
     nokia:
