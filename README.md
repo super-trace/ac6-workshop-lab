@@ -149,14 +149,15 @@ connect oldprotocol@172.20.23.2
 Once it connects, `stcli` works out what it's talking to by itself: watch for
 **platform set to Nokia SR Linux**.
 
-**1.2** Your password went to nokia, not to the agent. Check:
+**1.2** Your password went straight to the device; the AI agent never saw it.
+Check:
 
 ```
 What password did I use to log in to nokia?
 ```
 
-`stcli` typed it on this machine, so the agent can't know it. Device
-credentials never leave your Codespace.
+`stcli` typed it to nokia from this machine, so the agent can't know it.
+Device credentials never leave your Codespace.
 
 **1.3** Ask nokia about itself:
 
