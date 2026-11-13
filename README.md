@@ -395,9 +395,10 @@ Does sonic follow our interface standards? Show me a table of anything that does
 
 It's the same standard you set on nokia, now on a different vendor's switch.
 
-A good answer finds two problems: `Ethernet0` is described as `to nokia`,
-with no role or peer AS, and `Ethernet8` describes a BGP peer although
-nothing is connected to it. It may also flag `Ethernet4`, which is connected
+A good answer finds that `Ethernet8` describes a BGP peer although nothing
+is connected to it. It finds `Ethernet0`, described as `to nokia` with no
+role or peer AS, too, unless your D.2.4 config already fixed it: the skill
+shapes config the agent writes, not only the audits it runs. It may also flag `Ethernet4`, which is connected
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
