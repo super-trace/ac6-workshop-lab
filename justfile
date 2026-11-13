@@ -18,12 +18,12 @@ sonic := '\033[96m'
 default:
     @just --list --unsorted
 
-# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes)
+# deploy both nodes fresh from lab/configs/, plus NetBox, the GitHub MCP proxy and Grafana (~3 minutes)
 [group('lab')]
 lab-up:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
-        "one Nokia and one SONiC, plus NetBox." \
+        "one Nokia and one SONiC, plus NetBox and Grafana." \
         "Expect this to take ~3 minutes."
     @printf '\n'
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
@@ -38,6 +38,9 @@ lab-up:
     @# stcli and ssh at a dedicated known_hosts file; wiping it here keeps a
     @# redeploy from looking like a man-in-the-middle to either of them.
     @rm -f ~/.ac6-workshop-known-hosts
+    @# The Grafana stack sits on containerlab's management network; take it
+    @# off (keeping Grafana's dashboards) so the redeploy can recreate it.
+    @docker compose -f lab/grafana/compose.yml down 2>/dev/null || true
     @# --reconfigure: start every node from scratch, so nothing saved inside
     @# a node during the workshop survives a redeploy.
     @{{clab_run}} deploy --reconfigure -t topology.clab.yml
@@ -49,6 +52,10 @@ lab-up:
     @printf '\n'
     @./scripts/netbox-up.sh
     @printf '\n'
+    @# gnmic, Prometheus, Loki, Alloy, Grafana and Grafana's MCP server, once
+    @# the devices they collect from are up.
+    @./scripts/grafana-up.sh
+    @printf '\n'
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n'
     @printf '    {{bold}}nokia{{reset}}  {{srl}}Nokia SR Linux{{reset}}  configured: BGP on ethernet-1/1, VLAN trunk on ethernet-1/2\n'
@@ -56,18 +63,20 @@ lab-up:
     @printf '    Links: nokia ethernet-1/1 <-> sonic Ethernet0 (BGP)\n'
     @printf '           nokia ethernet-1/2 <-> sonic Ethernet4 (layer 2 trunk)\n'
     @printf '    NetBox: port 8000; GitHub MCP: http://localhost:8002/mcp/readonly\n'
+    @printf '    Grafana: port 3000; Grafana MCP: http://localhost:8003/mcp\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to open /etc/hosts file for srl node nokia: ...\n'
     @printf '    {{yellow}}WARN{{reset}} Unable to populate hosts for node "nokia": ...\n'
     @printf '\n    Next: {{green}}just lab-verify{{reset}}\n'
 
-# check the baseline: nokia configured, sonic blank, links and SSH up, NetBox and MCP answering (~10 seconds)
+# check the baseline: nokia configured, sonic blank, links and SSH up, NetBox, Grafana and both MCP servers answering (~10 seconds)
 [group('lab')]
 lab-verify:
     @./scripts/banner.sh intro "just lab-verify" \
         "This command checks the lab baseline: nokia configured, sonic" \
-        "blank, both links up, NetBox and GitHub's MCP server answering." \
+        "blank, both links up, NetBox, Grafana and both MCP servers" \
+        "answering." \
         "Expect this to take ~10 seconds."
     @printf '\n'
     @./scripts/verify.sh
@@ -92,9 +101,12 @@ lab-cli NODE='nokia':
       *) echo "unknown node {{NODE}} (nokia or sonic)" >&2; exit 1 ;;
     esac
 
-# reset for anyone stuck: tear down the lab and NetBox (keeps NetBox's data), then lab-up
+# reset for anyone stuck: tear down the lab, NetBox and Grafana (keeps their data), then lab-up
 [group('lab')]
 lab-down:
+    @# Grafana first: it sits on the lab's management network. Keep its
+    @# volume, so dashboards survive the reset; grafana-down deletes it.
+    @docker compose -f lab/grafana/compose.yml down
     @{{clab_run}} destroy -t topology.clab.yml
     @rm -f ~/.ac6-workshop-known-hosts
     @# Keep NetBox's volumes, so whatever was put into NetBox survives the
@@ -134,6 +146,17 @@ reset-netbox:
     @docker compose -f lab/netbox/compose.yml down -v
     @./scripts/netbox-up.sh
 
+# check the Grafana exercise: a dashboard shows both devices' metrics and their logs
+[group('exercises')]
+check-grafana:
+    @./scripts/check-grafana.sh
+
+# delete every dashboard and start Grafana fresh, to run the Grafana exercise again (seconds)
+[group('exercises')]
+reset-grafana:
+    @docker compose -f lab/grafana/compose.yml down -v
+    @./scripts/grafana-up.sh
+
 # start NetBox on port 8000, seeded with nokia, and the GitHub MCP proxy (lab-up does this too)
 [group('netbox')]
 netbox-up:
@@ -151,6 +174,23 @@ netbox-down:
     @printf '\n'
     @./scripts/banner.sh red "NETBOX IS DOWN"
 
+# start gnmic, Prometheus, Loki, Alloy, Grafana (port 3000) and Grafana's MCP server; needs the lab up (lab-up does this too)
+[group('grafana')]
+grafana-up:
+    @./scripts/banner.sh intro "just grafana-up" \
+        "Starting Grafana with metrics (gNMI, Prometheus) and logs (syslog," \
+        "Loki) from both devices, and Grafana's MCP server." \
+        "Expect ~30 seconds."
+    @printf '\n'
+    @./scripts/grafana-up.sh
+
+# stop the Grafana stack and delete Grafana's dashboards
+[group('grafana')]
+grafana-down:
+    @docker compose -f lab/grafana/compose.yml down -v
+    @printf '\n'
+    @./scripts/banner.sh red "GRAFANA IS DOWN"
+
 # pull the lab images and install SSH config
 [group('setup')]
 lab-setup:
@@ -158,6 +198,7 @@ lab-setup:
     docker pull ghcr.io/nokia/srlinux:25.3.2
     just sonic-ensure
     docker compose -f lab/netbox/compose.yml pull
+    docker compose -f lab/grafana/compose.yml pull
     ./scripts/install-ssh.sh
 
 # Use the local SONiC image if it matches this checkout, else pull it, else build it here.

@@ -1,0 +1,17 @@
+# Grafana's two datasources, with fixed uids so dashboards, the MCP server's
+# instructions and scripts/check-grafana.sh can name them.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 10s
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://loki:3100

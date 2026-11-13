@@ -17,7 +17,11 @@ image="$1"
 push="${2:-}"
 branch="${image##*:}"
 base="docker-sonic-vs:${branch}"
-url="https://sonic-build.azurewebsites.net/api/sonic/artifacts?branchName=${branch}&platform=vs&target=target/docker-sonic-vs.gz"
+artifacts="https://sonic-build.azurewebsites.net/api/sonic/artifacts?branchName=${branch}&platform=vs&target=target"
+url="${artifacts}/docker-sonic-vs.gz"
+# SONiC's gNMI server, which docker-sonic-vs leaves out (a real switch runs it
+# in its own container); the Dockerfile installs it from the `gnmi` context.
+gnmi_url="${artifacts}/debs/bookworm/sonic-gnmi_0.1_amd64.deb"
 
 cd "$(dirname "$0")/.."
 work="$(mktemp -d)"
@@ -26,6 +30,11 @@ trap 'rm -rf "$work"' EXIT
 echo "Downloading SONiC ${branch} docker-sonic-vs (about 200 MB)..."
 curl -fL --retry 3 --connect-timeout 15 --speed-limit 1024 --speed-time 60 \
     -o "${work}/docker-sonic-vs.gz" "$url"
+echo "Downloading SONiC ${branch} sonic-gnmi (about 30 MB)..."
+mkdir -p "${work}/gnmi"
+curl -fL --retry 3 --connect-timeout 15 --speed-limit 1024 --speed-time 60 \
+    -o "${work}/gnmi/sonic-gnmi.deb" "$gnmi_url" ||
+    { echo "Couldn't download sonic-gnmi from SONiC's pipeline (${gnmi_url})." >&2; exit 1; }
 loaded="$(docker load -i "${work}/docker-sonic-vs.gz" | sed -n 's/^Loaded image: //p' | tail -1)"
 docker tag "$loaded" "$base"
 docker run --rm --platform linux/amd64 --entrypoint cat "$base" /etc/sonic/sonic_version.yml |
@@ -33,6 +42,7 @@ docker run --rm --platform linux/amd64 --entrypoint cat "$base" /etc/sonic/sonic
 
 # Context is lab/, for the shared lab key.
 docker build --platform linux/amd64 --build-arg "BASE=${base}" \
+    --build-context "gnmi=${work}/gnmi" \
     --label "ac6.recipe=$(./scripts/sonic-recipe.sh)" \
     -f lab/images/sonic/Dockerfile -t "$image" lab
 echo "Built ${image}."

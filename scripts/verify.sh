@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Baseline check: nokia is fully configured, sonic is reachable and blank,
-# both links are up, both SSH aliases work, and NetBox and the GitHub MCP
-# proxy answer.
+# both links are up, both SSH aliases work, and NetBox, the GitHub MCP
+# proxy, Grafana (with metrics and logs from both devices) and Grafana's MCP
+# server answer.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -102,18 +103,62 @@ case "$code" in
 esac
 
 echo
+heading "Grafana (expect it on port 3000, with metrics and logs from both devices)"
+if ! curl -s --max-time 10 http://localhost:3000/api/health | grep -q '"database": *"ok"'; then
+    fail "Grafana not answering on http://localhost:3000 — run 'just grafana-up'"
+else
+    echo "   Grafana: ok"
+    # gnmic samples every 10 seconds; give a fresh lab-up a little time.
+    for _ in $(seq 1 15); do
+        metrics="$(curl -s --max-time 10 -G http://127.0.0.1:9090/api/v1/query \
+            --data-urlencode 'query=count by (device) (interface_oper_up)' || true)"
+        grep -q '"device":"nokia"' <<<"$metrics" && grep -q '"device":"sonic"' <<<"$metrics" && break
+        sleep 2
+    done
+    for node in nokia sonic; do
+        if grep -q "\"device\":\"${node}\"" <<<"$metrics"; then
+            echo "   metrics from ${node}: ok"
+        else
+            fail "no gNMI metrics from ${node} in Prometheus — run 'just grafana-up'"
+        fi
+    done
+    logs="$(curl -s --max-time 10 http://127.0.0.1:3100/loki/api/v1/label/device/values || true)"
+    for node in nokia sonic; do
+        if grep -q "\"${node}\"" <<<"$logs"; then
+            echo "   logs from ${node}: ok"
+        else
+            fail "no syslog from ${node} in Loki — run 'just lab-up'"
+        fi
+    done
+fi
+
+echo
+heading "Grafana MCP (expect Grafana's MCP server on port 8003)"
+code="$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "${mcp_headers[@]}" \
+    -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"lab-verify","version":"1"}}}' \
+    "http://localhost:8003/mcp" || true)"
+if [ "$code" = 200 ]; then
+    echo "   Grafana MCP answered: ok"
+else
+    fail "Grafana MCP not answering on port 8003 (HTTP ${code:-none}) — run 'just grafana-up'"
+fi
+
+echo
 if (( checks_failed )); then
     ./scripts/banner.sh red "LAB VERIFICATION FAILED"
     exit 1
 fi
 ./scripts/banner.sh green "LAB IS VERIFIED"
 
-# The README's Scenario 3 points here: a Codespace's forwarded URL can't be
-# linked from the README, so print it where attendees can click it.
+# The README's Scenarios 3 and 4 point here: a Codespace's forwarded URLs
+# can't be linked from the README, so print them where attendees can click.
 if [ "${CODESPACES:-}" = "true" ] && [ -n "${CODESPACE_NAME:-}" ]; then
     netbox_url="https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+    grafana_url="https://${CODESPACE_NAME}-3000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
 else
     netbox_url="http://localhost:8000"
+    grafana_url="http://localhost:3000"
 fi
 echo
-echo "   Open NetBox: ${netbox_url}  (log in as oldprotocol / newbrain)"
+echo "   Open NetBox:  ${netbox_url}  (log in as oldprotocol / newbrain)"
+echo "   Open Grafana: ${grafana_url}  (log in as oldprotocol / newbrain)"

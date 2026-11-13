@@ -1,0 +1,187 @@
+# gnmic: subscribe to both devices over gNMI and serve the latest values to
+# Prometheus on :9804 (scraped by prometheus.yml).
+#
+# The two devices speak different gNMI: nokia (SR Linux) serves its YANG
+# model over TLS on 57400; sonic serves its Redis databases (COUNTERS_DB,
+# APPL_DB) without TLS on 50051, from the gNMI server the lab's SONiC image
+# adds. The processors below turn both into one set of metric names, so a
+# query or a dashboard panel covers both ends of a link:
+#
+#   interface_in_octets, interface_out_octets      bytes, counters
+#   interface_in_packets, interface_out_packets    unicast + multicast + broadcast
+#   interface_in_errors, interface_out_errors      counters
+#   interface_in_discards, interface_out_discards  counters
+#   interface_oper_up                              1 up, 0 down
+#   bgp_neighbor_established                       nokia: 1 Established, else 0
+#   bgp_neighbor_received_routes / _active_routes  nokia, IPv4 unicast
+#   cpu_utilization_percent, memory_utilization_percent   nokia
+#
+# Every metric carries `device` (nokia or sonic); interface metrics carry
+# `interface` (ethernet-1/1, Ethernet0, ...), BGP ones `peer_address`.
+
+username: oldprotocol
+password: newbrain
+skip-verify: true
+timeout: 10s
+log: true
+
+targets:
+  nokia:
+    address: 172.20.23.2:57400
+    subscriptions: [nokia-interfaces, nokia-bgp, nokia-platform]
+  # sonic's gNMI server serves one subscription per connection: a second on
+  # the same connection never delivers. So sonic is two targets, one
+  # connection each; the processor names both `sonic`.
+  sonic:
+    address: 172.20.23.3:50051
+    insecure: true
+    subscriptions: [sonic-counters]
+  sonic-ports:
+    address: 172.20.23.3:50051
+    insecure: true
+    subscriptions: [sonic-ports]
+
+subscriptions:
+  nokia-interfaces:
+    paths:
+      # The two lab ports, as on sonic below; SR Linux reports oper-state
+      # for all 50-odd front-panel ports otherwise.
+      - /interface[name=ethernet-1/1]/statistics
+      - /interface[name=ethernet-1/1]/oper-state
+      - /interface[name=ethernet-1/2]/statistics
+      - /interface[name=ethernet-1/2]/oper-state
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+    encoding: json_ietf
+  nokia-bgp:
+    paths:
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/session-state
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/afi-safi[afi-safi-name=ipv4-unicast]/received-routes
+      - /network-instance[name=default]/protocols/bgp/neighbor[peer-address=*]/afi-safi[afi-safi-name=ipv4-unicast]/active-routes
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+    encoding: json_ietf
+  nokia-platform:
+    paths:
+      - /platform/control[slot=A]/cpu[index=all]/total/instant
+      - /platform/control[slot=A]/memory/utilization
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+    encoding: json_ietf
+  # One path per lab port: sonic's wildcard (COUNTERS/Ethernet*) names ports
+  # by alias (fortyGigE0/0) rather than Ethernet0.
+  sonic-counters:
+    target: COUNTERS_DB
+    paths:
+      - COUNTERS/Ethernet0
+      - COUNTERS/Ethernet4
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+  sonic-ports:
+    target: APPL_DB
+    paths:
+      - PORT_TABLE/Ethernet0
+      - PORT_TABLE/Ethernet4
+    mode: stream
+    stream-mode: sample
+    sample-interval: 10s
+
+outputs:
+  prometheus:
+    type: prometheus
+    listen: :9804
+    path: /metrics
+    # Drop a series a minute after its last update, so a stopped device
+    # shows as missing data rather than its last value.
+    expiration: 60s
+    event-processors: [normalise]
+
+processors:
+  normalise:
+    event-starlark:
+      source: |
+        # Both vendors' leaves -> one metric name each (see the top of this
+        # file). nokia's leaves carry YANG module prefixes, so match on the
+        # last path element.
+        NOKIA = {
+            "in-octets": "interface_in_octets",
+            "out-octets": "interface_out_octets",
+            "in-packets": "interface_in_packets",
+            "out-packets": "interface_out_packets",
+            "in-error-packets": "interface_in_errors",
+            "out-error-packets": "interface_out_errors",
+            "in-discarded-packets": "interface_in_discards",
+            "out-discarded-packets": "interface_out_discards",
+            "oper-state": "interface_oper_up",
+            "session-state": "bgp_neighbor_established",
+            "received-routes": "bgp_neighbor_received_routes",
+            "active-routes": "bgp_neighbor_active_routes",
+            "instant": "cpu_utilization_percent",
+            "utilization": "memory_utilization_percent",
+        }
+        SONIC = {
+            "SAI_PORT_STAT_IF_IN_OCTETS": "interface_in_octets",
+            "SAI_PORT_STAT_IF_OUT_OCTETS": "interface_out_octets",
+            "SAI_PORT_STAT_IF_IN_ERRORS": "interface_in_errors",
+            "SAI_PORT_STAT_IF_OUT_ERRORS": "interface_out_errors",
+            "SAI_PORT_STAT_IF_IN_DISCARDS": "interface_in_discards",
+            "SAI_PORT_STAT_IF_OUT_DISCARDS": "interface_out_discards",
+            "oper_status": "interface_oper_up",
+        }
+        # SONiC counts unicast and the rest separately; nokia's in-packets
+        # is the total.
+        SONIC_SUMS = {
+            "interface_in_packets": ["SAI_PORT_STAT_IF_IN_UCAST_PKTS", "SAI_PORT_STAT_IF_IN_NON_UCAST_PKTS"],
+            "interface_out_packets": ["SAI_PORT_STAT_IF_OUT_UCAST_PKTS", "SAI_PORT_STAT_IF_OUT_NON_UCAST_PKTS"],
+        }
+        UP = {"up": 1, "established": 1}
+
+        def number(v):
+            if type(v) == "string":
+                if v in UP:
+                    return UP[v]
+                if v.isdigit():
+                    return int(v)
+                return 0  # down, idle, active, connect, ...
+            return v
+
+        def apply(*events):
+            out = []
+            for e in events:
+                # The target's name: nokia, sonic or sonic-ports.
+                device = e.tags.get("source", "").split("-")[0]
+                tags = {"device": device}
+                values = {}
+                if device == "sonic":
+                    raw = {}
+                    for path, v in e.values.items():
+                        parts = path.strip("/").split("/")
+                        tags["interface"] = parts[1]
+                        raw[parts[-1]] = v
+                    for leaf, v in raw.items():
+                        if leaf in SONIC:
+                            values[SONIC[leaf]] = number(v)
+                    for name, leaves in SONIC_SUMS.items():
+                        if all([l in raw for l in leaves]):
+                            total = 0
+                            for l in leaves:
+                                total += number(raw[l])
+                            values[name] = total
+                else:
+                    if "interface_name" in e.tags:
+                        tags["interface"] = e.tags["interface_name"]
+                    if "neighbor_peer-address" in e.tags:
+                        tags["peer_address"] = e.tags["neighbor_peer-address"]
+                    for path, v in e.values.items():
+                        leaf = path.split("/")[-1].split(":")[-1]
+                        if leaf in NOKIA:
+                            values[NOKIA[leaf]] = number(v)
+                if values:
+                    e.tags = tags
+                    e.values = values
+                    out.append(e)
+            return out

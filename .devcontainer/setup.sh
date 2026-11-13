@@ -48,8 +48,9 @@ echo "dockerd ready after ${i}s ($(docker version --format '{{.Server.Version}}'
 
 step "Pulling lab images, installing SSH config (just lab-setup)"
 cd "$(dirname "$0")/.."
-# Every image is public (SR Linux, our SONiC build, NetBox), so the prebuild
-# pulls them all and new Codespaces start with them in place.
+# Every image is public (SR Linux, NetBox, the Grafana stack) or built here
+# from public parts (SONiC, by sonic-ensure), so the prebuild pulls or builds
+# them all and new Codespaces start with them in place.
 just lab-setup
 
 step "Summary"

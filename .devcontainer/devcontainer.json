@@ -15,9 +15,10 @@
 		"memory": "16gb"
 	},
 	"privileged": true,
-	"forwardPorts": [2401, 2402, 8000],
+	"forwardPorts": [2401, 2402, 8000, 3000],
 	"portsAttributes": {
 		"8000": { "label": "NetBox", "onAutoForward": "silent" },
+		"3000": { "label": "Grafana", "onAutoForward": "silent" },
 		"2401": { "label": "nokia SSH" },
 		"2402": { "label": "sonic SSH" }
 	},

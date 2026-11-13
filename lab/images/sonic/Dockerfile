@@ -63,3 +63,34 @@ v.setdefault("kernel_version", "unknown")
 yaml.safe_dump(v, open(path, "w"), default_flow_style=False, sort_keys=False)
 PY
 RUN sed -i '1a sed -i "s/^kernel_version:.*/kernel_version: $(uname -r)/" /etc/sonic/sonic_version.yml' /usr/bin/start.sh
+
+# SONiC's gNMI server, for the Grafana scenario: gnmic (lab/grafana/) streams
+# sonic's counters and port states from it into Prometheus. docker-sonic-vs
+# leaves it out; a real switch runs it in its own gnmi container. This is the
+# same branch's sonic-gnmi package, which scripts/sonic-image.sh downloads from
+# SONiC's pipeline and passes in as the `gnmi` build context. It serves the
+# switch's Redis databases (COUNTERS_DB, APPL_DB, ...) on port 50051 without
+# TLS or client auth, as SONiC's gnmi-native.sh does with TLS off: fine for a
+# disposable lab on its own management network.
+COPY --from=gnmi sonic-gnmi.deb /tmp/sonic-gnmi.deb
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends /tmp/sonic-gnmi.deb \
+    && rm -rf /var/lib/apt/lists/* /tmp/sonic-gnmi.deb \
+    && printf '%s\n' '' \
+        '[program:gnmi]' \
+        'command=/usr/sbin/telemetry -logtostderr --noTLS --port 50051 --allow_no_client_auth' \
+        'priority=3' \
+        'autostart=true' \
+        'autorestart=true' \
+        'startretries=100' \
+        'stdout_logfile=syslog' \
+        'stderr_logfile=syslog' \
+        >>/etc/supervisor/conf.d/supervisord.conf
+
+# Send sonic's syslog to the lab's Alloy (lab/grafana/, 172.20.23.20), which
+# stores it in Loki, beside nokia's. UDP, so a stopped Grafana stack never
+# blocks the switch.
+RUN printf '%s\n' \
+        '# AC6 workshop: forward everything to Alloy -> Loki (lab/grafana/).' \
+        '*.* @172.20.23.20:1514;RSYSLOG_SyslogProtocol23Format' \
+        >/etc/rsyslog.d/90-ac6-loki.conf

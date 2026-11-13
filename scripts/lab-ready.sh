@@ -36,6 +36,12 @@ docker exec "${sonic}" supervisorctl start bgpd >/dev/null 2>&1 || true
 # cables are "plugged in"; the workshop configures everything else.
 docker exec "${sonic}" config interface startup Ethernet0
 docker exec "${sonic}" config interface startup Ethernet4
+# Port counters for Scenario 4's metrics (gnmic reads COUNTERS_DB over gNMI).
+# A real switch enables counter polling at boot; the virtual switch leaves it
+# off, so COUNTERS_DB stays empty. It's saved in the baseline below, so
+# reset-sonic keeps it.
+docker exec "${sonic}" counterpoll port enable >/dev/null 2>&1
+docker exec "${sonic}" counterpoll port interval 10000 >/dev/null 2>&1
 # Two descriptions that break the team standard (README, "Team standards"),
 # for Scenario 2's audit to find: Ethernet0 has no role or peer AS, and
 # Ethernet8 describes a BGP peer though nothing is connected to it. They

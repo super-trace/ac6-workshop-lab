@@ -1,0 +1,9 @@
+# Prometheus scrapes one target: gnmic, which holds the latest gNMI values
+# from both devices (gnmic.yml). Every 10 seconds, matching gnmic's samples.
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+scrape_configs:
+  - job_name: gnmic
+    static_configs:
+      - targets: ["gnmic:9804"]

@@ -5,7 +5,8 @@ Slides: [supertrace.ai/ac6-deck](http://supertrace.ai/ac6-deck)
 A two-device network lab for working with `stcli`, running entirely in
 GitHub Codespaces: one Nokia SR Linux router that's already configured, one
 SONiC switch that starts blank, and two links between them for you to bring
-up.
+up. NetBox documents the network, and Grafana watches it: metrics streamed
+from both devices over gNMI, and both devices' logs.
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
@@ -38,6 +39,11 @@ work with:
   ┌───────────┴─────────────────────────────────────────────────────────────┐
   │ netbox                              source of truth                     │
   │ NetBox 4.7 · UI and API on :8000                                        │
+  └─────────────────────────────────────────────────────────────────────────┘
+              │ gNMI telemetry and syslog from both devices
+  ┌───────────┴─────────────────────────────────────────────────────────────┐
+  │ grafana                             metrics and logs                    │
+  │ gnmic → Prometheus · Alloy → Loki · Grafana UI on :3000                 │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -84,7 +90,8 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 ## C. Start and verify
 
 **C.1** Start the lab (about 3 minutes). This also starts NetBox (see
-[G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
+[G. NetBox](#g-netbox)), readies GitHub's MCP server for Scenario 3, and
+starts Grafana for Scenario 4 (see [H. Grafana](#h-grafana)):
 
 ```sh
 just lab-up
@@ -97,11 +104,13 @@ just lab-verify
 ```
 
 `lab-verify` checks the starting point: nokia
-configured, sonic blank, both links up, SSH to both, and NetBox and
-GitHub's MCP server answering. It ends with **LAB
+configured, sonic blank, both links up, SSH to both, NetBox and GitHub's
+MCP server answering, and Grafana answering with metrics and logs from both
+devices. It ends with **LAB
 IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
-in red above it. The last line is NetBox's address, **Open NetBox**:
-open it in a browser tab now, ready for Scenario 3.
+in red above it. The last lines are NetBox's and Grafana's addresses,
+**Open NetBox** and **Open Grafana**: open NetBox in a browser tab now,
+ready for Scenario 3; Grafana waits for Scenario 4.
 
 **C.3** Start `stcli` and sign in:
 
@@ -381,7 +390,7 @@ It's the same standard you set on nokia, now on a different vendor's switch.
 A good answer finds two problems: `Ethernet0` is described as `to nokia`,
 with no role or peer AS, and `Ethernet8` describes a BGP peer although
 nothing is connected to it. It may also flag `Ethernet4`, which is connected
-but has no description: that's the layer 2 trunk, which Scenario 4
+but has no description: that's the layer 2 trunk, which Scenario 5
 configures and describes, so leave it for now.
 
 **D.2.7** Review the full change before anything runs:
@@ -558,7 +567,149 @@ NetBox: attendees build it in Scenario 2.
 
 </details>
 
-### Scenario 4: choose your own adventure, layer 2
+### Scenario 4: see your network over time
+
+So far `stcli` has seen each device as it is right now. Grafana has seen the
+network all along: since `just lab-up`, gnmic has streamed both devices'
+interface counters and states over gNMI into Prometheus every 10 seconds,
+nokia's BGP session state too, and both devices have sent their logs to
+Loki. You'll plug `stcli` into Grafana, ask it what happened, and have it
+build you a dashboard.
+
+**D.4.1** Start a fresh conversation. Both devices stay connected:
+
+```
+/clear
+```
+
+**D.4.2** Open Grafana yourself, so you can watch it change. In the Codespace's
+**Ports** tab, hover over port **3000 (Grafana)** and click the globe icon
+(**Open in Browser**), or open the **Open Grafana** address at the end of
+`just lab-verify`. Log in
+as `oldprotocol` / `newbrain`. **Dashboards** is empty: you'll fill it at
+D.4.7. Keep the tab open.
+
+**D.4.3** Plug Grafana in. `just lab-up` already started Grafana's MCP server,
+signed in to Grafana, so it's one command, with no token to paste:
+
+```
+/mcp add grafana http://localhost:8003/mcp
+```
+
+Check it's there:
+
+```
+/mcp list
+```
+
+**D.4.4** Ask about traffic on the BGP link, from both ends:
+
+```
+Using Grafana, how much traffic crossed the BGP link between nokia and sonic in the last 15 minutes? Show both ends of the link and tell me whether they agree.
+```
+
+Each Grafana call stops at a confirm dialog first: press `y`. A good answer
+pairs nokia's `ethernet-1/1` with sonic's `Ethernet0`, and compares what one
+end sent with what the other received.
+
+**D.4.5** Ask what happened, from the metrics and the logs together:
+
+```
+When did the BGP session between nokia and sonic come up? Use Grafana's metrics and logs, and show me the log lines that prove it.
+```
+
+A good answer finds the moment `bgp_neighbor_established` went from 0 to 1
+(your D.2.8) and nokia's log line `Peer 10.0.0.1 moved into the
+ESTABLISHED state`. nokia also logs every CLI command, so the commands that
+led up to it are there too.
+
+**D.4.6** Make some traffic, then watch it land. The ping runs on nokia; the
+chart comes from Grafana:
+
+```
+Ping sonic at 10.0.0.1 from nokia 300 times, 20 per second, with 1400-byte packets. Then show me that traffic in Grafana, from both ends of the link.
+```
+
+Samples arrive every 10 seconds, so the spike shows up in Grafana about
+half a minute after the ping ends.
+
+**D.4.7** Build a dashboard. Creating a dashboard changes Grafana, so the
+confirm dialog shows the whole dashboard before anything is written:
+
+```
+Build a Grafana dashboard called "AC6 lab": traffic in and out on both lab links from both ends, each link's state, the BGP session's state, and recent logs from both devices.
+```
+
+Open the link the agent gives you, or reload **Dashboards** in your Grafana
+tab. The MCP server can create and change dashboards and folders, but not
+Grafana's data sources: Grafana itself refuses those.
+
+**D.4.8** Check the result in your Grafana tab: reload **Dashboards** and
+open **AC6 lab**. Every panel should have data, and the traffic panels
+should show both nokia and sonic. Then have `stcli` prove it from Grafana's
+side:
+
+```
+Read back the AC6 lab dashboard from Grafana and run each panel's query. Does every panel return data, from both devices where it should?
+```
+
+**D.4.9** Have the agent walk through it:
+
+```
+Explain what each panel on the AC6 lab dashboard queries, and why.
+```
+
+**D.4.10** Tell us how it went:
+
+```
+/feedback
+```
+
+For example: *"Asking when BGP came up and getting the log line back is
+exactly what I do at 2am."* or *"I'd want ___ on the dashboard."*
+
+<details>
+<summary>Facilitator reference: what Grafana holds</summary>
+
+Metrics come from gNMI: nokia's YANG paths over TLS on port 57400, and
+sonic's Redis databases over the gNMI server the lab's SONiC image adds
+(port 50051). gnmic (`lab/grafana/gnmic.yml`) gives both vendors one set of
+names, so one query covers both ends of a link. Every metric has a `device`
+label (`nokia` or `sonic`).
+
+| Metric | Labels | From |
+| --- | --- | --- |
+| `interface_in_octets`, `interface_out_octets` | `device`, `interface` | both; counters, bytes |
+| `interface_in_packets`, `interface_out_packets` | `device`, `interface` | both; sonic's are unicast plus non-unicast |
+| `interface_in_errors`, `interface_out_errors`, `interface_in_discards`, `interface_out_discards` | `device`, `interface` | both |
+| `interface_oper_up` | `device`, `interface` | both; 1 up, 0 down |
+| `bgp_neighbor_established` | `device`, `peer_address` | nokia; 1 Established, else 0 |
+| `bgp_neighbor_received_routes`, `bgp_neighbor_active_routes` | `device`, `peer_address` | nokia; IPv4 unicast |
+| `cpu_utilization_percent`, `memory_utilization_percent` | `device` | nokia |
+
+Only the two lab ports report: `ethernet-1/1` and `ethernet-1/2` on nokia,
+`Ethernet0` and `Ethernet4` on sonic. Counters start when the device boots,
+so compare rates, not totals:
+`rate(interface_out_octets{device="nokia",interface="ethernet-1/1"}[1m])`
+against `rate(interface_in_octets{device="sonic",interface="Ethernet0"}[1m])`.
+
+Logs are both devices' syslog in Loki, labelled `device`, `app` and
+`level`: `{device="nokia", app="sr_bgp_mgr"}` holds BGP state changes and
+`{device="nokia", app="sr_cli"}` every CLI command. sonic's logs come from
+its switch daemons (`orchagent`, `syncd`, `supervisord`); its FRR doesn't
+log to syslog, so BGP history comes from nokia's side. `syncd` is chatty;
+filter it out with `{device="sonic", app!="syncd"}`.
+
+The MCP server signs in as the Grafana service account `stcli`, role
+Editor. Data is kept for 6 hours and starts fresh on every `just lab-up`;
+dashboards survive it (and `just lab-down`), until `just reset-grafana`
+(D.6.3). `just check-grafana` confirms D.4.7 from a terminal: it runs every
+panel query and ends with **GRAFANA DASHBOARD BUILT** once a dashboard shows
+metrics from both nokia and sonic and the devices' logs.
+
+</details>
+
+### Scenario 5: choose your own adventure, layer 2
 
 Done early? The second link between the devices, nokia's `ethernet-1/2` to
 sonic's `Ethernet4`, is a layer 2 trunk. nokia already carries several
@@ -576,7 +727,7 @@ The first ping in each VLAN may lose a packet while ARP resolves. Your
 skill still applies: sonic's `Ethernet4` should end up described the way
 the standard describes a trunk.
 
-**D.4.1** When you think it's working, have `stcli` prove it:
+**D.5.1** When you think it's working, have `stcli` prove it:
 
 ```
 From sonic, ping nokia's gateway in every VLAN on the trunk, and show me the ARP entries nokia learned for sonic.
@@ -584,7 +735,7 @@ From sonic, ping nokia's gateway in every VLAN on the trunk, and show me the ARP
 
 Stuck? Ask a facilitator; the reference below has hints.
 
-**D.4.2** Tell us how it went: `/feedback`.
+**D.5.2** Tell us how it went: `/feedback`.
 
 ### Start over
 
@@ -592,7 +743,7 @@ These run in a terminal outside `stcli`, for facilitators or anyone who
 wants to go again.
 
 
-**D.5.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
+**D.6.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
 from Scenario 2 (this also clears any layer 2 config and puts back the
 off-standard descriptions). Your skill isn't touched; it lives in your
 account, not on a device:
@@ -601,21 +752,28 @@ account, not on a device:
 just reset-sonic
 ```
 
-**D.5.2** Put NetBox back as it was seeded, drift included, to run Scenario 3
+**D.6.2** Put NetBox back as it was seeded, drift included, to run Scenario 3
 again (seconds; the devices are untouched):
 
 ```sh
 just reset-netbox
 ```
 
-**D.5.3** Or redeploy both devices from scratch:
+**D.6.3** Delete every Grafana dashboard, to run Scenario 4 again (seconds;
+metrics, logs and the devices are untouched):
+
+```sh
+just reset-grafana
+```
+
+**D.6.4** Or redeploy both devices from scratch:
 
 ```sh
 just lab-up
 ```
 
-**D.5.4** If the lab is stuck, tear everything down and start it again. NetBox keeps
-its data:
+**D.6.5** If the lab is stuck, tear everything down and start it again. NetBox keeps
+its data, and Grafana keeps its dashboards:
 
 ```sh
 just lab-down
@@ -736,7 +894,32 @@ without the devices, run `just netbox-up`.
 `just netbox-down` stops NetBox and deletes NetBox's
 data; the next `just lab-up` seeds it again.
 
-## H. Troubleshooting
+## H. Grafana
+
+Grafana shows the lab over time (see Scenario 4). `just lab-up` starts it on
+port 3000, with two sources already in it: **Prometheus**, fed by gnmic
+with gNMI telemetry from both devices every 10 seconds (interface counters
+and states, and nokia's BGP session, CPU and memory), and **Loki**, holding
+both devices' syslog. `stcli` connects to it through Grafana's MCP server,
+`/mcp add grafana http://localhost:8003/mcp`. To start Grafana again
+without redeploying the devices, run `just grafana-up` (the devices must be
+up).
+
+- **Open it:** the recipe prints the URL. In a Codespace, that's the
+  forwarded port 3000 (Ports tab → Grafana).
+- **Log in:** `oldprotocol` / `newbrain`, the same as the devices.
+- **Keep it:** metrics and logs start fresh on every `just lab-up` and are
+  kept for 6 hours. Dashboards survive `just lab-up` and `just lab-down`;
+  `just reset-grafana` deletes them.
+- **Share it:** the recipe makes port 3000 public when the Codespace allows
+  it. Otherwise, in the Ports tab, right-click port 3000 and pick **Port
+  Visibility → Public**. Anyone with the URL can then log in with the
+  password above, so keep it to this disposable lab. Grafana's MCP server
+  stays on localhost: only `stcli` in the Codespace reaches it.
+
+`just grafana-down` stops Grafana and deletes its dashboards.
+
+## I. Troubleshooting
 
 - **`just lab-up` stops to build the SONiC image.** That's expected when
   the image isn't in the Codespace and can't be pulled: it downloads SONiC's
@@ -765,10 +948,18 @@ data; the next `just lab-up` seeds it again.
   sonic, FRR shows `(Policy)` and exchanges no routes until a policy allows
   them; see "Facilitator reference: what nokia has configured" under Start
   over.
-- **Anything else stuck.** `just lab-down`, then `just lab-up`, rebuilds
-  both devices from scratch; NetBox keeps its data.
+- **Grafana shows no data for a device.** `just lab-verify` says whether
+  metrics or logs are missing, and from which device. Restarting the
+  Grafana stack restarts the collectors and keeps your dashboards:
 
-## I. Finish
+  ```sh
+  just grafana-up
+  ```
+- **Anything else stuck.** `just lab-down`, then `just lab-up`, rebuilds
+  both devices from scratch; NetBox keeps its data and Grafana its
+  dashboards.
+
+## J. Finish
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.

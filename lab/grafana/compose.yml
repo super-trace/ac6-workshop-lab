@@ -1,0 +1,166 @@
+# The lab's observability stack, for Scenario 4: gnmic streams gNMI telemetry
+# from both devices into Prometheus, Alloy takes both devices' syslog into
+# Loki, Grafana shows both, and Grafana's MCP server lets stcli query them and
+# build dashboards. `just lab-up` starts it after containerlab has deployed
+# (through scripts/grafana-up.sh); `just lab-down` stops it and keeps
+# Grafana's database (the dashboards attendees build); `just grafana-down`
+# deletes it. Metrics and logs live only as long as their containers: every
+# `lab-up` starts them fresh, like the devices.
+name: ac6-grafana
+
+# Every service joins containerlab's management network (lab/topology.clab.yml:
+# ac6, 172.20.23.0/24) with a fixed address: gnmic dials the devices there,
+# and the devices send syslog to Alloy's address, which nokia's startup config
+# and the SONiC image name. containerlab creates the network, so this stack
+# starts after the deploy.
+networks:
+  ac6:
+    external: true
+
+services:
+  # Streams gNMI from both devices and serves it to Prometheus (gnmic.yml).
+  gnmic:
+    image: ghcr.io/openconfig/gnmic:0.49.1
+    command: ["subscribe", "--config", "/app/gnmic.yml"]
+    volumes:
+      - ./gnmic.yml:/app/gnmic.yml:ro
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.21
+    mem_limit: 128m
+    cpus: 0.5
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=6h
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.22
+    # Localhost only, for lab-verify and facilitators; attendees use Grafana.
+    ports:
+      - "127.0.0.1:9090:9090"
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.7.9
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./loki.yml:/etc/loki/loki.yml:ro
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.23
+    # Localhost only, for lab-verify and facilitators; attendees use Grafana.
+    ports:
+      - "127.0.0.1:3100:3100"
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+
+  # Receives both devices' syslog on UDP 1514 and pushes it to Loki
+  # (config.alloy).
+  alloy:
+    image: grafana/alloy:v1.21.3
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --disable-reporting
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.20
+    mem_limit: 192m
+    cpus: 0.5
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.2.6
+    environment:
+      # The lab login, as on every lab device and NetBox.
+      GF_SECURITY_ADMIN_USER: oldprotocol
+      GF_SECURITY_ADMIN_PASSWORD: newbrain
+      # The URL the attendee's browser uses: the forwarded port in a
+      # Codespace, which scripts/grafana-up.sh sets. Grafana builds its
+      # redirects and links from it.
+      GF_SERVER_ROOT_URL: ${GRAFANA_ORIGIN:-http://localhost:3000}
+      # The Codespaces relay rewrites the browser's Origin header to
+      # http://localhost:3000, so trust that as well as the forwarded host.
+      GF_SECURITY_CSRF_TRUSTED_ORIGINS: ${GRAFANA_HOST:-localhost:3000} localhost:3000
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.24
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health | grep -q '\"database\": *\"ok\"'"]
+      start_period: 120s
+      start_interval: 1s
+      timeout: 3s
+      interval: 5s
+    mem_limit: 384m
+    cpus: 1
+    restart: unless-stopped
+
+  # Grafana's MCP server, as http://localhost:8003/mcp with no auth, for
+  # Scenario 4's `/mcp add`. It signs in to Grafana as the service account
+  # `stcli` (role Editor), whose token scripts/grafana-up.sh mints, so
+  # attendees paste no token. Editor lets the agent build dashboards and
+  # folders but not change datasources. It listens on localhost only: stcli
+  # runs on the same machine. Tools are limited to what the scenario uses: search,
+  # datasources, Prometheus, Loki, dashboards, folders and links.
+  grafana-mcp:
+    image: grafana/mcp-grafana:2.2.0
+    entrypoint:
+      - /app/mcp-grafana
+      - --transport
+      - streamable-http
+      - --address
+      - 0.0.0.0:8000
+      - --allowed-hosts
+      - localhost:8003,127.0.0.1:8003
+      - --enabled-tools
+      - search,datasource,prometheus,loki,dashboard,folder,navigation
+      - --usage-stats
+      - disabled
+      - --instructions-append
+      - >-
+        This is the AC6 workshop lab's Grafana. Metrics (datasource uid
+        prometheus) come from gNMI: both devices' interfaces share metric names
+        interface_* with labels device (nokia or sonic) and interface; nokia
+        adds bgp_neighbor_* and cpu/memory. Logs (datasource uid loki) are
+        both devices' syslog, labelled device. Attendees open Grafana in their
+        browser at ${GRAFANA_ORIGIN:-http://localhost:3000}: give links under
+        that URL.
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_MCP_TOKEN:-}
+    depends_on:
+      grafana:
+        condition: service_healthy
+    networks:
+      ac6:
+        ipv4_address: 172.20.23.25
+    ports:
+      - "127.0.0.1:8003:8000"
+    mem_limit: 128m
+    cpus: 0.5
+    restart: unless-stopped
+
+volumes:
+  grafana-data:

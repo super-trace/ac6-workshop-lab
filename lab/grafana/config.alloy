@@ -1,0 +1,37 @@
+// Both devices send syslog here (UDP 1514, this container's fixed address
+// 172.20.23.20): nokia from its startup config, sonic from the lab's SONiC
+// image. Each line goes to Loki labelled with the device that sent it.
+loki.source.syslog "devices" {
+  listener {
+    address               = "0.0.0.0:1514"
+    protocol              = "udp"
+    labels                = { job = "syslog" }
+    use_incoming_timestamp = true
+  }
+  relabel_rules = loki.relabel.syslog.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+// Only rules: loki.source.syslog applies them to every line.
+loki.relabel "syslog" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__syslog_message_hostname"]
+    target_label  = "device"
+  }
+  rule {
+    source_labels = ["__syslog_message_severity"]
+    target_label  = "level"
+  }
+  rule {
+    source_labels = ["__syslog_message_app_name"]
+    target_label  = "app"
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
