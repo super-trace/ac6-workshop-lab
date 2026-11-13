@@ -51,6 +51,14 @@ post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"nokia\"},\"model\":\"7220
 post dcim/device-roles/ "{\"name\":\"router\",\"slug\":\"router\",\"color\":\"2196f3\",${why}}" >/dev/null
 post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufacturer\":{\"slug\":\"nokia\"},${why}}" >/dev/null
 
+# What sonic needs to be documented, for Scenario 3 to add it: sonic itself
+# isn't in NetBox. Without these the agent would create four more objects
+# (and ask four more approvals) before it could add the device.
+post dcim/manufacturers/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",${why}}" >/dev/null
+post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"sonic\"},\"model\":\"SONiC virtual switch\",\"slug\":\"sonic-vs\",\"u_height\":0,${why}}" >/dev/null
+post dcim/device-roles/ "{\"name\":\"switch\",\"slug\":\"switch\",\"color\":\"4caf50\",${why}}" >/dev/null
+post dcim/platforms/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",\"manufacturer\":{\"slug\":\"sonic\"},${why}}" >/dev/null
+
 device="$(post dcim/devices/ "{\"name\":\"nokia\",\"site\":{\"slug\":\"lab\"},\"device_type\":{\"slug\":\"7220-ixr-d2l\"},\"role\":{\"slug\":\"router\"},\"platform\":{\"slug\":\"srlinux\"},\"status\":\"active\",\"comments\":\"SR Linux 25.3.2, AS 65001\",${why}}")"
 
 # Drift: VLAN 130 is CAMERAS on nokia.
@@ -66,7 +74,7 @@ iface() {
 mgmt0="$(iface mgmt0 1000base-t "" ',"mgmt_only":true')"
 e11="$(iface ethernet-1/1 25gbase-x-sfp28 "BGP: eBGP peer AS65002")"
 # Matches nokia as deployed, off-standard description included. Scenario 1
-# (D.1.10) fixes nokia's to "TRUNK: VLANs 110,120,130", which leaves NetBox
+# (D.1.9) fixes nokia's to "TRUNK: VLANs 110,120,130", which leaves NetBox
 # stale for Scenario 3 to update from the device.
 e12="$(iface ethernet-1/2 25gbase-x-sfp28 "TRUNK: to peer switch" ",\"mode\":\"tagged\",\"tagged_vlans\":[${v110},${v120},${v130}]")"
 lo0="$(iface lo0 virtual "LOOPBACK: router-id 10.255.0.1")"

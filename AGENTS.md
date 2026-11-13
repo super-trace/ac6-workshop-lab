@@ -22,7 +22,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API, and the GitHub MCP proxy's handshake.
 - `just lab-cli <node>`: open a device's native CLI.
 - `just check-bgp` / `just check-l2`: confirm the BGP and layer 2 exercises succeeded.
-- `just check-standards`: confirm Scenario 2's standards audit fixed sonic's descriptions. `lab-ready.sh` seeds two off-standard ones (`Ethernet0`, `Ethernet8`) before saving sonic's baseline, so `reset-sonic` puts them back. Keep the README's "Team standards" block and its copy in Scenario 1's prompt (D.1.9), the seed, `scripts/check-standards.sh` and the Scenario 1–3 audit steps in step.
+- `just check-standards`: confirm Scenario 2's standards audit fixed sonic's descriptions. `lab-ready.sh` seeds two off-standard ones (`Ethernet0`, `Ethernet8`) before saving sonic's baseline, so `reset-sonic` puts them back. Keep the README's "Team standards" block and its copy in Scenario 1's prompt (D.1.8), the seed, `scripts/check-standards.sh` and the Scenario 1–3 audit steps in step.
 - `just reset-sonic`: return sonic to blank in seconds without redeploying nokia. `lab-ready.sh` saves sonic's CONFIG_DB and FRR config after boot; `scripts/sonic-reset.py` diffs CONFIG_DB back to it (SONiC's `config replace` rejects the virtual switch's default config, and `config reload` needs systemd), then FRR's files are restored and bgpd restarted.
 - `just check-netbox` / `just reset-netbox`: confirm NetBox matches nokia where the seed left it stale / put NetBox back as seeded, drift included.
 - `just netbox-up` / `just netbox-down`: start NetBox and the GitHub MCP proxy without the lab / stop both and delete NetBox's data.
@@ -30,7 +30,7 @@ Run commands from the repository root, with Docker and `just` installed:
 
 NetBox's own first-start migrations take ~6 minutes in a Codespace, so Postgres instead loads `lab/netbox/initdb/netbox.sql.gz`, an already-migrated database, on an empty volume; NetBox then starts in seconds. After changing the NetBox image in `lab/netbox/compose.yml`, regenerate the dump with `scripts/netbox-snapshot.sh` (it deletes NetBox's data).
 
-`scripts/netbox-seed.sh` (run by `netbox-up.sh`) seeds NetBox once, curl only, with nokia as documented plus the Scenario 3 drift; the `workshop-seed` tag, created last, marks a finished seed. Keep the seed, `scripts/check-netbox.sh` and the README's Scenario 3 facilitator table in step.
+`scripts/netbox-seed.sh` (run by `netbox-up.sh`) seeds NetBox once, curl only, with nokia as documented plus the Scenario 3 drift, and the SONiC manufacturer, device type, platform and `switch` role that D.3.10 needs to add sonic (sonic itself is never seeded); the `workshop-seed` tag, created last, marks a finished seed. Keep the seed, `scripts/check-netbox.sh` and the README's Scenario 3 facilitator table in step.
 
 ## Coding Style & Naming Conventions
 
