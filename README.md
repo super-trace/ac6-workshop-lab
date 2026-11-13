@@ -544,7 +544,7 @@ I need."* or *"I'd want it to connect to ___ next."*
 | Object | NetBox says | nokia has | Right side | Fix |
 | --- | --- | --- | --- | --- |
 | VLAN 130 name | `SECURITY` | `CAMERAS` (in its gateway's description) | nokia | update the VLAN in NetBox |
-| lo1 | missing | `172.16.10.1/24`, "LAN: simulated site subnet" | nokia | create the interface and its address in NetBox |
+| lo1 | missing | `172.16.10.1/24`, "LOOPBACK: simulated site subnet 172.16.10.0/24" | nokia | create the interface and its address in NetBox |
 | VLAN 120 gateway (`ethernet-1/2.120`) | `10.120.0.254/24` | `10.120.0.1/24` | nokia | update the address in NetBox |
 | ethernet-1/2 description | `TRUNK: to peer switch` | `TRUNK: VLANs 110,120,130` (fixed in D.1.10) | nokia | update the description in NetBox |
 
