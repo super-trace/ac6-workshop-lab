@@ -293,7 +293,7 @@ wanted ___ and it didn't."*
 ### Scenario 2: two devices, build, convert and apply
 
 You'll build the config for nokia's BGP peer, convert it to another OS, add a
-second device, and apply the change one approval at a time.
+second device, and apply the change in one approval.
 
 **D.2.1** Start a fresh conversation. nokia stays connected:
 
@@ -324,7 +324,7 @@ a copy. The agent writes files on this machine, and asks first: the dialog
 shows the whole file before it's written.
 
 ```
-Do it for SONiC, and save it to sonic-bgp.conf.
+Do it for SONiC and save it to sonic-bgp.conf. The peer's port is Ethernet0, and its router ID is 10.255.0.2 on Loopback0, which it advertises.
 ```
 
 Open `sonic-bgp.conf` in the Codespace's file explorer: it's ready for a
@@ -362,14 +362,14 @@ the same shape with your device's address and your key.
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
-**D.2.6** Apply the config you saved in D.2.4. Before anything runs, the
-plan comes with the commands to roll it back, because you asked `stcli` to
-remember that in Scenario 1. Then each command stops at **Approve this
-command?**; check that it names sonic before you approve it. Expect a
-handful of approvals:
+**D.2.6** Apply the config you saved in D.2.4. The plan comes with the
+commands that roll it back, because you asked `stcli` to remember that in
+Scenario 1. Then **Approve batch** shows every command in order, once; check
+that it names sonic before you approve it. `stcli` runs them one at a time
+and stops at the first that fails:
 
 ```
-Apply sonic-bgp.conf to sonic, one command at a time, in order. Don't run anything in parallel.
+Apply sonic-bgp.conf to sonic, in order.
 ```
 
 **D.2.7** Check the session. The ping should now succeed, and BGP should be
@@ -396,7 +396,7 @@ shapes config the agent writes, not only the audits it runs. It may also flag `E
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
-**D.2.9** Fix them, and prove it. Each change stops for your approval; when
+**D.2.9** Fix them, and prove it. The fix stops for your approval; when
 it's done, `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8` has
 no description:
 
@@ -451,9 +451,9 @@ paste:
 /mcp list
 ```
 
-**D.3.5** In Scenario 2, sonic's BGP session came up but showed `(Policy)`
-before any routes arrived. That's FRR, the routing daemon sonic runs. Ask
-GitHub about it:
+**D.3.5** FRR, the routing daemon sonic runs, exchanges no eBGP routes
+until a policy allows them, so the SONiC config you applied in Scenario 2
+either carries route-maps or turns that check off. Ask GitHub why:
 
 ```
 Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP exchange no routes until a policy allows them?
@@ -509,7 +509,7 @@ which side is right? It won't change either side until you answer. Here the
 device is the source of truth, so NetBox is what's stale:
 
 ```
-For every difference where nokia is right, update NetBox to match.
+nokia is right on every difference. Update NetBox to match.
 ```
 
 The agent proposes one changeset. **Apply these changes to NetBox?** shows
@@ -526,8 +526,8 @@ text, so NetBox changes.
 Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
 ```
 
-Expect about three approvals: the device first, then its interfaces, then
-the addresses, because each needs the one before it to exist. Reload the
+Expect two or three approvals: the device first, then its interfaces and
+addresses, because each needs the one before it to exist. Reload the
 NetBox tab: sonic is under **Devices**, with every change in **Operations →
 Change Log** and the agent's reason as its message.
 
@@ -538,8 +538,9 @@ all at once:
 Check nokia, sonic and NetBox against our interface standards, and fix anything that doesn't follow them.
 ```
 
-If you fixed nokia in Scenario 1 and sonic in Scenario 2, there's nothing
-left to fix: a clean answer is the win. All three agree.
+If you fixed nokia in Scenario 1 and sonic in Scenario 2, there's little
+left to fix. Expect it to ask about sonic's `Ethernet4`: that's the trunk
+Scenario 4 configures, so leave it.
 
 **D.3.12** Have the agent walk through it:
 
@@ -592,7 +593,8 @@ VLANs on it, each with a gateway address. sonic's end is at factory
 defaults.
 
 **The goal:** sonic reaches nokia's gateway in every VLAN, and nokia learns
-sonic's address in each one. nokia needs no changes.
+sonic's address in each one. sonic needs an address in each VLAN, such as
+`.2`. nokia needs no changes.
 
 There are no prompts to copy this time: work it out with `stcli` in your own
 words. Scenario 2's flow works here too: start fresh with `/clear`, test the
@@ -728,8 +730,9 @@ The two devices feel different once you're in:
   works across every device in the session, and each command it runs is
   labelled with the device it ran on.
 - **Approvals.** Read-only commands run straight away. Anything that changes
-  a device stops at **Approve this command?**, with the device named beside
-  the command. Destructive commands also ask you to type a confirmation
+  a device stops at **Approval needed**, with the device named beside
+  the command; a change of several commands asks once, as **Approve batch**.
+  Destructive commands always ask on their own, with a typed confirmation
   phrase.
 - **Run a command yourself:** `!oldprotocol@sonic show ip bgp summary`. With several
   devices in the session, name the device first; a bare `!` lists the names.
