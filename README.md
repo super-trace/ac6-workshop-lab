@@ -451,9 +451,9 @@ paste:
 /mcp list
 ```
 
-**D.3.5** The SONiC config you applied in Scenario 2 carries route-maps,
-because FRR, the routing daemon sonic runs, exchanges no eBGP routes until
-a policy allows them. Ask GitHub why:
+**D.3.5** FRR, the routing daemon sonic runs, exchanges no eBGP routes
+until a policy allows them, so the SONiC config you applied in Scenario 2
+either carries route-maps or turns that check off. Ask GitHub why:
 
 ```
 Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP exchange no routes until a policy allows them?
@@ -730,7 +730,7 @@ The two devices feel different once you're in:
   works across every device in the session, and each command it runs is
   labelled with the device it ran on.
 - **Approvals.** Read-only commands run straight away. Anything that changes
-  a device stops at **Approve this command?**, with the device named beside
+  a device stops at **Approval needed**, with the device named beside
   the command; a change of several commands asks once, as **Approve batch**.
   Destructive commands always ask on their own, with a typed confirmation
   phrase.
