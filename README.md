@@ -293,7 +293,7 @@ wanted ___ and it didn't."*
 ### Scenario 2: two devices, build, convert and apply
 
 You'll build the config for nokia's BGP peer, convert it to another OS, add a
-second device, and apply the change one approval at a time.
+second device, and apply the change in one approval.
 
 **D.2.1** Start a fresh conversation. nokia stays connected:
 
@@ -362,13 +362,14 @@ the same shape with your device's address and your key.
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
-**D.2.6** Apply the config you saved in D.2.4. Each command stops at
-**Approve this command?** with the command that rolls it back, because you
-asked `stcli` to remember that in Scenario 1; check that it names sonic
-before you approve it. Expect a handful of approvals:
+**D.2.6** Apply the config you saved in D.2.4. The plan comes with the
+commands that roll it back, because you asked `stcli` to remember that in
+Scenario 1. Then **Approve batch** shows every command in order, once; check
+that it names sonic before you approve it. `stcli` runs them one at a time
+and stops at the first that fails:
 
 ```
-Apply sonic-bgp.conf to sonic, one command at a time, in order. Don't run anything in parallel.
+Apply sonic-bgp.conf to sonic, in order.
 ```
 
 **D.2.7** Check the session. The ping should now succeed, and BGP should be
@@ -395,7 +396,7 @@ shapes config the agent writes, not only the audits it runs. It may also flag `E
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
-**D.2.9** Fix them, and prove it. Each change stops for your approval; when
+**D.2.9** Fix them, and prove it. The fix stops for your approval; when
 it's done, `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8` has
 no description:
 
@@ -730,7 +731,8 @@ The two devices feel different once you're in:
   labelled with the device it ran on.
 - **Approvals.** Read-only commands run straight away. Anything that changes
   a device stops at **Approve this command?**, with the device named beside
-  the command. Destructive commands also ask you to type a confirmation
+  the command; a change of several commands asks once, as **Approve batch**.
+  Destructive commands always ask on their own, with a typed confirmation
   phrase.
 - **Run a command yourself:** `!oldprotocol@sonic show ip bgp summary`. With several
   devices in the session, name the device first; a bare `!` lists the names.
