@@ -40,7 +40,8 @@ echo "   NetBox: ${name:-(no VLAN 130)}"
 
 echo
 heading "lo1 (nokia has 172.16.10.1/24)"
-addrs="$(addresses lo1)"
+# SR Linux puts the address on lo1.0; either interface counts.
+addrs="$(addresses lo1) $(addresses lo1.0)"
 echo "   NetBox: ${addrs:-(no lo1, or no address on it)}"
 [[ " $addrs " == *" 172.16.10.1/24 "* ]] || fail "NetBox has no 172.16.10.1/24 on nokia's lo1"
 

@@ -256,16 +256,13 @@ can see or edit it on the dashboard's
 
 **D.1.13** See your skill library:
 
-> [!WARNING]
-> **TODO (Mahir):** `/skills` is still being built. Check this step's
-> syntax against what ships.
-
 ```
 /skills
 ```
 
-`interface-standards` is there. Pick it to run it on demand; you'll also
-see the agent reach for it by itself in Scenario 2.
+`interface-standards` is there. Pick it to read what it says. You don't run
+it yourself: the agent reaches for it whenever a task calls for it, as you'll
+see in Scenario 2.
 
 > [!TIP]
 > **Memory or skill?** You've now made one of each.
@@ -273,7 +270,7 @@ see the agent reach for it by itself in Scenario 2.
 > | | Memory (D.1.11) | Skill (D.1.12) |
 > | --- | --- | --- |
 > | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
-> | When it applies | Every conversation, always | When the task calls for it, or when you start it with `/skills` |
+> | When it applies | Every conversation, always | When the task calls for it |
 > | Size | A sentence | As long as the procedure needs |
 > | Example | "Include rollback commands with every change" | Your team's interface standard |
 > | Where to see it | [Memory page](https://cli.supertrace.ai/app/memory) | [Skills page](https://cli.supertrace.ai/app/skills) |
@@ -362,11 +359,11 @@ the same shape with your device's address and your key.
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
-**D.2.6** Apply the config you saved in D.2.4. The plan comes with the
-commands that roll it back, because you asked `stcli` to remember that in
-Scenario 1. Then **Approve batch** shows every command in order, once; check
+**D.2.6** Apply the config you saved in D.2.4. The agent first asks to read
+the file. Then **Approve batch** shows every command in order, once; check
 that it names sonic before you approve it. `stcli` runs them one at a time
-and stops at the first that fails:
+and stops at the first that fails. The commands that roll it back follow the
+result, because you asked `stcli` to remember that in Scenario 1:
 
 ```
 Apply sonic-bgp.conf to sonic, in order.
@@ -459,8 +456,8 @@ either carries route-maps or turns that check off. Ask GitHub why:
 Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP exchange no routes until a policy allows them?
 ```
 
-Each GitHub call stops at a confirm dialog first: press `y`. MCP tools never
-run without asking.
+Each GitHub call stops at a confirm dialog first: press `y`. One question
+can take several calls, and MCP tools never run without asking.
 
 **D.3.6** Now NetBox. It's the lab's source of truth: it documents what nokia
 should look like. Like every real NetBox, it has drifted: in a few places it
@@ -509,10 +506,10 @@ which side is right? It won't change either side until you answer. Here the
 device is the source of truth, so NetBox is what's stale:
 
 ```
-nokia is right on every difference. Update NetBox to match.
+nokia is right on every difference. Update NetBox to match, but keep NetBox's interface layout: put addresses on the interfaces NetBox already has, and leave out ports with nothing connected.
 ```
 
-The agent proposes one changeset. **Apply these changes to NetBox?** shows
+The agent proposes a changeset, or two if one depends on the other. **Apply these changes to NetBox?** shows
 every field it will change, `current → new`, with the reason for each.
 Nothing is written until you press `y`.
 
@@ -526,8 +523,8 @@ text, so NetBox changes.
 Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
 ```
 
-Expect two or three approvals: the device first, then its interfaces and
-addresses, because each needs the one before it to exist. Reload the
+Expect two approvals: the device with its interfaces, then their addresses,
+because each needs the one before it to exist. Reload the
 NetBox tab: sonic is under **Devices**, with every change in **Operations →
 Change Log** and the agent's reason as its message.
 
