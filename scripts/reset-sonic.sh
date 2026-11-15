@@ -11,5 +11,5 @@ docker exec -i "${container}" python3 - <scripts/sonic-reset.py
 # Routing: FRR's saved files back, then restart the daemons that hold BGP
 # and static routes, so nothing typed into vtysh survives either.
 docker exec "${container}" bash -c \
-    'rm -rf /etc/frr && cp -a /etc/frr.ac6-baseline /etc/frr && supervisorctl restart bgpd staticd >/dev/null'
+    'rm -rf /etc/frr /etc/sonic/ac6-solved && cp -a /etc/frr.ac6-baseline /etc/frr && supervisorctl restart bgpd staticd >/dev/null'
 echo "sonic reset to its blank baseline."

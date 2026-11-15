@@ -15,8 +15,18 @@ sonic() { docker exec -i "${lab}-sonic" bash -se >/dev/null; }
 # Fault 2 is the only one on nokia; take it off before every break.
 nokia 'delete / acl interface ethernet-1/1.0' 'delete / acl acl-filter EDGE-PROTECT type ipv4'
 
-./scripts/reset-sonic.sh >/dev/null
-sonic <<'EOF'
+# Already solved by an earlier break: undo only the sonic faults, so no
+# daemon restart shows up as a red herring. Otherwise rebuild from blank.
+if docker exec "${lab}-sonic" test -e /etc/sonic/ac6-solved; then
+    sonic <<'EOF'
+case "$(sonic-db-cli CONFIG_DB HGET 'PORT|Ethernet0' mtu)" in ''|9100) ;; *) config interface mtu Ethernet0 9100 ;; esac
+[ "$(sonic-db-cli CONFIG_DB EXISTS 'VLAN_MEMBER|Vlan120|Ethernet4')" = 1 ] || config vlan member add 120 Ethernet4
+vtysh -c 'show running-config bgpd' | grep -q 'neighbor 10.0.0.0 remote-as 65001$' ||
+    vtysh -c 'conf t' -c 'router bgp 65002' -c 'neighbor 10.0.0.0 remote-as 65001' -c 'end' -c 'write memory'
+EOF
+else
+    ./scripts/reset-sonic.sh >/dev/null
+    sonic <<'EOF'
 config interface ip add Ethernet0 10.0.0.1/31
 config loopback add Loopback0
 config interface ip add Loopback0 10.255.0.2/32
@@ -36,6 +46,8 @@ vtysh -c 'conf t' -c 'router bgp 65002' -c 'bgp router-id 10.255.0.2' \
     -c 'no bgp ebgp-requires-policy' -c 'neighbor 10.0.0.0 remote-as 65001' \
     -c 'address-family ipv4 unicast' -c 'network 10.255.0.2/32' -c 'end' -c 'write memory'
 EOF
+    docker exec "${lab}-sonic" touch /etc/sonic/ac6-solved
+fi
 
 case "$n" in
 1) sonic <<<"vtysh -c 'conf t' -c 'router bgp 65002' -c 'neighbor 10.0.0.0 remote-as 65010' -c 'end' -c 'write memory'" ;;
@@ -52,6 +64,11 @@ case "$n" in
 3) sonic <<<'config interface mtu Ethernet0 1400' ;;
 4) sonic <<<'config vlan member del 120 Ethernet4' ;;
 esac
+
+# sr_cli logs every command this script typed as root; keep them out of
+# nokia's logs so the agent finds the fault in the config, not the log.
+docker exec "${lab}-nokia" bash -c 'for f in /var/log/srlinux/buffer/ramdisk/messages /var/log/srlinux/debug/ramdisk/{sr_cli,debugs}.log; do
+    [ -f "$f" ] || continue; grep -v " sr_cli: .*|root|" "$f" >"$f.tmp"; cat "$f.tmp" >"$f"; rm "$f.tmp"; done'
 
 ./scripts/banner.sh red "FAULT ${n} IS IN"
 printf '\n    Something in the lab is broken. Ask stcli why.\n'

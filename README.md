@@ -670,8 +670,10 @@ replaces whatever the last fault left behind, fixed or not.
 | 4 | sonic | VLAN 120 removed from the trunk: `Ethernet4` isn't a member; `Vlan120` and its address remain | `check-l2` | `sudo config vlan member add 120 Ethernet4` |
 
 The ACL in 2 only stops new sessions, so `just break 2` also resets nokia's
-BGP peer. Each `just break` restarts sonic's bgpd, which the agent may chase
-as a red herring.
+BGP peer. Only the first `just break` rebuilds sonic; later ones undo the
+previous fault in place, so no daemon restarts leave a trail. `just
+reset-sonic` forces a rebuild. `break` keeps its own commands out of
+nokia's logs.
 
 </details>
 
