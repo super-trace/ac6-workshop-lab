@@ -151,7 +151,9 @@ connect oldprotocol@172.20.23.2
 > login on every device: user `oldprotocol`, password `newbrain`.
 
 Once it connects, `stcli` works out what it's talking to by itself: watch for
-**platform set to Nokia SR Linux**.
+**platform set to Nokia SR Linux**. `stcli` lists the device as
+`oldprotocol@172.20.23.2`, so the agent may call it "oldprotocol" until it
+learns the name nokia.
 
 **D.1.2** Your password went straight to the device; the AI agent never saw it.
 Check:
@@ -290,7 +292,7 @@ wanted ___ and it didn't."*
 ### Scenario 2: two devices, build, convert and apply
 
 You'll build the config for nokia's BGP peer, convert it to another OS, add a
-second device, and apply the change in one approval.
+second device, and apply the change with an approval for each batch.
 
 **D.2.1** Start a fresh conversation. nokia stays connected:
 
@@ -360,8 +362,9 @@ Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
 **D.2.6** Apply the config you saved in D.2.4. The agent first asks to read
-the file. Then **Approve batch** shows every command in order, once; check
-that it names sonic before you approve it. `stcli` runs them one at a time
+the file. Then **Approve batch** shows every command in order; check that it
+names sonic before you approve it. The agent may send more than one batch,
+such as one more to save the config. `stcli` runs them one at a time
 and stops at the first that fails. The commands that roll it back follow the
 result, because you asked `stcli` to remember that in Scenario 1:
 
@@ -523,8 +526,9 @@ text, so NetBox changes.
 Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
 ```
 
-Expect two approvals: the device with its interfaces, then their addresses,
-because each needs the one before it to exist. Reload the
+Expect an approval for each step: the device with its interfaces, then their
+addresses, because each needs the one before it to exist, and possibly the
+primary IP. Reload the
 NetBox tab: sonic is under **Devices**, with every change in **Operations →
 Change Log** and the agent's reason as its message.
 
@@ -546,7 +550,7 @@ Explain what you changed in NetBox and why.
 ```
 
 **D.3.13** Finish with a big one: audit the security of both devices. It
-takes a few minutes:
+takes about five minutes and asks to approve its reads and the report file:
 
 ```
 Do a full security audit across both devices, give me a TLDR of what to focus on, and save the full report to security-audit.md.
