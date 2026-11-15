@@ -9,13 +9,11 @@ n="${1:-}"
 [[ "$n" =~ ^[1-4]$ ]] || { echo "usage: just break 1|2|3|4" >&2; exit 1; }
 
 lab="clab-ac6-workshop"
-nokia() { docker exec "${lab}-nokia" sr_cli -ed --post 'commit now' "$@" >/dev/null; }
+nokia() { printf '%s\n' "$@" 'commit now' | docker exec -i "${lab}-nokia" sr_cli -ed >/dev/null; }
 sonic() { docker exec -i "${lab}-sonic" bash -se >/dev/null; }
 
 # Fault 2 is the only one on nokia; take it off before every break.
-if docker exec "${lab}-nokia" sr_cli "info from running / acl acl-filter EDGE-PROTECT" | grep -q entry; then
-    nokia 'delete / acl interface ethernet-1/1.0' 'delete / acl acl-filter EDGE-PROTECT type ipv4'
-fi
+nokia 'delete / acl interface ethernet-1/1.0' 'delete / acl acl-filter EDGE-PROTECT type ipv4'
 
 ./scripts/reset-sonic.sh >/dev/null
 sonic <<'EOF'
@@ -48,7 +46,9 @@ case "$n" in
        'set / acl acl-filter EDGE-PROTECT type ipv4 entry 20 match transport source-port value 179' \
        'set / acl acl-filter EDGE-PROTECT type ipv4 entry 20 action drop' \
        'set / acl acl-filter EDGE-PROTECT type ipv4 entry 100 action accept' \
-       'set / acl interface ethernet-1/1.0 input acl-filter EDGE-PROTECT type ipv4' ;;
+       'set / acl interface ethernet-1/1.0 input acl-filter EDGE-PROTECT type ipv4'
+   # The ACL only stops new sessions; drop the one that's up.
+   docker exec "${lab}-nokia" sr_cli "tools network-instance default protocols bgp neighbor 10.0.0.1 reset-peer" >/dev/null ;;
 3) sonic <<<'config interface mtu Ethernet0 1400' ;;
 4) sonic <<<'config vlan member del 120 Ethernet4' ;;
 esac
