@@ -363,8 +363,8 @@ and each command shows which device it ran on.
 
 **D.2.6** Apply the config you saved in D.2.4. The agent first asks to read
 the file. Then **Approve batch** shows every command in order; check that it
-names sonic before you approve it. The agent may send more than one batch,
-such as one more to save the config. `stcli` runs them one at a time
+names sonic before you approve it. The agent may offer to save the config
+afterwards, as a second batch. `stcli` runs them one at a time
 and stops at the first that fails. The commands that roll it back follow the
 result, because you asked `stcli` to remember that in Scenario 1:
 
@@ -509,7 +509,7 @@ which side is right? It won't change either side until you answer. Here the
 device is the source of truth, so NetBox is what's stale:
 
 ```
-nokia is right on every difference. Update NetBox to match, but keep NetBox's interface layout: put addresses on the interfaces NetBox already has, and leave out ports with nothing connected.
+nokia is right on every difference, VLAN names included: its gateway descriptions name them. Update NetBox to match, but keep NetBox's interface layout: put addresses on the interfaces NetBox already has, and leave out ports with nothing connected.
 ```
 
 The agent proposes a changeset, or two if one depends on the other. **Apply these changes to NetBox?** shows
@@ -550,7 +550,7 @@ Explain what you changed in NetBox and why.
 ```
 
 **D.3.13** Finish with a big one: audit the security of both devices. It
-takes about five minutes and asks to approve its reads and the report file:
+takes about five minutes and asks before it writes the report file:
 
 ```
 Do a full security audit across both devices, give me a TLDR of what to focus on, and save the full report to security-audit.md.
@@ -675,7 +675,9 @@ replaces whatever the last fault left behind, fixed or not.
 
 The ACL in 2 only stops new sessions, so `just break 2` also resets nokia's
 BGP peer. Only the first `just break` rebuilds sonic; later ones undo the
-previous fault in place, so no daemon restarts leave a trail. `just
+previous fault in place, so later breaks restart nothing. Earlier faults still
+leave log history (rejected BGP opens, nokia commits); a good agent calls it
+resolved. `just
 reset-sonic` forces a rebuild. `break` keeps its own commands out of
 nokia's logs.
 
