@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Goal check for the BGP exercise: the eBGP session between nokia and sonic
-# is Established and sonic has installed nokia's prefixes.
+# is Established, sonic has installed nokia's prefixes, and a full-size
+# packet crosses the link.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -22,6 +23,14 @@ if ! grep -q 'Known via "bgp"' <<<"$out"; then
         echo "   The session is up, but FRR shows (Policy): it exchanges no eBGP routes" >&2
         echo "   until a policy allows them (bgp ebgp-requires-policy)." >&2
     fi
+fi
+
+echo
+printf '\033[1;36m== sonic -> nokia: a full-size 1500-byte packet across the BGP link ==\033[0m\n'
+if docker exec "${lab}-sonic" ping -M do -s 1472 -c 2 -W 1 10.0.0.0 2>&1 | grep -q ' 0% packet loss'; then
+    echo "   ok"
+else
+    fail "1500-byte packets don't cross the BGP link; compare the MTUs at each end"
 fi
 
 echo

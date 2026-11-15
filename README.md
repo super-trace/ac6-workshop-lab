@@ -611,13 +611,76 @@ Stuck? Ask a facilitator; the reference below has hints.
 
 **D.4.2** Tell us how it went: `/feedback`.
 
+### Scenario 5: break-fix
+
+Done with Scenario 4? Now something breaks, the way it does on a Friday
+afternoon. Each `just break` puts the lab in the state Scenarios 2 and 4 end
+in, BGP up and all three VLANs across the trunk, then breaks one thing. You
+don't know what; `stcli` finds out. There are four faults: `just break 1`
+to `just break 4`.
+
+**D.5.1** Open a second terminal (the **+** in the Codespace's terminal
+panel), leave `stcli` running in the first, and break the lab:
+
+```sh
+just break 1
+```
+
+It ends with **FAULT 1 IS IN**. sonic's config was replaced, so if it isn't
+in your session yet, `/add sonic` (and `/add nokia`).
+
+**D.5.2** Back in `stcli`, start fresh and ask:
+
+```
+/clear
+```
+
+```
+Something between nokia and sonic broke in the last few minutes. Check both devices, find what's wrong and why, and propose a fix. Don't change anything yet.
+```
+
+A good answer names the one thing that changed, on the right device, and
+shows the output that proves it.
+
+**D.5.3** Fix it, and prove it:
+
+```
+Apply that fix, then show me it worked.
+```
+
+**D.5.4** In the second terminal, confirm the lab is healthy again. Both
+end in green:
+
+```sh
+just check-bgp
+just check-l2
+```
+
+**D.5.5** Next fault: `just break 2`, then repeat from D.5.2. `just break`
+replaces whatever the last fault left behind, fixed or not.
+
+<details>
+<summary>Facilitator reference: the four faults</summary>
+
+| `just break` | Device | Fault | Fails | Fix |
+| --- | --- | --- | --- | --- |
+| 1 | sonic | Neighbor `10.0.0.0` configured with `remote-as 65010`; nokia is AS 65001 | `check-bgp` | `neighbor 10.0.0.0 remote-as 65001` under `router bgp 65002` |
+| 2 | nokia | ACL `EDGE-PROTECT` on `ethernet-1/1.0` input drops TCP port 179, both directions | `check-bgp` | Remove the ACL from `ethernet-1/1.0`, or its two drop entries |
+| 3 | sonic | `Ethernet0` MTU 1400; nokia's side is 1500. BGP stays up; full-size packets don't cross | `check-bgp` | `sudo config interface mtu Ethernet0 1500` (or 9100, the default) |
+| 4 | sonic | VLAN 120 removed from the trunk: `Ethernet4` isn't a member; `Vlan120` and its address remain | `check-l2` | `sudo config vlan member add 120 Ethernet4` |
+
+`Ethernet0`'s and `Ethernet4`'s descriptions don't change with the faults,
+so in 1 and 4 they disagree with the config: a good agent notices.
+
+</details>
+
 ### Start over
 
 These run in a terminal outside `stcli`, for facilitators or anyone who
 wants to go again.
 
 
-**D.5.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
+**D.6.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
 from Scenario 2 (this also clears any layer 2 config and puts back the
 off-standard descriptions). Your skill isn't touched; it lives in your
 account, not on a device:
@@ -626,20 +689,20 @@ account, not on a device:
 just reset-sonic
 ```
 
-**D.5.2** Put NetBox back as it was seeded, drift included, to run Scenario 3
+**D.6.2** Put NetBox back as it was seeded, drift included, to run Scenario 3
 again (seconds; the devices are untouched):
 
 ```sh
 just reset-netbox
 ```
 
-**D.5.3** Or redeploy both devices from scratch:
+**D.6.3** Or redeploy both devices from scratch:
 
 ```sh
 just lab-up
 ```
 
-**D.5.4** If the lab is stuck, tear everything down and start it again. NetBox keeps
+**D.6.4** If the lab is stuck, tear everything down and start it again. NetBox keeps
 its data:
 
 ```sh

@@ -123,6 +123,11 @@ check-l2:
 reset-sonic:
     @./scripts/reset-sonic.sh
 
+# Scenario 5: put the lab in its solved state, then break one thing (1-4)
+[group('exercises')]
+break N:
+    @./scripts/break.sh {{N}}
+
 # check the NetBox exercise: NetBox matches nokia where it was stale
 [group('exercises')]
 check-netbox:
