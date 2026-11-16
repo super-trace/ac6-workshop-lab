@@ -135,7 +135,7 @@ A ping or other long-running command can be stopped with **Esc**.
 Each scenario ends with `/feedback`: tell us what worked and what didn't, in
 a sentence. We read every one.
 
-<br>
+---
 
 ### Scenario 1: one device, talk to your network
 
@@ -289,7 +289,7 @@ see in Scenario 2.
 For example: *"Turning our wiki standard into a skill took a minute."* or *"I
 wanted ___ and it didn't."*
 
-<br>
+---
 
 ### Scenario 2: two devices, build, convert and apply
 
@@ -419,7 +419,7 @@ and each approval with who gave it.
 For example: *"Converting the config to SONiC saved me real time."* or *"The
 approvals felt ___."*
 
-<br>
+---
 
 ### Scenario 3: plug in the tools you already use
 
@@ -588,7 +588,7 @@ SONiC manufacturer, device type and platform, and a `switch` role.
 
 </details>
 
-<br>
+---
 
 ### Scenario 4: choose your own adventure, layer 2
 
