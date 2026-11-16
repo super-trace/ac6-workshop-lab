@@ -94,7 +94,7 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 #### C.1
 
 Start the lab (about 3 minutes). This also starts NetBox (see
-[G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
+[H. NetBox](#h-netbox)) and readies GitHub's MCP server for Scenario 3:
 
 ```sh
 just lab-up
@@ -104,7 +104,7 @@ just lab-up
 > You can reset your lab at any time with `just lab-reset`. It tears both
 > devices down and starts them again from scratch (the same as `just lab-down`
 > then `just lab-up`). NetBox keeps its data. For smaller resets, see
-> [Start over](#start-over).
+> [E. Start over](#e-start-over).
 
 #### C.2
 
@@ -727,13 +727,13 @@ Stuck? Ask a facilitator; the reference below has hints.
 
 Tell us how it went: `/feedback`.
 
-### Start over
+## E. Start over
 
 These run in a terminal outside `stcli`, for facilitators or anyone who
 wants to go again.
 
 
-#### D.5.1
+#### E.1
 
 Wipe sonic back to blank in seconds, leaving nokia alone, then start again
 from Scenario 2 (this also clears any layer 2 config and puts back the
@@ -744,7 +744,7 @@ account, not on a device:
 just reset-sonic
 ```
 
-#### D.5.2
+#### E.2
 
 Put NetBox back as it was seeded, drift included, to run Scenario 3
 again (seconds; the devices are untouched):
@@ -753,7 +753,7 @@ again (seconds; the devices are untouched):
 just reset-netbox
 ```
 
-#### D.5.3
+#### E.3
 
 Or redeploy both devices from scratch:
 
@@ -761,7 +761,7 @@ Or redeploy both devices from scratch:
 just lab-up
 ```
 
-#### D.5.4
+#### E.4
 
 If the lab is stuck, tear everything down and start it again. NetBox keeps
 its data:
@@ -804,11 +804,11 @@ neighbor fixes it.
 
 </details>
 
-## E. Connect to the network
+## F. Connect to the network
 
 Other ways to connect, beyond the workshop's steps.
 
-#### E.1
+#### F.1
 
 Put both devices in one session, so one agent can work across them. Ask
 `stcli` in plain language (the easiest way):
@@ -817,7 +817,7 @@ Put both devices in one session, so one agent can work across them. Ask
 Can you please connect to oldprotocol@172.20.23.2 and oldprotocol@172.20.23.3?
 ```
 
-#### E.2
+#### F.2
 
 It asks before each connection; press **Enter** to confirm each one, then
 type the password, `newbrain`. Or add devices yourself with `/add`, one per
@@ -848,7 +848,7 @@ The two devices feel different once you're in:
   `Ethernet4` and so on, and `sudo config save -y` keeps changes across a
   restart of the switch.
 
-## F. Use stcli
+## G. Use stcli
 
 - **Ask in plain language:** "is BGP up between nokia and sonic?" One agent
   works across every device in the session, and each command it runs is
@@ -867,7 +867,7 @@ The two devices feel different once you're in:
 - **One `stcli`, one session.** For a second session, run a second `stcli` in
   another terminal.
 
-## G. NetBox
+## H. NetBox
 
 NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
 it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
@@ -888,7 +888,7 @@ without the devices, run `just netbox-up`.
 `just netbox-down` stops NetBox and deletes NetBox's
 data; the next `just lab-up` seeds it again.
 
-## H. Troubleshooting
+## I. Troubleshooting
 
 - **`just lab-up` stops to build the SONiC image.** That's expected when
   the image isn't in the Codespace and can't be pulled: it downloads SONiC's
@@ -915,12 +915,12 @@ data; the next `just lab-up` seeds it again.
   ```
 - **The BGP session is Established but `just check-bgp` still fails.** On
   sonic, FRR shows `(Policy)` and exchanges no routes until a policy allows
-  them; see "Facilitator reference: what nokia has configured" under Start
-  over.
+  them; see "Facilitator reference: what nokia has configured" under
+  [E. Start over](#e-start-over).
 - **Anything else stuck.** `just lab-reset` (`lab-down`, then `lab-up`)
   rebuilds both devices from scratch; NetBox keeps its data.
 
-## I. Finish
+## J. Finish
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.
