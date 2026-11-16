@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="736" viewBox="0 0 1120 736" role="img" aria-labelledby="title description">
+  <title id="title">AC6 workshop lab topology</title>
+  <desc id="description">Nokia SR Linux, configured at management address 172.20.23.2/24, connects to a blank SONiC switch at 172.20.23.3/24 over two physical links. The lab SSH aliases forward Nokia to 127.0.0.1:2401 and SONiC to 127.0.0.1:2402. The eBGP link joins ethernet-1/1, 10.0.0.0/31 in AS 65001, to Ethernet0, with target address 10.0.0.1/31 in AS 65002. The 802.1Q trunk joins ethernet-1/2 to Ethernet4 and carries VLANs 110, 120 and 130 on Nokia. The workshop configures both links on SONiC. NetBox 4.7 provides its UI and API at http://localhost:8000. It initially documents Nokia with intentional drift; SONiC is not yet documented. The dashed line represents documentation, not a physical connection.</desc>
+  <defs>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #172b45; }
+      .muted { fill: #526477; }
+      .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; }
+      .small { font-size: 17px; }
+      .label { font-size: 19px; font-weight: 700; }
+      .port { font-size: 18px; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; }
+    </style>
+  </defs>
+
+  <rect width="1120" height="736" rx="20" fill="#f5f7fa"/>
+  <text x="40" y="53" font-size="30" font-weight="700">AC6 workshop lab</text>
+  <text x="40" y="85" font-size="19" class="muted">Two devices. Two links. Configure the SONiC side.</text>
+  <rect x="936" y="35" width="144" height="32" rx="16" fill="#e6ecf2"/>
+  <text x="1008" y="56" text-anchor="middle" font-size="14" font-weight="700" letter-spacing="1">STARTING STATE</text>
+
+  <!-- Management addresses are labels, not additional physical links. -->
+  <text x="40" y="126" class="small muted">Management IP</text>
+  <text x="40" y="150" class="mono" font-size="20">172.20.23.2/24</text>
+  <text x="40" y="176" font-size="16" class="muted">SSH via 127.0.0.1:2401</text>
+  <text x="1080" y="126" text-anchor="end" class="small muted">Management IP</text>
+  <text x="1080" y="150" text-anchor="end" class="mono" font-size="20">172.20.23.3/24</text>
+  <text x="1080" y="176" text-anchor="end" font-size="16" class="muted">SSH via 127.0.0.1:2402</text>
+
+  <!-- Device chassis and their two data-plane ports. -->
+  <rect x="40" y="188" width="260" height="304" rx="16" fill="#ffffff" stroke="#ccd6e1"/>
+  <rect x="40" y="212" width="4" height="64" rx="2" fill="#14796f"/>
+  <text x="64" y="229" font-size="30" font-weight="700">nokia</text>
+  <text x="64" y="258" font-size="19" class="muted">Nokia SR Linux</text>
+  <rect x="64" y="277" width="126" height="28" rx="14" fill="#e3f3ee"/>
+  <text x="127" y="296" text-anchor="middle" font-size="15" font-weight="700" fill="#11695e" style="fill:#11695e">Configured</text>
+  <path d="M64 326 H276" stroke="#e4eaf0"/>
+  <text x="64" y="355" class="small muted">AS 65001</text>
+  <text x="64" y="390" class="port">ethernet-1/1</text>
+  <text x="64" y="459" class="port">ethernet-1/2</text>
+  <rect x="276" y="373" width="24" height="22" rx="4" fill="#e8f0fd" stroke="#3776c5" stroke-width="2"/>
+  <rect x="276" y="442" width="24" height="22" rx="4" fill="#f0eafa" stroke="#8161b3" stroke-width="2"/>
+
+  <rect x="820" y="188" width="260" height="304" rx="16" fill="#ffffff" stroke="#ccd6e1"/>
+  <rect x="1076" y="212" width="4" height="64" rx="2" fill="#b17621"/>
+  <text x="844" y="229" font-size="30" font-weight="700">sonic</text>
+  <text x="844" y="258" font-size="19" class="muted">SONiC</text>
+  <rect x="844" y="277" width="132" height="28" rx="14" fill="#fff1d9"/>
+  <text x="910" y="296" text-anchor="middle" font-size="15" font-weight="700" style="fill:#805316">Starts blank</text>
+  <path d="M844 326 H1056" stroke="#e4eaf0"/>
+  <text x="844" y="355" class="small muted">AS 65002 · target</text>
+  <text x="1056" y="390" text-anchor="end" class="port">Ethernet0</text>
+  <text x="1056" y="459" text-anchor="end" class="port">Ethernet4</text>
+  <rect x="820" y="373" width="24" height="22" rx="4" fill="#e8f0fd" stroke="#3776c5" stroke-width="2"/>
+  <rect x="820" y="442" width="24" height="22" rx="4" fill="#f0eafa" stroke="#8161b3" stroke-width="2"/>
+
+  <!-- Physical links have no arrowheads: both are bidirectional. -->
+  <rect x="432" y="219" width="256" height="36" rx="18" fill="#e8f0fd"/>
+  <text x="560" y="243" text-anchor="middle" class="label" style="fill:#245c9f">Layer 3 · eBGP</text>
+  <text x="560" y="283" text-anchor="middle" font-size="19" class="muted">Bring up the routing peer</text>
+  <text x="320" y="348" class="port">10.0.0.0/31</text>
+  <text x="800" y="348" text-anchor="end" class="port">10.0.0.1/31</text>
+  <text x="800" y="371" text-anchor="end" font-size="15" class="muted">target address</text>
+  <path d="M300 384 H820" fill="none" stroke="#3776c5" stroke-width="4"/>
+
+  <path d="M300 453 H820" fill="none" stroke="#8161b3" stroke-width="4"/>
+  <rect x="393" y="435" width="334" height="36" rx="18" fill="#f0eafa"/>
+  <text x="560" y="459" text-anchor="middle" class="label" style="fill:#6d4a9a">Layer 2 · 802.1Q trunk</text>
+  <text x="560" y="500" text-anchor="middle" font-size="18" class="muted">VLANs 110 · 120 · 130</text>
+
+  <!-- NetBox's initial documentation relationship; no cable is implied. -->
+  <path d="M170 492 V586" fill="none" stroke="#8996a6" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="190" y="541" class="small muted">Documents nokia</text>
+  <rect x="40" y="586" width="1040" height="100" rx="16" fill="#ffffff" stroke="#ccd6e1"/>
+  <rect x="64" y="610" width="6" height="52" rx="3" fill="#526477"/>
+  <text x="86" y="633" font-size="25" font-weight="700">netbox</text>
+  <text x="86" y="659" class="small muted">Source of truth</text>
+  <path d="M302 610 V662" stroke="#e4eaf0"/>
+  <text x="328" y="628" font-size="19">NetBox 4.7</text>
+  <text x="328" y="655" class="small muted">UI + API: localhost:8000</text>
+  <path d="M567 610 V662" stroke="#e4eaf0"/>
+  <text x="593" y="628" font-size="19">Nokia documented, with intentional drift</text>
+  <text x="593" y="655" class="small muted">SONiC is not in NetBox yet</text>
+
+  <path d="M40 714 H72" stroke="#526477" stroke-width="3"/>
+  <text x="82" y="720" font-size="15" class="muted">Physical link</text>
+  <path d="M222 714 H254" stroke="#8996a6" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="264" y="720" font-size="15" class="muted">Documentation relationship</text>
+  <text x="1080" y="720" text-anchor="end" font-size="15" class="muted">SONiC starts without addresses on either data link</text>
+</svg>

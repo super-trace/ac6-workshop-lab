@@ -24,15 +24,20 @@ smaller machine types aren't offered.
 
 While it starts, here's the lab you'll work with:
 
+![Lab topology: Nokia SR Linux and SONiC connected by eBGP and VLAN trunk links, with NetBox documenting Nokia.](images/lab-topology.svg)
+
+<details>
+<summary>Text version of the lab topology</summary>
+
 ```
       mgmt 172.20.23.2                                   mgmt 172.20.23.3
   ┌──────────────────────┐                           ┌──────────────────────┐
-  │ nokia                │ e1-1           Ethernet0  │ sonic                │
+  │ nokia                │ ethernet-1/1   Ethernet0  │ sonic                │
   │ Nokia SR Linux       │ ───────────────────────── │ SONiC                │
   │ configured           │ 10.0.0.0/31   10.0.0.1/31 │ blank                │
   │                      │     layer 3: eBGP         │                      │
   │                      │                           │                      │
-  │                      │ e1-2           Ethernet4  │                      │
+  │                      │ ethernet-1/2   Ethernet4  │                      │
   │                      │ ───────────────────────── │                      │
   └──────────────────────┘    layer 2: VLAN trunk    └──────────────────────┘
               │ documents nokia (drift included); sonic isn't in it yet
@@ -41,6 +46,8 @@ While it starts, here's the lab you'll work with:
   │ NetBox 4.7 · UI and API on :8000                                        │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+</details>
 
 - nokia's end of the BGP link is configured.
 - sonic's `10.0.0.1/31` is the address the workshop gives it, since sonic
