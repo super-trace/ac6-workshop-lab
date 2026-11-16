@@ -79,7 +79,7 @@ all commands with `just --list`.
 
 `just lab-up` starts NetBox at http://localhost:8000 (login
 `oldprotocol:newbrain`), seeded with nokia for Scenario 3; see the
-[main README](README.md#h-netbox) for the API token. `just netbox-up` starts
+[main README](README.md#g-netbox) for the API token. `just netbox-up` starts
 NetBox and the GitHub MCP proxy without the devices; run it after exporting
 `GITHUB_TOKEN` to give a running lab's proxy the token. `just reset-netbox`
 puts NetBox back as seeded; `just netbox-down` stops both and deletes

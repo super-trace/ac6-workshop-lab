@@ -94,7 +94,7 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 #### C.1
 
 Start the lab (about 3 minutes). This also starts NetBox (see
-[H. NetBox](#h-netbox)) and readies GitHub's MCP server for Scenario 3:
+[G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
 
 ```sh
 just lab-up
@@ -104,7 +104,7 @@ just lab-up
 > You can reset your lab at any time with `just lab-reset`. It tears both
 > devices down and starts them again from scratch (the same as `just lab-down`
 > then `just lab-up`). NetBox keeps its data. For smaller resets, see
-> [E. Start over](#e-start-over).
+> [E. Reset the lab](#e-reset-the-lab).
 
 #### C.2
 
@@ -727,11 +727,10 @@ Stuck? Ask a facilitator; the reference below has hints.
 
 Tell us how it went: `/feedback`.
 
-## E. Start over
+## E. Reset the lab
 
 These run in a terminal outside `stcli`, for facilitators or anyone who
 wants to go again.
-
 
 #### E.1
 
@@ -804,9 +803,46 @@ neighbor fixes it.
 
 </details>
 
-## F. Connect to the network
+## F. How to use stcli
 
-Other ways to connect, beyond the workshop's steps.
+Everything here works in any session, beyond the workshop's steps.
+
+- **Ask in plain language:** "is BGP up between nokia and sonic?" One agent
+  works across every device in the session, and each command it runs is
+  labelled with the device it ran on.
+- **Approvals.** Read-only commands run straight away. Anything that changes
+  a device stops at **Approval needed**, with the device named beside
+  the command; a change of several commands asks once, as **Approve batch**.
+  Destructive commands always ask on their own, with a typed confirmation
+  phrase.
+- **Run a command yourself:** `!oldprotocol@sonic show ip bgp summary`. With several
+  devices in the session, name the device first; a bare `!` lists the names.
+- **One `stcli`, one session.** For a second session, run a second `stcli` in
+  another terminal.
+
+### Commands
+
+Type `/help` in `stcli` for the same list, plus the keyboard shortcuts.
+
+| Command | What it does |
+| --- | --- |
+| `/help` (`/h`) | Lists every command and key. |
+| `/new [device]` (`/n`) | Starts a brand-new session with no devices, and connects to `device` if you give one. |
+| `/clear` | Starts a fresh conversation; the connected devices stay. |
+| `/add <device>` | Adds a device to this session, without asking first. |
+| `/connect [device]` (`/c`) | Connects a device to this session, or reconnects one that dropped. |
+| `/disconnect [name]` | Closes one device's connection; `/connect` brings it back. |
+| `/sessions` | Picks a past session to resume. |
+| `/skills` | Lists your skills; shows or deletes one. |
+| `/mcp` | Lists, adds or removes MCP servers, such as GitHub's. |
+| `/netbox` | Connects, shows or disconnects NetBox. |
+| `/copy` | Copies the agent's last reply. |
+| `/usage` (`/credits`) | Shows your remaining credits, and your spend and tokens over 30 days. |
+| `/config [key=value]` | Opens the settings, or changes one. |
+| `/feedback <message>` | Sends feedback about `stcli` to the Supertrace team. |
+| `/quit` (`/q`) | Leaves `stcli`. |
+
+### Connect to devices
 
 #### F.1
 
@@ -848,26 +884,7 @@ The two devices feel different once you're in:
   `Ethernet4` and so on, and `sudo config save -y` keeps changes across a
   restart of the switch.
 
-## G. Use stcli
-
-- **Ask in plain language:** "is BGP up between nokia and sonic?" One agent
-  works across every device in the session, and each command it runs is
-  labelled with the device it ran on.
-- **Approvals.** Read-only commands run straight away. Anything that changes
-  a device stops at **Approval needed**, with the device named beside
-  the command; a change of several commands asks once, as **Approve batch**.
-  Destructive commands always ask on their own, with a typed confirmation
-  phrase.
-- **Run a command yourself:** `!oldprotocol@sonic show ip bgp summary`. With several
-  devices in the session, name the device first; a bare `!` lists the names.
-- **Manage devices:** `/disconnect sonic` closes one device;
-  `/connect sonic` dials it again.
-- **Start fresh:** `/clear` clears the conversation and keeps the connected
-  devices; `/new` starts a completely new session with no devices.
-- **One `stcli`, one session.** For a second session, run a second `stcli` in
-  another terminal.
-
-## H. NetBox
+## G. NetBox
 
 NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
 it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
@@ -888,7 +905,7 @@ without the devices, run `just netbox-up`.
 `just netbox-down` stops NetBox and deletes NetBox's
 data; the next `just lab-up` seeds it again.
 
-## I. Troubleshooting
+## H. Troubleshooting
 
 - **`just lab-up` stops to build the SONiC image.** That's expected when
   the image isn't in the Codespace and can't be pulled: it downloads SONiC's
@@ -916,11 +933,11 @@ data; the next `just lab-up` seeds it again.
 - **The BGP session is Established but `just check-bgp` still fails.** On
   sonic, FRR shows `(Policy)` and exchanges no routes until a policy allows
   them; see "Facilitator reference: what nokia has configured" under
-  [E. Start over](#e-start-over).
+  [E. Reset the lab](#e-reset-the-lab).
 - **Anything else stuck.** `just lab-reset` (`lab-down`, then `lab-up`)
   rebuilds both devices from scratch; NetBox keeps its data.
 
-## J. Finish
+## I. Finish
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.
