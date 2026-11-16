@@ -9,16 +9,6 @@ up.
 
 For local Docker, follow [the local setup guide](README-docker-local.md).
 
-> [!IMPORTANT]
-> **Where does each command go?** Every box below is labelled.
->
-> - **In the terminal:** the Codespace's terminal, at the `$` prompt.
-> - **In `stcli`:** inside `stcli`, once it's running (from C.3 on).
->
-> After each step, **✅** shows what success looks like. The agent's answers
-> vary from run to run, so **Expect something like** is an example, not exact
-> text. If you see something very different, raise your hand.
-
 ## A. Create a Codespace
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsWest) <img src="images/arrow.svg" alt="" width="140">
