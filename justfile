@@ -103,6 +103,10 @@ lab-down:
     @printf '\n'
     @./scripts/banner.sh red "LAB IS DOWN"
 
+# reset the lab in one step: lab-down, then lab-up (NetBox keeps its data)
+[group('lab')]
+lab-reset: lab-down lab-up
+
 # check the BGP exercise: nokia <-> sonic session Established, routes installed
 [group('exercises')]
 check-bgp:

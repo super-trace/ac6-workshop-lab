@@ -90,6 +90,12 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 just lab-up
 ```
 
+> [!TIP]
+> You can reset your lab at any time with `just lab-reset`. It tears both
+> devices down and starts them again from scratch (the same as `just lab-down`
+> then `just lab-up`). NetBox keeps its data. For smaller resets, see
+> [Start over](#start-over).
+
 **C.2** Then check it:
 
 ```sh
@@ -651,8 +657,7 @@ just lab-up
 its data:
 
 ```sh
-just lab-down
-just lab-up
+just lab-reset
 ```
 
 <details>
@@ -798,8 +803,8 @@ data; the next `just lab-up` seeds it again.
   sonic, FRR shows `(Policy)` and exchanges no routes until a policy allows
   them; see "Facilitator reference: what nokia has configured" under Start
   over.
-- **Anything else stuck.** `just lab-down`, then `just lab-up`, rebuilds
-  both devices from scratch; NetBox keeps its data.
+- **Anything else stuck.** `just lab-reset` (`lab-down`, then `lab-up`)
+  rebuilds both devices from scratch; NetBox keeps its data.
 
 ## I. Finish
 
