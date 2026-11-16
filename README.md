@@ -46,7 +46,7 @@ work with:
 - sonic's `10.0.0.1/31` is the address the workshop gives it, since sonic
   starts with no addresses on either link.
 - Connect to each device by its management IP.
-- Every login (both devices and NetBox) is `oldprotocol:newbrain`.
+- The credentials for NetBox, sonic and nokia are `oldprotocol:newbrain`.
 
 ### Team standards
 
