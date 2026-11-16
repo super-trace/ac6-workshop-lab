@@ -11,10 +11,11 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
 
 ## A. Create a Codespace
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast) <img src="images/pointing-hand.gif" alt="" height="48">
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast) <img src="images/arrow.svg" alt="" width="200">
 
 Open the link above:
 <https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast>.
+
 It creates your Codespace from a prebuilt image, or reopens the one you
 already have. The repository requires a **4-core / 16 GB RAM** machine, so
 smaller machine types aren't offered.
@@ -41,9 +42,10 @@ work with:
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-nokia's end of the BGP link is configured; sonic's `10.0.0.1/31` is the
-address the workshop gives it, since sonic starts with no addresses on
-either link. Connect to each device by its management IP.
+- nokia's end of the BGP link is configured.
+- sonic's `10.0.0.1/31` is the address the workshop gives it, since sonic
+  starts with no addresses on either link.
+- Connect to each device by its management IP.
 
 ### Team standards
 
@@ -65,7 +67,8 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 
 ## B. Install stcli
 
-**B.1** In the Codespace terminal, install `stcli`, the same way as on
+**B.1** Once your Codespace is ready, install `stcli` in the Codespace
+terminal, the same way as on
 [cli.supertrace.ai](https://cli.supertrace.ai):
 
 ```sh
