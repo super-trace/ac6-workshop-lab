@@ -506,7 +506,7 @@ which side is right? It won't change either side until you answer. Here the
 device is the source of truth, so NetBox is what's stale:
 
 ```
-nokia is right on every difference. Update NetBox to match, but keep NetBox's interface layout: put addresses on the interfaces NetBox already has, and leave out ports with nothing connected.
+nokia is right on every difference, VLAN names included: its gateway descriptions name them. Update NetBox to match, but keep NetBox's interface layout: put addresses on the interfaces NetBox already has, and leave out ports with nothing connected.
 ```
 
 The agent proposes a changeset, or two if one depends on the other. **Apply these changes to NetBox?** shows
