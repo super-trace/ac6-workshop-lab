@@ -214,6 +214,12 @@ conversation, so the agent can use it too:
 !show version
 ```
 
+Then list nokia's interfaces and whether they're up:
+
+```
+!show interface brief
+```
+
 #### D.1.6
 
 Read the routing table. The BGP peer shows as down, because nothing on the
