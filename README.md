@@ -344,7 +344,7 @@ Before you move on, ask how to undo the fix:
 **In `stcli`:**
 
 ```
-How would I revert the description change on ethernet-1/2?
+How would I revert the changes you just made on the nokia?
 ```
 
 ✅ **Expect something like:** commands that set the description back to `TRUNK: to peer switch`.
