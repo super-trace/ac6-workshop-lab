@@ -93,8 +93,8 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 
 #### C.1
 
-Start the lab (about 3 minutes). This also starts NetBox (see
-[G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
+Start the lab (about 3 minutes). This also starts NetBox and readies
+GitHub's MCP server, both for Scenario 3:
 
 ```sh
 just lab-up
@@ -692,6 +692,22 @@ SONiC manufacturer, device type and platform, and a `switch` role.
 
 </details>
 
+<details>
+<summary>Facilitator reference: NetBox</summary>
+
+- **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
+- **Share it:** `just lab-up` makes port 8000 public when the Codespace
+  allows it. Otherwise, in the Ports tab, right-click port 8000 and pick
+  **Port Visibility → Public**. Anyone with the URL can then log in with the
+  lab login, so keep it to this disposable lab.
+- **Without the devices:** `just netbox-up` starts NetBox and the GitHub
+  MCP proxy on their own.
+- **Delete its data:** `just netbox-down` stops NetBox and deletes what's in
+  it; the next `just lab-up` seeds it again. (`just lab-reset-netbox` does
+  both in one step.)
+
+</details>
+
 ---
 
 ### Scenario 4: choose your own adventure, layer 2
@@ -890,28 +906,7 @@ The two devices feel different once you're in:
   `Ethernet4` and so on, and `sudo config save -y` keeps changes across a
   restart of the switch.
 
-## G. NetBox
-
-NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
-it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
-starts seeded with nokia as documented, drift included (see Scenario 3).
-It keeps what you change, even across a `just lab-down`; `just
-lab-reset-netbox` puts it back as seeded. To start NetBox and the GitHub MCP proxy
-without the devices, run `just netbox-up`.
-
-- **Open it:** the recipe prints the URL. In a Codespace, that's the
-  forwarded port 8000 (Ports tab → NetBox).
-- **Log in:** `oldprotocol:newbrain`, the same as the devices.
-- **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
-- **Share it:** the recipe makes port 8000 public when the Codespace allows
-  it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
-  Visibility → Public**. Anyone with the URL can then log in with the
-  password above, so keep it to this disposable lab.
-
-`just netbox-down` stops NetBox and deletes NetBox's
-data; the next `just lab-up` seeds it again.
-
-## H. Troubleshooting
+## G. Troubleshooting
 
 - **`just lab-up` stops to build the SONiC image.** That's expected when
   the image isn't in the Codespace and can't be pulled: it downloads SONiC's
@@ -943,7 +938,7 @@ data; the next `just lab-up` seeds it again.
 - **Anything else stuck.** `just lab-reset` (`lab-down`, then `lab-up`)
   rebuilds both devices from scratch; NetBox keeps its data.
 
-## I. Finish
+## H. Finish
 
 Delete the Codespace from GitHub's Codespaces page when finished to remove
 its stored resources. Codespaces usage counts against your GitHub allowance.
