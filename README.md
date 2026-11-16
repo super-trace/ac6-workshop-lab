@@ -11,10 +11,10 @@ For local Docker, follow [the local setup guide](README-docker-local.md).
 
 ## A. Create a Codespace
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast) <img src="images/arrow.svg" alt="" width="140">
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsWest) <img src="images/arrow.svg" alt="" width="140">
 
 Open the link above:
-<https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsEast>.
+<https://codespaces.new/super-trace/ac6-workshop-lab?quickstart=1&geo=UsWest>.
 
 It creates your Codespace from a prebuilt image, or reopens the one you
 already have. The repository requires a **4-core / 16 GB RAM** machine, so
