@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start the workshop's NetBox and the GitHub MCP proxy (lab/netbox/compose.yml),
 # seed NetBox with nokia as documented (scripts/netbox-seed.sh, once: what
-# attendees change is kept until `just netbox-down` or `just reset-netbox`),
+# attendees change is kept until `just netbox-down` or `just lab-reset-netbox`),
 # and print how to reach both. In a
 # Codespace, also make port 8000 (NetBox) public so anyone with the URL can
 # open it; the GitHub MCP proxy listens on localhost only. Safe to re-run.
@@ -75,7 +75,7 @@ printf '    %sLogin%s     oldprotocol / newbrain\n' "$bold" "$reset"
 printf '    %sAPI token%s Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000\n' "$bold" "$reset"
 printf '    %sGitHub MCP%s http://localhost:8002/mcp/readonly (proxy, adds your GITHUB_TOKEN)\n' "$bold" "$reset"
 printf '\n    NetBox documents nokia: the source of truth for Scenario 3.\n'
-printf '    %sjust reset-netbox%s puts it back as seeded.\n' "$green" "$reset"
+printf '    %sjust lab-reset-netbox%s puts it back as seeded.\n' "$green" "$reset"
 if [ "${CODESPACES:-}" = "true" ]; then
     if [ -n "$public" ]; then
         printf '\n    %sPort 8000 is public: anyone with the URL can open NetBox.%s\n' "$green" "$reset"

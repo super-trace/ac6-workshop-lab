@@ -50,7 +50,7 @@ docker exec "${lab}-sonic" vtysh -c "show running-config" 2>/dev/null | grep -q 
 docker exec "${lab}-sonic" sonic-db-cli CONFIG_DB KEYS 'VLAN|*' 2>/dev/null | grep -q . && leftovers+=" VLANs"
 docker exec "${lab}-sonic" sonic-db-cli CONFIG_DB KEYS 'INTERFACE|*' 2>/dev/null | grep -q . && leftovers+=" addresses"
 if [ -n "$leftovers" ]; then
-    echo "   sonic already has${leftovers} configured; run 'just reset-sonic' for a blank slate."
+    echo "   sonic already has${leftovers} configured; run 'just lab-reset-sonic' for a blank slate."
 else
     echo "   blank, as expected"
 fi
@@ -79,7 +79,7 @@ elif curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
     "http://localhost:8000/api/dcim/devices/?name=nokia&brief=1" | grep -q '"count":1'; then
     echo "   NetBox ${version}: ok, nokia documented"
 else
-    fail "NetBox ${version} answers but does not document nokia — run 'just reset-netbox'"
+    fail "NetBox ${version} answers but does not document nokia — run 'just lab-reset-netbox'"
 fi
 
 echo

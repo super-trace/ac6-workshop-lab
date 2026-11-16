@@ -43,7 +43,7 @@ lab-up:
     @{{clab_run}} deploy --reconfigure -t topology.clab.yml
     @echo ""
     @just lab-status
-    @# Waits for both devices, saves sonic's blank baseline for reset-sonic,
+    @# Waits for both devices, saves both baselines for the lab-reset-* recipes,
     @# and waits for SSH.
     @./scripts/lab-ready.sh
     @printf '\n'
@@ -107,6 +107,22 @@ lab-down:
 [group('lab')]
 lab-reset: lab-down lab-up
 
+# put nokia back to its configured baseline (seconds; sonic and the links untouched)
+[group('lab')]
+lab-reset-nokia:
+    @./scripts/reset-nokia.sh
+
+# wipe sonic back to blank to run the exercises again (seconds; nokia untouched)
+[group('lab')]
+lab-reset-sonic:
+    @./scripts/reset-sonic.sh
+
+# put NetBox back as seeded, drift included, to run the NetBox exercise again (seconds)
+[group('lab')]
+lab-reset-netbox:
+    @docker compose -f lab/netbox/compose.yml down -v
+    @./scripts/netbox-up.sh
+
 # check the BGP exercise: nokia <-> sonic session Established, routes installed
 [group('exercises')]
 check-bgp:
@@ -122,21 +138,12 @@ check-standards:
 check-l2:
     @./scripts/check-l2.sh
 
-# wipe sonic back to blank to run the exercises again (seconds; nokia untouched)
-[group('exercises')]
-reset-sonic:
-    @./scripts/reset-sonic.sh
 
 # check the NetBox exercise: NetBox matches nokia where it was stale
 [group('exercises')]
 check-netbox:
     @./scripts/check-netbox.sh
 
-# put NetBox back as seeded, drift included, to run the NetBox exercise again (seconds)
-[group('exercises')]
-reset-netbox:
-    @docker compose -f lab/netbox/compose.yml down -v
-    @./scripts/netbox-up.sh
 
 # start NetBox on port 8000, seeded with nokia, and the GitHub MCP proxy (lab-up does this too)
 [group('netbox')]

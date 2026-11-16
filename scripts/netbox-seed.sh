@@ -7,7 +7,7 @@
 # Seeds once: the workshop-seed tag is created last, and its presence skips
 # the seed, so a lab-down/lab-up keeps whatever attendees changed. A seed
 # that failed partway leaves no tag, so the next run fails loudly on a
-# duplicate; `just reset-netbox` starts it over.
+# duplicate; `just lab-reset-netbox` starts it over.
 #
 # curl only: the Codespace host has neither jq nor python3.
 set -euo pipefail

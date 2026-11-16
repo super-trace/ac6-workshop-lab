@@ -734,39 +734,45 @@ wants to go again.
 
 #### E.1
 
-Wipe sonic back to blank in seconds, leaving nokia alone, then start again
-from Scenario 2 (this also clears any layer 2 config and puts back the
-off-standard descriptions). Your skill isn't touched; it lives in your
-account, not on a device:
+Reset the whole lab: both devices are torn down and redeployed from scratch
+(about 3 minutes). NetBox keeps its data:
 
 ```sh
-just reset-sonic
+just lab-reset
 ```
 
 #### E.2
 
-Put NetBox back as it was seeded, drift included, to run Scenario 3
-again (seconds; the devices are untouched):
+`lab-reset` is the two commands below in one step. `lab-down` stops both
+devices and NetBox; nothing works again until `lab-up`:
 
 ```sh
-just reset-netbox
+just lab-down
+just lab-up
 ```
 
 #### E.3
 
-Or redeploy both devices from scratch:
+Or reset one part in seconds, leaving the rest alone. Your skills and
+memories aren't touched; they live in your account, not on a device.
+
+Put nokia back to its starting config, removing anything added since:
 
 ```sh
-just lab-up
+just lab-reset-nokia
 ```
 
-#### E.4
-
-If the lab is stuck, tear everything down and start it again. NetBox keeps
-its data:
+Wipe sonic back to blank, then start again from Scenario 2 (this also
+clears any layer 2 config and puts back the off-standard descriptions):
 
 ```sh
-just lab-reset
+just lab-reset-sonic
+```
+
+Put NetBox back as it was seeded, drift included, to run Scenario 3 again:
+
+```sh
+just lab-reset-netbox
 ```
 
 <details>
@@ -890,7 +896,7 @@ NetBox is the lab's source of truth (see Scenario 3). `just lab-up` starts
 it on port 8000, and `stcli` connects to it with `/netbox connect`. NetBox
 starts seeded with nokia as documented, drift included (see Scenario 3).
 It keeps what you change, even across a `just lab-down`; `just
-reset-netbox` puts it back as seeded. To start NetBox and the GitHub MCP proxy
+lab-reset-netbox` puts it back as seeded. To start NetBox and the GitHub MCP proxy
 without the devices, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the

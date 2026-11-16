@@ -81,7 +81,7 @@ all commands with `just --list`.
 `oldprotocol:newbrain`), seeded with nokia for Scenario 3; see the
 [main README](README.md#g-netbox) for the API token. `just netbox-up` starts
 NetBox and the GitHub MCP proxy without the devices; run it after exporting
-`GITHUB_TOKEN` to give a running lab's proxy the token. `just reset-netbox`
+`GITHUB_TOKEN` to give a running lab's proxy the token. `just lab-reset-netbox`
 puts NetBox back as seeded; `just netbox-down` stops both and deletes
 NetBox's data.
 

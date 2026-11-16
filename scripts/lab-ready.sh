@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run after deploy: wait for both devices, make sure nokia's startup config
 # took, turn sonic's two lab ports on, seed its off-standard descriptions and
-# save sonic's blank baseline for `just reset-sonic`, then wait for SSH on
+# save sonic's blank baseline for `just lab-reset-sonic`, then wait for SSH on
 # both.
 set -euo pipefail
 
@@ -18,7 +18,11 @@ done
 # startup-config; `set` lines are idempotent, so re-applying is a no-op when
 # it all took.
 { grep -E '^set / ' "${cfg}"; echo "commit now"; } | docker exec -i "${nokia}" sr_cli -ed >/dev/null
-echo "nokia: configured."
+# The baseline for `just lab-reset-nokia`: an SR Linux checkpoint of the
+# config just applied. Clear an old one first, so there's only ever one.
+docker exec "${nokia}" sr_cli -d 'tools system configuration checkpoint ac6-baseline clear' >/dev/null 2>&1 || true
+docker exec "${nokia}" sr_cli -d 'tools system configuration generate-checkpoint name ac6-baseline' >/dev/null
+echo "nokia: configured, baseline saved."
 
 # SONiC is ready once its services are up: syncd has created the ports and
 # bgpd (started last) is running.
@@ -43,7 +47,7 @@ docker exec "${sonic}" config interface startup Ethernet4
 # interface description`; a description is a CONFIG_DB field.
 docker exec "${sonic}" sonic-db-cli CONFIG_DB HSET 'PORT|Ethernet0' description 'to nokia' >/dev/null
 docker exec "${sonic}" sonic-db-cli CONFIG_DB HSET 'PORT|Ethernet8' description 'BGP: eBGP peer AS65003' >/dev/null
-# The blank baseline for reset-sonic: CONFIG_DB and FRR's config files.
+# The blank baseline for lab-reset-sonic: CONFIG_DB and FRR's config files.
 docker exec "${sonic}" bash -c \
     'sonic-cfggen -d --print-data > /etc/sonic/ac6-baseline.json &&
      rm -rf /etc/frr.ac6-baseline && cp -a /etc/frr /etc/frr.ac6-baseline'
