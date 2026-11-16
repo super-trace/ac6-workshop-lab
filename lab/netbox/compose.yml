@@ -1,0 +1,118 @@
+# The smallest NetBox that runs: the web app, Postgres and one Valkey
+# (Redis). Trimmed from netbox-community/netbox-docker's docker-compose.yml:
+# no netbox-worker (only background jobs need it; the import pages and the
+# REST API work without it) and one Valkey for both of NetBox's Redis
+# databases instead of two. Plus github-mcp, a proxy to GitHub's MCP server
+# for Scenario 3. `just lab-up` starts it all (through
+# scripts/netbox-up.sh); `just lab-down` stops it and keeps the database;
+# `just netbox-down` deletes it.
+name: ac6-netbox
+
+services:
+  netbox:
+    image: docker.io/netboxcommunity/netbox:v4.7-5.1.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: netbox.env
+    environment:
+      # Origins NetBox accepts a login form from (space-separated). The
+      # Codespaces relay rewrites the browser's Origin header to
+      # http://localhost:8000, so trust that as well as the forwarded URL
+      # that scripts/netbox-up.sh sets.
+      CSRF_TRUSTED_ORIGINS: ${NETBOX_ORIGIN:-http://localhost:8000} http://localhost:8000
+      # initdb/'s dump already has the admin user and token, so skip the
+      # startup step (a whole Django start) that creates them.
+      # scripts/netbox-snapshot.sh sets this to false to create them.
+      SKIP_SUPERUSER: ${NETBOX_SKIP_SUPERUSER:-true}
+    user: "netbox:root"
+    ports:
+      - "8000:8080"
+    healthcheck:
+      test: /opt/netbox/health.sh
+      # Generous for a start without initdb/'s dump, which runs every
+      # migration (~6 minutes in a Codespace). Checks that pass end the grace
+      # period early, so normal starts aren't slower.
+      start_period: 900s
+      # Check every second while starting, so dependants don't wait for the
+      # next 5-second check once NetBox is up.
+      start_interval: 1s
+      timeout: 3s
+      interval: 5s
+    volumes:
+      - netbox-media-files:/opt/netbox/netbox/media:rw
+
+  # GitHub's read-only MCP server, as http://localhost:8002/mcp/readonly with
+  # no auth: this proxy adds the Codespace's GITHUB_TOKEN on the way out, so
+  # Scenario 3's `/mcp add` needs no header and the token never reaches stcli,
+  # its config.json or the screen. Compose takes GITHUB_TOKEN from the shell
+  # that runs `just lab-up`; without one, GitHub answers 401 and lab-verify
+  # says so. It carries a token, so it listens on localhost only: stcli runs
+  # on the same machine.
+  github-mcp:
+    image: docker.io/library/caddy:2.10-alpine
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    command:
+      - caddy
+      - reverse-proxy
+      - --from
+      - :8002
+      - --to
+      - https://api.githubcopilot.com
+      - --change-host-header
+      - --header-up
+      - "Authorization: Bearer {env.GITHUB_TOKEN}"
+      # Read-only on every path, not only /mcp/readonly: GitHub's full
+      # /mcp/ endpoint includes write tools, and this header limits it to the
+      # read-only set. It replaces any value a client sends.
+      - --header-up
+      - "X-MCP-Readonly: true"
+    ports:
+      - "127.0.0.1:8002:8002"
+
+  postgres:
+    image: docker.io/postgres:18-alpine
+    environment:
+      POSTGRES_DB: netbox
+      POSTGRES_USER: netbox
+      POSTGRES_PASSWORD: ac6-workshop-db
+    healthcheck:
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      start_period: 20s
+      start_interval: 1s
+      timeout: 30s
+      interval: 2s
+      retries: 15
+    volumes:
+      - netbox-postgres:/var/lib/postgresql
+      # A freshly migrated NetBox database, loaded only when the volume is
+      # empty, so NetBox's first start skips ~800 migrations (~6 minutes in
+      # a Codespace). Regenerate with scripts/netbox-snapshot.sh.
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: docker.io/valkey/valkey:9.1-alpine
+    command: valkey-server --requirepass ac6-workshop-redis
+    healthcheck:
+      test: '[ "$$(valkey-cli --pass ac6-workshop-redis ping)" = PONG ]'
+      start_period: 5s
+      timeout: 3s
+      interval: 1s
+      retries: 5
+
+volumes:
+  netbox-media-files:
+  netbox-postgres:
+
+# A fixed subnet beside the lab's own (172.20.23.0/24, lab/topology.clab.yml).
+# Left to Docker, the first network created gets all of 172.20.0.0/16, and
+# since `just lab-up` starts NetBox before containerlab deploys, containerlab
+# would then fail on an overlapping subnet.
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.24.0/24

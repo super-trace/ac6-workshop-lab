@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="96" viewBox="0 0 320 96">
+  <style>
+    .arrow { animation: nudge 0.9s ease-in-out infinite; }
+    @keyframes nudge {
+      0%, 100% { transform: translateX(24px); }
+      50%      { transform: translateX(0); }
+    }
+  </style>
+  <g class="arrow">
+    <!-- head points left, at the Codespaces button -->
+    <polygon points="4,48 76,4 76,30 292,30 292,66 76,66 76,92"
+             fill="#2da44e" stroke="#1a7f37" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+</svg>

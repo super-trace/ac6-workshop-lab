@@ -1,0 +1,25 @@
+{
+	"name": "AC6 workshop lab (SR Linux + SONiC)",
+	"build": { "dockerfile": "Dockerfile" },
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/sshd:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "16gb"
+	},
+	"privileged": true,
+	"forwardPorts": [2401, 2402, 8000],
+	"portsAttributes": {
+		"8000": { "label": "NetBox", "onAutoForward": "silent" },
+		"2401": { "label": "nokia SSH" },
+		"2402": { "label": "sonic SSH" }
+	},
+	"onCreateCommand": "bash .devcontainer/on-create.sh && bash .devcontainer/setup.sh"
+}

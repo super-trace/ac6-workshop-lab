@@ -1,0 +1,6 @@
+---
+# Platforms: select one with @nokia_srlinux or @sonic.
+nokia_srlinux:
+  platform: nokia_srlinux
+sonic:
+  platform: linux

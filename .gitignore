@@ -1,0 +1,8 @@
+# no proprietary binaries in this lab, but keep the pattern consistent with
+# the sibling stcli-3node-lab repo just in case.
+*.tar.xz
+*.tar.gz
+
+# Native CLI build used by the local login workaround.
+/stcli-source/
+/stcli-local

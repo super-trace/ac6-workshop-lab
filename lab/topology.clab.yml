@@ -1,0 +1,39 @@
+name: ac6-workshop
+
+# Own mgmt network/subnet so a per-attendee lab doesn't collide with the
+# other labs in this org (3node-lab uses stcli3/172.20.22.0/24, the AutoCon
+# demo lab uses clab/172.20.20.0/24).
+mgmt:
+  network: ac6
+  ipv4-subnet: 172.20.23.0/24
+
+# Two devices, two links:
+#   nokia (SR Linux) is fully configured: BGP toward sonic on ethernet-1/1,
+#   an 802.1Q trunk with three VLAN gateways on ethernet-1/2.
+#   sonic (SONiC) starts blank apart from the lab login; the workshop
+#   configures both of its links.
+#
+# configs/nokia.cfg has no comments: SR Linux logs every startup line, and the
+# agent can read that log. Its password lines (newbrain) are logged too, which
+# stcli shows as [redacted]. It names neither the peer's vendor nor its ports,
+# and LLDP is off, so Scenario 2's agent can't tell the peer is SONiC before
+# it is told.
+topology:
+  nodes:
+    nokia:
+      kind: nokia_srlinux
+      image: ghcr.io/nokia/srlinux:25.3.2
+      startup-config: configs/nokia.cfg
+      mgmt-ipv4: 172.20.23.2   # fixed, so the README can give each device's IP
+      ports: ["2401:22"]
+    sonic:
+      kind: sonic-vs
+      # SONiC's official virtual switch plus the lab login (lab/images/sonic/).
+      image: ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511
+      mgmt-ipv4: 172.20.23.3
+      ports: ["2402:22"]
+
+  # sonic's eth1 is the wire behind its Ethernet0 port, eth2 behind Ethernet4.
+  links:
+    - endpoints: ["nokia:e1-1", "sonic:eth1"]   # layer 3: eBGP, 10.0.0.0/31
+    - endpoints: ["nokia:e1-2", "sonic:eth2"]   # layer 2: 802.1Q trunk
