@@ -298,44 +298,18 @@ trunk should list its VLANs.
 
 #### D.1.9
 
-Fix it:
+Fix it, and prove it:
 
 **In `stcli`:**
 
 ```
-Fix the nokia.
+Fix it, and check that nokia now follows our interface standards.
 ```
 
-✅ **Expect something like:** an approval dialog. Approve it, and `ethernet-1/2` reads `TRUNK:
-VLANs 110,120,130`.
+✅ **Expect something like:** an approval dialog. Approve it; `ethernet-1/2`
+reads `TRUNK: VLANs 110,120,130`, and the re-check finds nothing left.
 
 #### D.1.10
-
-Before you move on, ask how to undo that:
-
-**In `stcli`:**
-
-```
-How would I revert that if I needed to?
-```
-
-✅ **Expect something like:** commands that set the description back to `TRUNK: to peer switch`.
-
-#### D.1.11
-
-Tell `stcli` once to show rollback commands with every change; it remembers
-across sessions:
-
-**In `stcli`:**
-
-```
-From now on, whenever you propose a config change, include the commands to roll it back.
-```
-
-✅ **Expect something like:** "Saved to memory." It's listed on the dashboard's
-[**Memory** page](https://cli.supertrace.ai/app/memory).
-
-#### D.1.12
 
 Save the standards as a skill, straight from this conversation, so every
 device gets them:
@@ -343,7 +317,7 @@ device gets them:
 **In `stcli`:**
 
 ```
-Also, remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
+Remember those standards as a skill called interface-standards. Use it whenever I configure, audit or document interfaces on any device, or compare a device with NetBox.
 ```
 
 ✅ **Expect something like:** a draft of the skill. Read it, then press `y` to save it.
@@ -351,7 +325,7 @@ Also, remember those standards as a skill called interface-standards. Use it whe
 It carries across `/clear`, and you can edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-#### D.1.13
+#### D.1.11
 
 See your skill library:
 
@@ -363,19 +337,47 @@ See your skill library:
 
 ✅ **You should see:** `interface-standards` in the list. Pick it to read it.
 
+#### D.1.12
+
+Before you move on, ask how to undo the fix:
+
+**In `stcli`:**
+
+```
+How would I revert the description change on ethernet-1/2?
+```
+
+✅ **Expect something like:** commands that set the description back to `TRUNK: to peer switch`.
+
+#### D.1.13
+
+Rollback commands are worth seeing with every change, not only when you
+ask. Tell `stcli` once; it remembers across sessions:
+
+**In `stcli`:**
+
+```
+From now on, whenever you propose a config change, include the commands to roll it back.
+```
+
+✅ **Expect something like:** "Saved to memory." It's listed on the dashboard's
+[**Memory** page](https://cli.supertrace.ai/app/memory).
+
+You'll see it pay off in Scenario 2, without asking again.
+
 > [!TIP]
-> **Memory or skill?** You've now made one of each.
+> **Skill or memory?** You've now made one of each.
 >
-> | | Memory (D.1.11) | Skill (D.1.12) |
+> | | Skill (D.1.10) | Memory (D.1.13) |
 > | --- | --- | --- |
-> | What it is | A short fact or preference about you | A named playbook: instructions for a kind of task |
-> | When it applies | Every conversation, always | When the task calls for it |
-> | Size | A sentence | As long as the procedure needs |
-> | Example | "Include rollback commands with every change" | Your team's interface standard |
-> | Where to see it | [Memory page](https://cli.supertrace.ai/app/memory) | [Skills page](https://cli.supertrace.ai/app/skills) |
+> | What it is | A named playbook: instructions for a kind of task | A short fact or preference about you |
+> | When it applies | When the task calls for it | Every conversation, always |
+> | Size | As long as the procedure needs | A sentence |
+> | Example | Your team's interface standard | "Include rollback commands with every change" |
+> | Where to see it | [Skills page](https://cli.supertrace.ai/app/skills) | [Memory page](https://cli.supertrace.ai/app/memory) |
 >
-> Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
-> *a job* gets done, it's a skill.
+> Rule of thumb: if it's how *a job* gets done, it's a skill. If it's how
+> *you* like to work, it's a memory.
 
 #### D.1.14
 
