@@ -68,7 +68,9 @@ Interface descriptions follow ROLE: detail, except VLAN gateways (below).
 
 ## B. Install stcli
 
-**B.1** Once your Codespace is ready, install `stcli` in the Codespace
+#### B.1
+
+Once your Codespace is ready, install `stcli` in the Codespace
 terminal, the same way as on
 [cli.supertrace.ai](https://cli.supertrace.ai):
 
@@ -76,7 +78,9 @@ terminal, the same way as on
 curl -fsSL https://cli.supertrace.ai/install.sh | sh
 ```
 
-**B.2** The installer adds `stcli` to your PATH in `~/.bashrc`. Reload it, so this
+#### B.2
+
+The installer adds `stcli` to your PATH in `~/.bashrc`. Reload it, so this
 terminal finds `stcli`:
 
 ```sh
@@ -87,7 +91,9 @@ You'll sign in the first time you run `stcli`, once the lab is up (C.3).
 
 ## C. Start and verify
 
-**C.1** Start the lab (about 3 minutes). This also starts NetBox (see
+#### C.1
+
+Start the lab (about 3 minutes). This also starts NetBox (see
 [G. NetBox](#g-netbox)) and readies GitHub's MCP server for Scenario 3:
 
 ```sh
@@ -100,7 +106,9 @@ just lab-up
 > then `just lab-up`). NetBox keeps its data. For smaller resets, see
 > [Start over](#start-over).
 
-**C.2** Then check it:
+#### C.2
+
+Then check it:
 
 ```sh
 just lab-verify
@@ -113,7 +121,9 @@ IS VERIFIED**, or **LAB VERIFICATION FAILED** with each failed check printed
 in red above it. The last line is NetBox's address, **Open NetBox**:
 open it in a browser tab now, ready for Scenario 3.
 
-**C.3** Start `stcli` and sign in:
+#### C.3
+
+Start `stcli` and sign in:
 
 ```sh
 stcli
@@ -152,7 +162,9 @@ a sentence. We read every one.
 You'll connect to nokia, ask it questions in plain language, run commands
 yourself, and teach `stcli` your team's standard.
 
-**D.1.1** Connect to nokia by its management IP, as the lab user:
+#### D.1.1
+
+Connect to nokia by its management IP, as the lab user:
 
 ```
 connect oldprotocol@172.20.23.2
@@ -165,7 +177,9 @@ connect oldprotocol@172.20.23.2
 Once it connects, `stcli` works out what it's talking to by itself: watch for
 **platform set to Nokia SR Linux**.
 
-**D.1.2** Your password went straight to the device; the AI agent never saw it.
+#### D.1.2
+
+Your password went straight to the device; the AI agent never saw it.
 Check:
 
 ```
@@ -175,39 +189,51 @@ What password did I use to log in to nokia?
 `stcli` typed it to nokia from this machine, so the agent can't know it.
 Device credentials never leave your Codespace.
 
-**D.1.3** Ask nokia about itself:
+#### D.1.3
+
+Ask nokia about itself:
 
 ```
 show me the config that controls the username and password on this box
 ```
 
-**D.1.4** That config holds every user's password hash. See what left the
+#### D.1.4
+
+That config holds every user's password hash. See what left the
 Codespace: open [cli.supertrace.ai/app/usage](https://cli.supertrace.ai/app/usage),
 go to **Sessions**, and open this session. The command and its output are
 there, but each password hash reads `[redacted]`: `stcli` strips them before
 anything leaves your machine.
 
-**D.1.5** Run a command yourself, without the agent. The output lands in the
+#### D.1.5
+
+Run a command yourself, without the agent. The output lands in the
 conversation, so the agent can use it too:
 
 ```
 !show version
 ```
 
-**D.1.6** Read the routing table. The BGP peer shows as down, because nothing on the
+#### D.1.6
+
+Read the routing table. The BGP peer shows as down, because nothing on the
 other end is configured yet:
 
 ```
 Show me routing on this device.
 ```
 
-**D.1.7** Pull the config behind the routing:
+#### D.1.7
+
+Pull the config behind the routing:
 
 ```
 Show me the configuration snippets behind the routing you just diagnosed.
 ```
 
-**D.1.8** Your boss just sent round the [team standards](#team-standards).
+#### D.1.8
+
+Your boss just sent round the [team standards](#team-standards).
 Check nokia against them. Copy the whole block, standard included, and paste
 it into `stcli` as one message; the line breaks stay in the input until you
 press **Enter**:
@@ -230,20 +256,26 @@ Can you check my nokia and see if I'm in line? Show me a table of anything that 
 A good answer finds one problem: `ethernet-1/2` is described as `TRUNK: to
 peer switch`, but a trunk should list its VLANs.
 
-**D.1.9** Fix it. This changes nokia, so it stops for your approval: SR
+#### D.1.9
+
+Fix it. This changes nokia, so it stops for your approval: SR
 Linux stages the change and commits it, and the dialog shows both:
 
 ```
 Fix the nokia.
 ```
 
-**D.1.10** Before you move on: how would you undo that?
+#### D.1.10
+
+Before you move on: how would you undo that?
 
 ```
 How would I revert that if I needed to?
 ```
 
-**D.1.11** Rollback commands are worth seeing with every change, not only
+#### D.1.11
+
+Rollback commands are worth seeing with every change, not only
 when you ask. Tell `stcli` once; it remembers across sessions:
 
 ```
@@ -254,7 +286,9 @@ It says what it saved. You'll see it pay off in Scenario 2 without asking
 again; your memories are listed on the dashboard's
 [**Memory** page](https://cli.supertrace.ai/app/memory).
 
-**D.1.12** You'll need these standards again, on every device. Save them as
+#### D.1.12
+
+You'll need these standards again, on every device. Save them as
 a skill, straight from this conversation:
 
 ```
@@ -266,7 +300,9 @@ Also, remember those standards as a skill called interface-standards. Use it whe
 can see or edit it on the dashboard's
 [**Skills** page](https://cli.supertrace.ai/app/skills).
 
-**D.1.13** See your skill library:
+#### D.1.13
+
+See your skill library:
 
 ```
 /skills
@@ -290,7 +326,9 @@ see in Scenario 2.
 > Rule of thumb: if it's how *you* like to work, it's a memory. If it's how
 > *a job* gets done, it's a skill.
 
-**D.1.14** Tell us how it went:
+#### D.1.14
+
+Tell us how it went:
 
 ```
 /feedback
@@ -306,7 +344,9 @@ wanted ___ and it didn't."*
 You'll build the config for nokia's BGP peer, convert it to another OS, add a
 second device, and apply the change in one approval.
 
-**D.2.1** Start a fresh conversation. nokia stays connected:
+#### D.2.1
+
+Start a fresh conversation. nokia stays connected:
 
 ```
 /clear
@@ -315,7 +355,9 @@ second device, and apply the change in one approval.
 nokia has a BGP peer configured at `10.0.0.1`, but nothing in its config
 says what that peer is.
 
-**D.2.2** Ping the peer across the BGP link. This should fail: the peer's end of the
+#### D.2.2
+
+Ping the peer across the BGP link. This should fail: the peer's end of the
 link has no IP address yet. A good answer explains why rather than only
 reporting the failure.
 
@@ -323,14 +365,18 @@ reporting the failure.
 Ping the BGP peer at 10.0.0.1.
 ```
 
-**D.2.3** Generate the config for the other end. With only nokia in the session, the
+#### D.2.3
+
+Generate the config for the other end. With only nokia in the session, the
 agent should write it for Nokia SR Linux:
 
 ```
 Generate a configuration snippet to configure BGP on a peer to this device.
 ```
 
-**D.2.4** The peer is actually a SONiC switch. Convert the snippet, and keep
+#### D.2.4
+
+The peer is actually a SONiC switch. Convert the snippet, and keep
 a copy. The agent writes files on this machine, and asks first: the dialog
 shows the whole file before it's written.
 
@@ -341,7 +387,9 @@ Do it for SONiC and save it to sonic-bgp.conf. The peer's port is Ethernet0, and
 Open `sonic-bgp.conf` in the Codespace's file explorer: it's ready for a
 change ticket or a peer review.
 
-**D.2.5** Add the SONiC switch to the session. In D.1.1 you typed an IP and
+#### D.2.5
+
+Add the SONiC switch to the session. In D.1.1 you typed an IP and
 a password. This time, use the name, the way you'd type `ssh sonic`:
 
 ```
@@ -373,7 +421,9 @@ the same shape with your device's address and your key.
 Watch for **platform set to SONiC**. Both devices are now in one session,
 and each command shows which device it ran on.
 
-**D.2.6** Apply the config you saved in D.2.4. The agent first asks to read
+#### D.2.6
+
+Apply the config you saved in D.2.4. The agent first asks to read
 the file. Then **Approve batch** shows every command in order, once; check
 that it names sonic before you approve it. `stcli` runs them one at a time
 and stops at the first that fails. The commands that roll it back follow the
@@ -383,14 +433,18 @@ result, because you asked `stcli` to remember that in Scenario 1:
 Apply sonic-bgp.conf to sonic, in order.
 ```
 
-**D.2.7** Check the session. The ping should now succeed, and BGP should be
+#### D.2.7
+
+Check the session. The ping should now succeed, and BGP should be
 Established:
 
 ```
 Ping the BGP peer at 10.0.0.1 again, and verify that BGP is up.
 ```
 
-**D.2.8** BGP works, but someone has been labelling sonic's ports by hand.
+#### D.2.8
+
+BGP works, but someone has been labelling sonic's ports by hand.
 Audit them. You don't name the skill: the agent picks it up because the
 question is about interface standards:
 
@@ -407,7 +461,9 @@ shapes config the agent writes, not only the audits it runs. It may also flag `E
 but has no description: that's the layer 2 trunk, which Scenario 4
 configures and describes, so leave it for now.
 
-**D.2.9** Fix them, and prove it. The fix stops for your approval; when
+#### D.2.9
+
+Fix them, and prove it. The fix stops for your approval; when
 it's done, `Ethernet0` reads `BGP: eBGP peer AS65001` and `Ethernet8` has
 no description:
 
@@ -415,12 +471,16 @@ no description:
 Fix those, and check that sonic now follows our interface standards.
 ```
 
-**D.2.10** Everything you just did is on the record. Open the dashboard at
+#### D.2.10
+
+Everything you just did is on the record. Open the dashboard at
 [cli.supertrace.ai/app](https://cli.supertrace.ai/app), go to **Usage →
 Sessions**, and open this session: every command, which device it ran on,
 and each approval with who gave it.
 
-**D.2.11** Tell us how it went:
+#### D.2.11
+
+Tell us how it went:
 
 ```
 /feedback
@@ -436,20 +496,26 @@ approvals felt ___."*
 You'll give `stcli` the tools you already use: the web, GitHub over MCP, and
 NetBox, your source of truth, which it reads and fixes.
 
-**D.3.1** Start a fresh conversation. Both devices stay connected:
+#### D.3.1
+
+Start a fresh conversation. Both devices stay connected:
 
 ```
 /clear
 ```
 
-**D.3.2** Start with the biggest tool there is: the web. Check both devices'
+#### D.3.2
+
+Start with the biggest tool there is: the web. Check both devices'
 software for anything you should patch:
 
 ```
 Search the web for any recent patches or security advisories for the software versions on nokia and sonic that I should be aware of.
 ```
 
-**D.3.3** Plug GitHub in. MCP is how `stcli` uses tools beyond your devices, and
+#### D.3.3
+
+Plug GitHub in. MCP is how `stcli` uses tools beyond your devices, and
 GitHub runs an MCP server. `just lab-up` already set it up for you, signed in
 with your Codespace's GitHub account, so it's one command, with no token to
 paste:
@@ -458,13 +524,17 @@ paste:
 /mcp add github http://localhost:8002/mcp/readonly
 ```
 
-**D.3.4** Check it's there:
+#### D.3.4
+
+Check it's there:
 
 ```
 /mcp list
 ```
 
-**D.3.5** FRR, the routing daemon sonic runs, exchanges no eBGP routes
+#### D.3.5
+
+FRR, the routing daemon sonic runs, exchanges no eBGP routes
 until a policy allows them, so the SONiC config you applied in Scenario 2
 either carries route-maps or turns that check off. Ask GitHub why:
 
@@ -475,7 +545,9 @@ Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP e
 Each GitHub call stops at a confirm dialog first: press `y`. One question
 can take several calls, and MCP tools never run without asking.
 
-**D.3.6** Now NetBox. It's the lab's source of truth: it documents what nokia
+#### D.3.6
+
+Now NetBox. It's the lab's source of truth: it documents what nokia
 should look like. Like every real NetBox, it has drifted: in a few places it
 no longer matches the network. The agent finds where NetBox and nokia
 disagree, asks you which side is right, and fixes the side that's wrong.
@@ -502,7 +574,9 @@ Then connect `stcli` to NetBox:
 > The token stays in the Codespace, like your SSH password: `stcli` never sends
 > it to the agent.
 
-**D.3.7** Ask what NetBox knows. Reads from NetBox run without asking you:
+#### D.3.7
+
+Ask what NetBox knows. Reads from NetBox run without asking you:
 
 ```
 What does NetBox document about our network? List every site, device, interface, IP address and VLAN. Is anything we're connected to missing?
@@ -511,13 +585,17 @@ What does NetBox document about our network? List every site, device, interface,
 A good answer lists the site `lab` and nokia, and points out that sonic
 isn't in NetBox at all.
 
-**D.3.8** Compare NetBox with the real device:
+#### D.3.8
+
+Compare NetBox with the real device:
 
 ```
 Compare nokia's running configuration with NetBox and show me every difference.
 ```
 
-**D.3.9** A good answer is a table of discrepancies, and a question: for each one,
+#### D.3.9
+
+A good answer is a table of discrepancies, and a question: for each one,
 which side is right? It won't change either side until you answer. Here the
 device is the source of truth, so NetBox is what's stale:
 
@@ -533,7 +611,9 @@ One of them is your own work: the `ethernet-1/2` description you fixed in
 Scenario 1. nokia follows the standard now, and NetBox still has the old
 text, so NetBox changes.
 
-**D.3.10** Now document sonic, from the switch itself:
+#### D.3.10
+
+Now document sonic, from the switch itself:
 
 ```
 Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
@@ -544,7 +624,9 @@ because each needs the one before it to exist. Reload the
 NetBox tab: sonic is under **Devices**, with every change in **Operations →
 Change Log** and the agent's reason as its message.
 
-**D.3.11** One standard, two vendors, and your source of truth. Check them
+#### D.3.11
+
+One standard, two vendors, and your source of truth. Check them
 all at once:
 
 ```
@@ -555,20 +637,26 @@ If you fixed nokia in Scenario 1 and sonic in Scenario 2, there's little
 left to fix. Expect it to ask about sonic's `Ethernet4`: that's the trunk
 Scenario 4 configures, so leave it.
 
-**D.3.12** Have the agent walk through it:
+#### D.3.12
+
+Have the agent walk through it:
 
 ```
 Explain what you changed in NetBox and why.
 ```
 
-**D.3.13** Finish with a big one: audit the security of both devices. It
+#### D.3.13
+
+Finish with a big one: audit the security of both devices. It
 takes a few minutes:
 
 ```
 Do a full security audit across both devices, give me a TLDR of what to focus on, and save the full report to security-audit.md.
 ```
 
-**D.3.14** Tell us how it went:
+#### D.3.14
+
+Tell us how it went:
 
 ```
 /feedback
@@ -619,7 +707,9 @@ The first ping in each VLAN may lose a packet while ARP resolves. Your
 skill still applies: sonic's `Ethernet4` should end up described the way
 the standard describes a trunk.
 
-**D.4.1** When you think it's working, have `stcli` prove it:
+#### D.4.1
+
+When you think it's working, have `stcli` prove it:
 
 ```
 From sonic, ping nokia's gateway in every VLAN on the trunk, and show me the ARP entries nokia learned for sonic.
@@ -627,7 +717,9 @@ From sonic, ping nokia's gateway in every VLAN on the trunk, and show me the ARP
 
 Stuck? Ask a facilitator; the reference below has hints.
 
-**D.4.2** Tell us how it went: `/feedback`.
+#### D.4.2
+
+Tell us how it went: `/feedback`.
 
 ### Start over
 
@@ -635,7 +727,9 @@ These run in a terminal outside `stcli`, for facilitators or anyone who
 wants to go again.
 
 
-**D.5.1** Wipe sonic back to blank in seconds, leaving nokia alone, then start again
+#### D.5.1
+
+Wipe sonic back to blank in seconds, leaving nokia alone, then start again
 from Scenario 2 (this also clears any layer 2 config and puts back the
 off-standard descriptions). Your skill isn't touched; it lives in your
 account, not on a device:
@@ -644,20 +738,26 @@ account, not on a device:
 just reset-sonic
 ```
 
-**D.5.2** Put NetBox back as it was seeded, drift included, to run Scenario 3
+#### D.5.2
+
+Put NetBox back as it was seeded, drift included, to run Scenario 3
 again (seconds; the devices are untouched):
 
 ```sh
 just reset-netbox
 ```
 
-**D.5.3** Or redeploy both devices from scratch:
+#### D.5.3
+
+Or redeploy both devices from scratch:
 
 ```sh
 just lab-up
 ```
 
-**D.5.4** If the lab is stuck, tear everything down and start it again. NetBox keeps
+#### D.5.4
+
+If the lab is stuck, tear everything down and start it again. NetBox keeps
 its data:
 
 ```sh
@@ -702,14 +802,18 @@ neighbor fixes it.
 
 Other ways to connect, beyond the workshop's steps.
 
-**E.1** Put both devices in one session, so one agent can work across them. Ask
+#### E.1
+
+Put both devices in one session, so one agent can work across them. Ask
 `stcli` in plain language (the easiest way):
 
 ```
 Can you please connect to oldprotocol@172.20.23.2 and oldprotocol@172.20.23.3?
 ```
 
-**E.2** It asks before each connection; press **Enter** to confirm each one, then
+#### E.2
+
+It asks before each connection; press **Enter** to confirm each one, then
 type the password, `newbrain`. Or add devices yourself with `/add`, one per
 line, which skips the confirmation:
 
