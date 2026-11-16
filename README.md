@@ -46,7 +46,7 @@ work with:
 - sonic's `10.0.0.1/31` is the address the workshop gives it, since sonic
   starts with no addresses on either link.
 - Connect to each device by its management IP.
-- Every login (both devices and NetBox) is `oldprotocol` / `newbrain`.
+- Every login (both devices and NetBox) is `oldprotocol:newbrain`.
 
 ### Team standards
 
@@ -483,7 +483,7 @@ disagree, asks you which side is right, and fixes the side that's wrong.
 First, open NetBox yourself, so you can watch it change: the NetBox tab
 from C.2, or the **Open NetBox** address `just lab-verify` printed. Lost it?
 In the Codespace's **Ports** tab, hover over port **8000 (NetBox)** and click
-the globe icon (**Open in Browser**). Log in as `oldprotocol` / `newbrain`,
+the globe icon (**Open in Browser**). Log in as `oldprotocol:newbrain`,
 then look at **Devices → nokia** and its interfaces. Keep the tab open.
 
 Then connect `stcli` to NetBox:
@@ -721,7 +721,7 @@ line, which skips the confirmation:
 `stcli oldprotocol@172.20.23.2 oldprotocol@172.20.23.3` does the same from the
 shell: both devices join one session.
 
-Every connection uses the lab login, `oldprotocol` / `newbrain`:
+Every connection uses the lab login, `oldprotocol:newbrain`:
 `oldprotocol@172.20.23.2` is nokia, `oldprotocol@172.20.23.3` is sonic.
 
 For a device's native CLI outside `stcli`, run `just lab-cli nokia` or
@@ -768,7 +768,7 @@ without the devices, run `just netbox-up`.
 
 - **Open it:** the recipe prints the URL. In a Codespace, that's the
   forwarded port 8000 (Ports tab → NetBox).
-- **Log in:** `oldprotocol` / `newbrain`, the same as the devices.
+- **Log in:** `oldprotocol:newbrain`, the same as the devices.
 - **API token:** `Authorization: Bearer nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000`.
 - **Share it:** the recipe makes port 8000 public when the Codespace allows
   it. Otherwise, in the Ports tab, right-click port 8000 and pick **Port
