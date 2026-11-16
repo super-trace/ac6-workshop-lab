@@ -727,7 +727,7 @@ Now document sonic, from the switch itself:
 **In `stcli`:**
 
 ```
-Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces and their IP addresses.
+Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces, their IP addresses, and cables.
 ```
 
 ✅ **Expect something like:** two approvals, then sonic under **Devices** when you reload the
