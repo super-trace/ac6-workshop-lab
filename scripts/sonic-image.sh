@@ -6,10 +6,10 @@
 #
 # SONiC publishes docker-sonic-vs only as a build artifact of its Azure
 # pipeline, not in a registry, so this downloads the latest successful build
-# of the release branch named by the image tag (202511 → branch 202511).
+# of the release branch named by the image tag (202605 → branch 202605).
 #
 # Usage: sonic-image.sh <image> [--push]
-#   e.g. sonic-image.sh ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511 --push
+#   e.g. sonic-image.sh ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605 --push
 # --push publishes it; the ghcr package must be public for attendees to pull.
 set -euo pipefail
 
