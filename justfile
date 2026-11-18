@@ -1,7 +1,7 @@
 # containerlab runs in a sidecar container; scripts/clab.sh explains how.
 clab_image := "ghcr.io/srl-labs/clab:latest"
 # SONiC's official virtual switch plus the lab login; scripts/sonic-image.sh builds it.
-sonic_image := "ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511"
+sonic_image := "ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605"
 clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 # ANSI colors for the recipe intros; raw strings, so printf expands the

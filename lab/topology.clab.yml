@@ -29,7 +29,7 @@ topology:
     sonic:
       kind: sonic-vs
       # SONiC's official virtual switch plus the lab login (lab/images/sonic/).
-      image: ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202511
+      image: ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605
       mgmt-ipv4: 172.20.23.3
       ports: ["2402:22"]
 

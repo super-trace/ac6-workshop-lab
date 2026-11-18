@@ -4,16 +4,19 @@
 # scripts/sonic-image.sh loads that file as docker-sonic-vs:<branch> and
 # builds this on top. We publish the result on ghcr so attendees can
 # `docker pull` it.
-ARG BASE=docker-sonic-vs:202511
+ARG BASE=docker-sonic-vs:202605
 FROM ${BASE}
+LABEL org.opencontainers.image.source=https://github.com/super-trace/ac6-workshop-lab
 
 # The lab login, oldprotocol / newbrain, as on every lab device. SONiC's
 # `config` commands need root, so oldprotocol gets passwordless sudo, as
 # SONiC's own admin user does on a real switch. The shared lab key lets the
-# lab scripts log in without the password (lab/ssh_config).
+# lab scripts log in without the password (lab/ssh_config). 202605's syncd
+# links against libasan but the image doesn't ship it.
 COPY ac6-workshop-key.pub /tmp/ac6-workshop-key.pub
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends sudo \
+    && apt-get install -y --no-install-recommends sudo libasan8 \
+    && out="$(ldd /usr/bin/syncd)" && ! echo "$out" | grep -q 'not found' \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -s /bin/bash -G sudo oldprotocol \
     && echo 'oldprotocol:newbrain' | chpasswd \

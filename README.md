@@ -601,7 +601,7 @@ Search the web for any recent patches or security advisories for the software ve
 ```
 
 ✅ **Expect something like:** a short list of advisories for SR Linux `v25.3.2` and SONiC
-`202511`, with links.
+`202605`, with links.
 
 #### D.3.3
 
