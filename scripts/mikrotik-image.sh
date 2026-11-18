@@ -23,7 +23,8 @@ git -C "${work}/vrnetlab" fetch -q --depth 1 https://github.com/srl-labs/vrnetla
 git -C "${work}/vrnetlab" checkout -q FETCH_HEAD
 unzip -q "${work}/chr.zip" "chr-${version}.vmdk" -d "${work}/vrnetlab/mikrotik/routeros"
 
-make -C "${work}/vrnetlab/mikrotik/routeros" docker-image
+make -C "${work}/vrnetlab/mikrotik/routeros" docker-image \
+    DOCKER_BUILD_CMD="docker buildx build --platform linux/amd64 --load"
 # The fork tags <version>-amd64, and <version> only on amd64 hosts.
 docker tag "vrnetlab/mikrotik_routeros:${version}-amd64" "$image"
 echo "Built ${image}."
