@@ -2,6 +2,7 @@
 #   Include /path/to/workshop/lab/ssh_config
 # Then: stcli nokia / stcli sonic, or connect by management IP:
 #   nokia 172.20.23.2, sonic 172.20.23.3 (fixed in topology.clab.yml).
+#   The optional mikrotik node (`just lab-up mikrotik`) is 172.20.23.4.
 #
 # Host keys regenerate on every `lab-up` (disposable containers), so strict
 # host-key checking would fail every redeploy for no security benefit here —
@@ -10,8 +11,8 @@
 # flow writes the accepted key back and re-verifies against it, so /dev/null
 # would make every "trust this host key?" prompt loop forever.
 #
-# Both nodes have one login, oldprotocol / newbrain. The names `nokia` and
-# `sonic` (what the lab scripts use) log in with the shared, non-secret lab
+# Every node has one login, oldprotocol / newbrain. The names `nokia`,
+# `sonic` and `mikrotik` (what the lab scripts use) log in with the shared, non-secret lab
 # key, which `just lab-setup` copies to ~/.ssh/ac6-workshop-key. The IPs get
 # no key, so `connect oldprotocol@172.20.23.3` asks for the password, as the
 # workshop wants.
@@ -19,12 +20,12 @@
 # stcli reads this file too, and rejects any keyword it doesn't implement
 # (IdentitiesOnly, for one) instead of ignoring it, so `/add sonic`
 # would fail even though `ssh sonic` works. Keep to keywords stcli supports.
-Host nokia sonic 172.20.23.2 172.20.23.3
+Host nokia sonic mikrotik 172.20.23.2 172.20.23.3 172.20.23.4
     StrictHostKeyChecking no
     UserKnownHostsFile ~/.ac6-workshop-known-hosts
     HostName 127.0.0.1
     User oldprotocol
-Host nokia sonic
+Host nokia sonic mikrotik
     IdentityFile ~/.ssh/ac6-workshop-key
 
 # The management IPs go through the same forwarded ports as the names:
@@ -34,3 +35,5 @@ Host nokia 172.20.23.2
     Port 2401
 Host sonic 172.20.23.3
     Port 2402
+Host mikrotik 172.20.23.4
+    Port 2403

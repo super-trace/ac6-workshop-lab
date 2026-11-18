@@ -67,6 +67,16 @@ for node in nokia sonic; do
     fi
 done
 
+if docker inspect "${lab}-mikrotik" >/dev/null 2>&1; then
+    echo
+    heading "mikrotik (expect SSH to answer)"
+    if ssh -o BatchMode=yes -o ConnectTimeout=10 mikrotik "/system resource print" >/dev/null 2>&1; then
+        echo "   mikrotik: ok"
+    else
+        fail "ssh mikrotik failed — RouterOS takes 1-2 minutes to boot; wait, or run 'just lab-up mikrotik'"
+    fi
+fi
+
 echo
 heading "NetBox (expect the API to answer on port 8000 and to document nokia)"
 netbox_token="nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000"

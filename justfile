@@ -2,6 +2,8 @@
 clab_image := "ghcr.io/srl-labs/clab:latest"
 # SONiC's official virtual switch plus the lab login; scripts/sonic-image.sh builds it.
 sonic_image := "ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605"
+# Optional, local-only MikroTik RouterOS CHR; scripts/mikrotik-image.sh builds it (never pushed).
+mikrotik_image := "vrnetlab/mikrotik_routeros:7.25.1"
 clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 # ANSI colors for the recipe intros; raw strings, so printf expands the
@@ -13,19 +15,22 @@ green := '\033[1;32m'
 note := '\033[92m'
 srl := '\033[94m'
 sonic := '\033[96m'
+ros := '\033[95m'
 
 [private]
 default:
     @just --list --unsorted
 
-# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes)
+# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes); `lab-up mikrotik` adds a RouterOS node (Linux with KVM)
 [group('lab')]
-lab-up:
+lab-up EXTRA='':
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
         "one Nokia and one SONiC, plus NetBox." \
         "Expect this to take ~3 minutes."
     @printf '\n'
+    @case "{{EXTRA}}" in ''|mikrotik) ;; *) echo "unknown option {{EXTRA}} (mikrotik)" >&2; exit 1 ;; esac
+    @[ "{{EXTRA}}" != mikrotik ] || just mikrotik-ensure
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
     @# that changes lab/ssh_config takes effect without rerunning lab-setup.
     @./scripts/install-ssh.sh >/dev/null
@@ -40,7 +45,9 @@ lab-up:
     @rm -f ~/.ac6-workshop-known-hosts
     @# --reconfigure: start every node from scratch, so nothing saved inside
     @# a node during the workshop survives a redeploy.
-    @{{clab_run}} deploy --reconfigure -t topology.clab.yml
+    @# A filtered deploy leaves a mikrotik from an earlier `lab-up mikrotik` running.
+    @docker rm -f clab-ac6-workshop-mikrotik >/dev/null 2>&1 || true
+    @{{clab_run}} deploy --reconfigure -t topology.clab.yml {{ if EXTRA == 'mikrotik' { '' } else { '--node-filter nokia,sonic' } }}
     @echo ""
     @just lab-status
     @# Waits for both devices, saves both baselines for the lab-reset-* recipes,
@@ -52,9 +59,12 @@ lab-up:
     @./scripts/banner.sh green "LAB IS UP"
     @printf '\n'
     @printf '    {{bold}}nokia{{reset}}  {{srl}}Nokia SR Linux{{reset}}  configured: BGP on ethernet-1/1, VLAN trunk on ethernet-1/2\n'
-    @printf '    {{bold}}sonic{{reset}}  {{sonic}}SONiC{{reset}}           blank: Ethernet0 and Ethernet4 unconfigured\n\n'
+    @printf '    {{bold}}sonic{{reset}}  {{sonic}}SONiC{{reset}}           blank: Ethernet0 and Ethernet4 unconfigured\n'
+    @[ "{{EXTRA}}" != mikrotik ] || printf '    {{bold}}mikrotik{{reset}}  {{ros}}MikroTik RouterOS{{reset}}  blank: ether2 unconfigured\n'
+    @printf '\n'
     @printf '    Links: nokia ethernet-1/1 <-> sonic Ethernet0 (BGP)\n'
     @printf '           nokia ethernet-1/2 <-> sonic Ethernet4 (layer 2 trunk)\n'
+    @[ "{{EXTRA}}" != mikrotik ] || printf '           nokia ethernet-1/3 <-> mikrotik ether2\n'
     @printf '    NetBox: port 8000; GitHub MCP: http://localhost:8002/mcp/readonly\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
@@ -81,7 +91,7 @@ verify: lab-verify
 lab-status:
     @{{clab_run}} inspect -t topology.clab.yml
 
-# open a node's own CLI: nokia or sonic
+# open a node's own CLI: nokia, sonic or mikrotik
 [group('lab')]
 lab-cli NODE='nokia':
     #!/usr/bin/env bash
@@ -89,7 +99,8 @@ lab-cli NODE='nokia':
     case "{{NODE}}" in
       nokia)  docker exec -it clab-ac6-workshop-nokia sr_cli ;;
       sonic)  docker exec -it -u oldprotocol -w /home/oldprotocol clab-ac6-workshop-sonic bash -l ;;
-      *) echo "unknown node {{NODE}} (nokia or sonic)" >&2; exit 1 ;;
+      mikrotik) ssh mikrotik ;;
+      *) echo "unknown node {{NODE}} (nokia, sonic or mikrotik)" >&2; exit 1 ;;
     esac
 
 # reset for anyone stuck: tear down the lab and NetBox (keeps NetBox's data), then lab-up
@@ -187,6 +198,24 @@ sonic-ensure:
 [group('setup')]
 sonic-image *ARGS:
     ./scripts/sonic-image.sh "{{sonic_image}}" {{ARGS}}
+
+# build the optional MikroTik RouterOS image locally (needs no KVM; about 2 minutes)
+[group('setup')]
+mikrotik-image:
+    ./scripts/mikrotik-image.sh "{{mikrotik_image}}"
+
+# Build the MikroTik image unless it's here; lab-up mikrotik needs KVM, which a Codespace and Docker on a Mac lack.
+[private]
+mikrotik-ensure:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if ! docker run --rm --privileged alpine sh -c '[ "$(uname -m)" = x86_64 ] && test -e /dev/kvm'; then
+        echo "MikroTik needs /dev/kvm, which this Docker host lacks (Codespaces and Docker on a Mac have none); use a Linux x86_64 machine with KVM." >&2
+        exit 1
+    fi
+    docker image inspect "{{mikrotik_image}}" >/dev/null 2>&1 && exit 0
+    echo "Building the MikroTik image (once, about 2 minutes)."
+    ./scripts/mikrotik-image.sh "{{mikrotik_image}}"
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
 [group('setup')]
