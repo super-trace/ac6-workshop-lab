@@ -75,7 +75,7 @@ for node in mikrotik vjunos; do
     if ssh -o BatchMode=yes -o ConnectTimeout=10 "${node}" "${cmd}" >/dev/null 2>&1; then
         echo "   ${node}: ok"
     else
-        fail "ssh ${node} failed — it is a slow-booting VM (mikrotik 1-2 minutes, vjunos ~15); wait, or run 'just lab-up ${node}'"
+        fail "ssh ${node} failed — it is a slow-booting VM (mikrotik 1-2 minutes, vjunos ~15); wait, then run 'just lab-verify' again"
     fi
 done
 

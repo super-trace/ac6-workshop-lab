@@ -28,4 +28,5 @@ ln -s "$(realpath "$qcow2")" "${work}/vrnetlab/juniper/vjunosswitch/vjunos-switc
 # `make all` would first run a KVM-only AMD patch, so build the image directly.
 make -C "${work}/vrnetlab/juniper/vjunosswitch" docker-image \
     DOCKER_BUILD_CMD="docker buildx build --platform linux/amd64 --load"
+docker image inspect "$image" >/dev/null
 echo "Built ${image}."

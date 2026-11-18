@@ -95,7 +95,6 @@ account needed), then build the image and deploy:
 ```sh
 just vjunos-image ~/Downloads/vJunos-switch-25.2R1.9.qcow2
 just lab-up vjunos
-docker logs -f clab-ac6-workshop-vjunos   # watch it boot
 ssh vjunos          # or: stcli vjunos (SSH port 2404)
 ```
 

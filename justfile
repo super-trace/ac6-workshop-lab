@@ -34,7 +34,7 @@ lab-up *EXTRA:
     @printf '\n'
     @for x in {{EXTRA}}; do case "$x" in mikrotik|vjunos) ;; *) echo "unknown option $x (mikrotik, vjunos)" >&2; exit 1 ;; esac; done
     @# vjunos first: it fails fast without a downloaded image.
-    @for x in vjunos mikrotik; do case " {{EXTRA}} " in *" $x "*) just "$x-ensure" ;; esac; done
+    @for x in vjunos mikrotik; do case " {{EXTRA}} " in *" $x "*) just "$x-ensure" || exit ;; esac; done
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
     @# that changes lab/ssh_config takes effect without rerunning lab-setup.
     @./scripts/install-ssh.sh >/dev/null
