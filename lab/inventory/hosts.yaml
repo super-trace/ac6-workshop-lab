@@ -20,3 +20,8 @@ mikrotik:
   groups: [mikrotik_routeros]
   data:
     role: blank
+vjunos:
+  port: 2404
+  groups: [juniper_junos]
+  data:
+    role: blank

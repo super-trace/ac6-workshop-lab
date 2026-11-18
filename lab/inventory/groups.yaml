@@ -1,8 +1,10 @@
 ---
-# Platforms: select one with @nokia_srlinux, @sonic or @mikrotik_routeros.
+# Platforms: select one with @nokia_srlinux, @sonic, @mikrotik_routeros or @juniper_junos.
 nokia_srlinux:
   platform: nokia_srlinux
 sonic:
   platform: linux
 mikrotik_routeros:
   platform: routeros
+juniper_junos:
+  platform: junos

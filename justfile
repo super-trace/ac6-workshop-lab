@@ -4,6 +4,8 @@ clab_image := "ghcr.io/srl-labs/clab:latest"
 sonic_image := "ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605"
 # Optional, local-only MikroTik RouterOS CHR; scripts/mikrotik-image.sh builds it (never pushed).
 mikrotik_image := "vrnetlab/mikrotik_routeros:7.25.1"
+# Optional, local-only Juniper vJunos-switch; scripts/vjunos-image.sh builds it from Juniper's qcow2 (never pushed).
+vjunos_image := "vrnetlab/juniper_vjunos-switch:25.2R1.9"
 clab_run := "CLAB_IMAGE=" + clab_image + " ./scripts/clab.sh"
 
 # ANSI colors for the recipe intros; raw strings, so printf expands the
@@ -16,21 +18,23 @@ note := '\033[92m'
 srl := '\033[94m'
 sonic := '\033[96m'
 ros := '\033[95m'
+junos := '\033[32m'
 
 [private]
 default:
     @just --list --unsorted
 
-# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes); `lab-up mikrotik` adds a RouterOS node (Linux with KVM)
+# deploy both nodes fresh from lab/configs/, plus NetBox and the GitHub MCP proxy (~3 minutes); `lab-up mikrotik vjunos` adds optional RouterOS and Junos nodes (Linux with KVM)
 [group('lab')]
-lab-up EXTRA='':
+lab-up *EXTRA:
     @./scripts/banner.sh intro "just lab-up" \
         "Welcome to the workshop! This command starts two network devices," \
         "one Nokia and one SONiC, plus NetBox." \
         "Expect this to take ~3 minutes."
     @printf '\n'
-    @case "{{EXTRA}}" in ''|mikrotik) ;; *) echo "unknown option {{EXTRA}} (mikrotik)" >&2; exit 1 ;; esac
-    @[ "{{EXTRA}}" != mikrotik ] || just mikrotik-ensure
+    @for x in {{EXTRA}}; do case "$x" in mikrotik|vjunos) ;; *) echo "unknown option $x (mikrotik, vjunos)" >&2; exit 1 ;; esac; done
+    @# vjunos first: it fails fast without a downloaded image.
+    @for x in vjunos mikrotik; do case " {{EXTRA}} " in *" $x "*) just "$x-ensure" ;; esac; done
     @# Refresh the SSH aliases and key from this checkout, so a `git pull`
     @# that changes lab/ssh_config takes effect without rerunning lab-setup.
     @./scripts/install-ssh.sh >/dev/null
@@ -45,9 +49,9 @@ lab-up EXTRA='':
     @rm -f ~/.ac6-workshop-known-hosts
     @# --reconfigure: start every node from scratch, so nothing saved inside
     @# a node during the workshop survives a redeploy.
-    @# A filtered deploy leaves a mikrotik from an earlier `lab-up mikrotik` running.
-    @docker rm -f clab-ac6-workshop-mikrotik >/dev/null 2>&1 || true
-    @{{clab_run}} deploy --reconfigure -t topology.clab.yml {{ if EXTRA == 'mikrotik' { '' } else { '--node-filter nokia,sonic' } }}
+    @# A filtered deploy leaves an optional node from an earlier run alive.
+    @for x in mikrotik vjunos; do case " {{EXTRA}} " in *" $x "*) ;; *) docker rm -f "clab-ac6-workshop-$x" >/dev/null 2>&1 || true ;; esac; done
+    @{{clab_run}} deploy --reconfigure -t topology.clab.yml --node-filter {{ replace(trim("nokia sonic " + EXTRA), " ", ",") }}
     @echo ""
     @just lab-status
     @# Waits for both devices, saves both baselines for the lab-reset-* recipes,
@@ -60,11 +64,13 @@ lab-up EXTRA='':
     @printf '\n'
     @printf '    {{bold}}nokia{{reset}}  {{srl}}Nokia SR Linux{{reset}}  configured: BGP on ethernet-1/1, VLAN trunk on ethernet-1/2\n'
     @printf '    {{bold}}sonic{{reset}}  {{sonic}}SONiC{{reset}}           blank: Ethernet0 and Ethernet4 unconfigured\n'
-    @[ "{{EXTRA}}" != mikrotik ] || printf '    {{bold}}mikrotik{{reset}}  {{ros}}MikroTik RouterOS{{reset}}  blank: ether2 unconfigured\n'
+    @case " {{EXTRA}} " in *" mikrotik "*) printf '    {{bold}}mikrotik{{reset}}  {{ros}}MikroTik RouterOS{{reset}}  blank: ether2 unconfigured\n' ;; esac
+    @case " {{EXTRA}} " in *" vjunos "*) printf '    {{bold}}vjunos{{reset}}  {{junos}}Juniper vJunos-switch{{reset}}  blank: ge-0/0/0 unconfigured\n' ;; esac
     @printf '\n'
     @printf '    Links: nokia ethernet-1/1 <-> sonic Ethernet0 (BGP)\n'
     @printf '           nokia ethernet-1/2 <-> sonic Ethernet4 (layer 2 trunk)\n'
-    @[ "{{EXTRA}}" != mikrotik ] || printf '           nokia ethernet-1/3 <-> mikrotik ether2\n'
+    @case " {{EXTRA}} " in *" mikrotik "*) printf '           nokia ethernet-1/3 <-> mikrotik ether2\n' ;; esac
+    @case " {{EXTRA}} " in *" vjunos "*) printf '           nokia ethernet-1/4 <-> vjunos ge-0/0/0\n' ;; esac
     @printf '    NetBox: port 8000; GitHub MCP: http://localhost:8002/mcp/readonly\n'
     @printf '\n{{note}}Expected warnings: containerlab may print these WARN lines for nokia.\n'
     @printf 'They are harmless; ignore them.{{reset}}\n'
@@ -91,7 +97,7 @@ verify: lab-verify
 lab-status:
     @{{clab_run}} inspect -t topology.clab.yml
 
-# open a node's own CLI: nokia, sonic or mikrotik
+# open a node's own CLI: nokia, sonic, mikrotik or vjunos
 [group('lab')]
 lab-cli NODE='nokia':
     #!/usr/bin/env bash
@@ -99,8 +105,8 @@ lab-cli NODE='nokia':
     case "{{NODE}}" in
       nokia)  docker exec -it clab-ac6-workshop-nokia sr_cli ;;
       sonic)  docker exec -it -u oldprotocol -w /home/oldprotocol clab-ac6-workshop-sonic bash -l ;;
-      mikrotik) ssh mikrotik ;;
-      *) echo "unknown node {{NODE}} (nokia, sonic or mikrotik)" >&2; exit 1 ;;
+      mikrotik|vjunos) ssh {{NODE}} ;;
+      *) echo "unknown node {{NODE}} (nokia, sonic, mikrotik or vjunos)" >&2; exit 1 ;;
     esac
 
 # reset for anyone stuck: tear down the lab and NetBox (keeps NetBox's data), then lab-up
@@ -204,18 +210,35 @@ sonic-image *ARGS:
 mikrotik-image:
     ./scripts/mikrotik-image.sh "{{mikrotik_image}}"
 
-# Build the MikroTik image unless it's here; lab-up mikrotik needs KVM, which a Codespace and Docker on a Mac lack.
+# build the optional vJunos-switch image locally from Juniper's qcow2 (needs no KVM; a few minutes)
+[group('setup')]
+vjunos-image QCOW2='':
+    ./scripts/vjunos-image.sh "{{vjunos_image}}" "{{QCOW2}}"
+
+# Optional nodes are QEMU VMs: they need KVM on an x86_64 host, which a Codespace and Docker on a Mac lack.
 [private]
-mikrotik-ensure:
+kvm-check NODE:
     #!/usr/bin/env bash
     set -euo pipefail
-    if ! docker run --rm --privileged alpine sh -c '[ "$(uname -m)" = x86_64 ] && test -e /dev/kvm'; then
-        echo "MikroTik needs /dev/kvm, which this Docker host lacks (Codespaces and Docker on a Mac have none); use a Linux x86_64 machine with KVM." >&2
-        exit 1
-    fi
+    docker run --rm --privileged alpine sh -c '[ "$(uname -m)" = x86_64 ] && test -e /dev/kvm' ||
+        { echo "{{NODE}} needs /dev/kvm, which this Docker host lacks (Codespaces and Docker on a Mac have none); use a Linux x86_64 machine with KVM." >&2; exit 1; }
+
+# Build the MikroTik image unless it's here.
+[private]
+mikrotik-ensure: (kvm-check "MikroTik")
+    #!/usr/bin/env bash
+    set -euo pipefail
     docker image inspect "{{mikrotik_image}}" >/dev/null 2>&1 && exit 0
     echo "Building the MikroTik image (once, about 2 minutes)."
     ./scripts/mikrotik-image.sh "{{mikrotik_image}}"
+
+# Require the vJunos-switch image, which only you can build: Juniper's qcow2 needs a manual download.
+[private]
+vjunos-ensure: (kvm-check "vJunos-switch")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    docker image inspect "{{vjunos_image}}" >/dev/null 2>&1 && exit 0
+    ./scripts/vjunos-image.sh "{{vjunos_image}}"
 
 # remove the workshop's SSH config and key (undoes lab-setup's SSH step)
 [group('setup')]

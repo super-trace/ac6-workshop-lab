@@ -2,7 +2,7 @@
 # Run after deploy: wait for both devices, make sure nokia's startup config
 # took, turn sonic's two lab ports on, seed its off-standard descriptions and
 # save sonic's blank baseline for `just lab-reset-sonic`, then wait for SSH on
-# both (and the optional mikrotik, when deployed).
+# both (and the optional mikrotik and vjunos, when deployed).
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -55,13 +55,20 @@ echo "sonic: ports up, blank baseline saved."
 
 # SSH comes up a little after the CLI. Only wait if the aliases are installed.
 nodes=(nokia sonic)
-docker inspect "${lab}-mikrotik" >/dev/null 2>&1 && nodes+=(mikrotik)
+for node in mikrotik vjunos; do
+    docker inspect "${lab}-${node}" >/dev/null 2>&1 && nodes+=("${node}")
+done
 for node in "${nodes[@]}"; do
-    ssh -G "${node}" 2>/dev/null | grep -qE '^port 240[123]$' || continue
-    # RouterOS boots in 1-2 minutes, so it gets a longer wait.
-    cmd="show version"; tries=30
-    [ "${node}" = mikrotik ] && { cmd="/system resource print"; tries=120; }
-    for _ in $(seq 1 "${tries}"); do
+    ssh -G "${node}" 2>/dev/null | grep -qE '^port 240[1-4]$' || continue
+    cmd="show version"; secs=60
+    case "${node}" in
+        mikrotik) cmd="/system resource print"; secs=240 ;;
+        vjunos)
+            secs=1200
+            echo "vjunos: slow, boots in ~15 minutes; watch with: docker logs -f ${lab}-vjunos" ;;
+    esac
+    deadline=$((SECONDS + secs))
+    while (( SECONDS < deadline )); do
         if ssh -o BatchMode=yes -o ConnectTimeout=5 "${node}" "${cmd}" >/dev/null 2>&1; then
             echo "${node}: SSH ready."
             continue 2

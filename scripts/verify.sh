@@ -67,15 +67,17 @@ for node in nokia sonic; do
     fi
 done
 
-if docker inspect "${lab}-mikrotik" >/dev/null 2>&1; then
+for node in mikrotik vjunos; do
+    docker inspect "${lab}-${node}" >/dev/null 2>&1 || continue
     echo
-    heading "mikrotik (expect SSH to answer)"
-    if ssh -o BatchMode=yes -o ConnectTimeout=10 mikrotik "/system resource print" >/dev/null 2>&1; then
-        echo "   mikrotik: ok"
+    heading "${node} (expect SSH to answer)"
+    cmd="show version"; [ "${node}" = mikrotik ] && cmd="/system resource print"
+    if ssh -o BatchMode=yes -o ConnectTimeout=10 "${node}" "${cmd}" >/dev/null 2>&1; then
+        echo "   ${node}: ok"
     else
-        fail "ssh mikrotik failed — RouterOS takes 1-2 minutes to boot; wait, or run 'just lab-up mikrotik'"
+        fail "ssh ${node} failed — it is a slow-booting VM (mikrotik 1-2 minutes, vjunos ~15); wait, or run 'just lab-up ${node}'"
     fi
-fi
+done
 
 echo
 heading "NetBox (expect the API to answer on port 8000 and to document nokia)"
