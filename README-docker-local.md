@@ -75,6 +75,22 @@ From there, follow the exercises in the main
 [README](README.md#d-workshop-exercises). For a router's native CLI, run `just lab-cli nokia` or `just lab-cli sonic`. List
 all commands with `just --list`.
 
+## Optional: MikroTik
+
+`just lab-up mikrotik` adds a third node, `mikrotik` (RouterOS CHR), linked to
+`nokia` ethernet-1/3 and blank apart from the lab login. It runs as a QEMU
+VM, so it needs a Linux x86_64 host with KVM (`/dev/kvm`): not a Codespace,
+and not Docker Desktop or OrbStack on a Mac. The first run downloads CHR and
+builds the image locally (about 2 minutes; it is never published), and
+RouterOS then boots in 1-2 minutes.
+
+```sh
+just lab-up mikrotik
+ssh mikrotik        # or: stcli mikrotik (SSH port 2403)
+```
+
+CHR's free license caps every interface at 1 Mbps.
+
 ## NetBox
 
 `just lab-up` starts NetBox at http://localhost:8000 (login
@@ -95,5 +111,5 @@ just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2402 (and NetBox's 8000) on your
+running: both use SSH ports 2401–2403 (and NetBox's 8000) on your
 computer.

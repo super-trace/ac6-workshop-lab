@@ -2,7 +2,7 @@
 # Run after deploy: wait for both devices, make sure nokia's startup config
 # took, turn sonic's two lab ports on, seed its off-standard descriptions and
 # save sonic's blank baseline for `just lab-reset-sonic`, then wait for SSH on
-# both.
+# both (and the optional mikrotik, when deployed).
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -54,10 +54,15 @@ docker exec "${sonic}" bash -c \
 echo "sonic: ports up, blank baseline saved."
 
 # SSH comes up a little after the CLI. Only wait if the aliases are installed.
-for node in nokia sonic; do
-    ssh -G "${node}" 2>/dev/null | grep -qE '^port 240[12]$' || continue
-    for _ in $(seq 1 30); do
-        if ssh -o BatchMode=yes -o ConnectTimeout=5 "${node}" "show version" >/dev/null 2>&1; then
+nodes=(nokia sonic)
+docker inspect "${lab}-mikrotik" >/dev/null 2>&1 && nodes+=(mikrotik)
+for node in "${nodes[@]}"; do
+    ssh -G "${node}" 2>/dev/null | grep -qE '^port 240[123]$' || continue
+    # RouterOS boots in 1-2 minutes, so it gets a longer wait.
+    cmd="show version"; tries=30
+    [ "${node}" = mikrotik ] && { cmd="/system resource print"; tries=120; }
+    for _ in $(seq 1 "${tries}"); do
+        if ssh -o BatchMode=yes -o ConnectTimeout=5 "${node}" "${cmd}" >/dev/null 2>&1; then
             echo "${node}: SSH ready."
             continue 2
         fi

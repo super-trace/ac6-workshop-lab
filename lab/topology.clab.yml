@@ -32,8 +32,17 @@ topology:
       image: ghcr.io/super-trace/ac6-workshop-lab/sonic-vs:202605
       mgmt-ipv4: 172.20.23.3
       ports: ["2402:22"]
+    # Opt-in (`just lab-up mikrotik`), local only: a QEMU VM that needs /dev/kvm.
+    # The default deploy skips it with --node-filter.
+    mikrotik:
+      kind: mikrotik_ros
+      image: vrnetlab/mikrotik_routeros:7.25.1   # built locally by scripts/mikrotik-image.sh
+      startup-config: configs/mikrotik.rsc
+      mgmt-ipv4: 172.20.23.4
+      ports: ["2403:22"]
 
   # sonic's eth1 is the wire behind its Ethernet0 port, eth2 behind Ethernet4.
   links:
     - endpoints: ["nokia:e1-1", "sonic:eth1"]   # layer 3: eBGP, 10.0.0.0/31
     - endpoints: ["nokia:e1-2", "sonic:eth2"]   # layer 2: 802.1Q trunk
+    - endpoints: ["nokia:e1-3", "mikrotik:eth1"]   # opt-in; eth1 is RouterOS ether2
