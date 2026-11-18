@@ -6,6 +6,7 @@
 # `docker pull` it.
 ARG BASE=docker-sonic-vs:202605
 FROM ${BASE}
+LABEL org.opencontainers.image.source=https://github.com/super-trace/ac6-workshop-lab
 
 # The lab login, oldprotocol / newbrain, as on every lab device. SONiC's
 # `config` commands need root, so oldprotocol gets passwordless sudo, as
