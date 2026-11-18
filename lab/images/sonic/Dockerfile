@@ -16,7 +16,7 @@ LABEL org.opencontainers.image.source=https://github.com/super-trace/ac6-worksho
 COPY ac6-workshop-key.pub /tmp/ac6-workshop-key.pub
 RUN apt-get update \
     && apt-get install -y --no-install-recommends sudo libasan8 \
-    && ! ldd /usr/bin/syncd | grep -q 'not found' \
+    && out="$(ldd /usr/bin/syncd)" && ! echo "$out" | grep -q 'not found' \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -s /bin/bash -G sudo oldprotocol \
     && echo 'oldprotocol:newbrain' | chpasswd \
