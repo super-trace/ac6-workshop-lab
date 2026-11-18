@@ -75,18 +75,27 @@ From there, follow the exercises in the main
 [README](README.md#d-workshop-exercises). For a router's native CLI, run `just lab-cli nokia` or `just lab-cli sonic`. List
 all commands with `just --list`.
 
-## Optional: MikroTik
+## Optional nodes
 
-`just lab-up mikrotik` adds a third node, `mikrotik` (RouterOS CHR), linked to
-`nokia` ethernet-1/3 and blank apart from the lab login. It runs as a QEMU
-VM, so it needs a Linux x86_64 host with KVM (`/dev/kvm`): not a Codespace,
-and not Docker Desktop or OrbStack on a Mac. The first run downloads CHR and
-builds the image locally (about 2 minutes; it is never published), and
-RouterOS then boots in 1-2 minutes.
+`just lab-up` takes any of `mikrotik`, `vjunos`, both, or neither
+(`just lab-up mikrotik vjunos`). Each adds a node linked to `nokia` and blank
+apart from the lab login. Both run as QEMU VMs, so they need a Linux x86_64
+host with KVM (`/dev/kvm`): not a Codespace, and not Docker Desktop or
+OrbStack on a Mac. Images are built locally and never published.
+
+| Node | Device | Link | SSH port | First run | Boot | Extra resources |
+| --- | --- | --- | --- | --- | --- | --- |
+| `mikrotik` | RouterOS CHR | `nokia` ethernet-1/3 | 2403 | downloads CHR, builds (about 2 minutes) | 1-2 minutes | light |
+| `vjunos` | Juniper vJunos-switch | `nokia` ethernet-1/4 (`ge-0/0/0`) | 2404 | manual download, then build | about 15 minutes | 4 vCPUs, 5 GB RAM, about 4.5 GB disk |
+
+Juniper's image has no direct download URL. Download the vJunos-switch `.qcow2`
+from <https://support.juniper.net/support/downloads/?p=vjunos-switch> (no
+account needed), then build the image and deploy:
 
 ```sh
-just lab-up mikrotik
-ssh mikrotik        # or: stcli mikrotik (SSH port 2403)
+just vjunos-image ~/Downloads/vJunos-switch-25.2R1.9.qcow2
+just lab-up vjunos
+ssh vjunos          # or: stcli vjunos (SSH port 2404)
 ```
 
 CHR's free license caps every interface at 1 Mbps.
@@ -111,5 +120,5 @@ just cleanup-ssh
 ```
 
 Do not run a Codespace port-forwarding tunnel while the local lab is
-running: both use SSH ports 2401–2403 (and NetBox's 8000) on your
+running: both use SSH ports 2401–2404 (and NetBox's 8000) on your
 computer.

@@ -40,9 +40,17 @@ topology:
       startup-config: configs/mikrotik.rsc
       mgmt-ipv4: 172.20.23.4
       ports: ["2403:22"]
+    # Opt-in (`just lab-up vjunos`), local only: a QEMU VM that needs /dev/kvm.
+    vjunos:
+      kind: juniper_vjunosswitch
+      image: vrnetlab/juniper_vjunos-switch:25.2R1.9   # built locally by scripts/vjunos-image.sh
+      startup-config: configs/vjunos.cfg
+      mgmt-ipv4: 172.20.23.5
+      ports: ["2404:22"]
 
   # sonic's eth1 is the wire behind its Ethernet0 port, eth2 behind Ethernet4.
   links:
     - endpoints: ["nokia:e1-1", "sonic:eth1"]   # layer 3: eBGP, 10.0.0.0/31
     - endpoints: ["nokia:e1-2", "sonic:eth2"]   # layer 2: 802.1Q trunk
     - endpoints: ["nokia:e1-3", "mikrotik:eth1"]   # opt-in; eth1 is RouterOS ether2
+    - endpoints: ["nokia:e1-4", "vjunos:eth1"]   # opt-in; eth1 is Junos ge-0/0/0

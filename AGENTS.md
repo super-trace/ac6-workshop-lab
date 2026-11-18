@@ -8,6 +8,7 @@ Two-node AC6 workshop lab: `nokia` (SR Linux, fully configured) and `sonic` (SON
 - `lab/inventory/`: a Nornir inventory of the lab devices. `stcli` doesn't read it; it connects through the `lab/ssh_config` aliases.
 - `lab/images/sonic/`: the lab's SONiC image, SONiC's official `docker-sonic-vs` plus the lab login, sshd and bgpd. `just sonic-image --push` rebuilds it from SONiC's pipeline and publishes `ghcr.io/super-trace/ac6-workshop-lab/sonic-vs` (a public package; SONiC is Apache-2.0).
 - `scripts/mikrotik-image.sh`, `lab/configs/mikrotik.rsc`: an optional third node, `mikrotik` (RouterOS CHR, `mikrotik_ros` kind, linked to `nokia:e1-3`), local-only because it needs `/dev/kvm`. The default `lab-up` excludes it with `--node-filter nokia,sonic`; `just lab-up mikrotik` builds the image locally (never pushed; MikroTik's redistribution terms are unclear) and deploys it.
+- `scripts/vjunos-image.sh`, `lab/configs/vjunos.cfg`: an optional node, `vjunos` (Juniper vJunos-switch, `juniper_vjunosswitch` kind, linked to `nokia:e1-4`, ~15 minute boot), local-only for the same reason. `just vjunos-image <qcow2>` builds the image from a qcow2 downloaded by hand from Juniper (never pushed; Juniper's terms forbid redistribution); the startup config is Junos curly-brace text that vrnetlab appends to its default config.
 - `scripts/`: verification, exercise checks, and setup helpers; `justfile` wraps them.
 - `lab/netbox/`: NetBox and `github-mcp`, a Caddy proxy that serves GitHub's read-only MCP server at `http://localhost:8002/mcp/readonly` with the `GITHUB_TOKEN` of the shell that ran `lab-up` (Scenario 3's `/mcp add`; localhost only) (Compose file and settings). `lab-up` starts both; its network is pinned to `172.20.24.0/24` so it can't overlap containerlab's `172.20.23.0/24`.
 - `.devcontainer/`: Codespaces configuration.
@@ -19,7 +20,7 @@ Run commands from the repository root, with Docker and `just` installed:
 - `just --list`: list recipes.
 - `just lab-setup`: fetch images and install lab SSH configuration ahead of time (the Codespace prebuild runs it). `lab-up` does both itself, so attendees never need it.
 - `just lab-up`: deploy the topology and start NetBox (port 8000) and the GitHub MCP proxy (port 8002, localhost only). It redeploys every node from `lab/configs/` (`--reconfigure`), so nothing saved inside a node survives a redeploy; NetBox's data does. It also reinstalls the SSH aliases from `lab/ssh_config` (so a `git pull` is enough after they change) and makes sure the SONiC image matches the checkout (`sonic-ensure`): the image carries a hash of its recipe (`scripts/sonic-recipe.sh`, label `ac6.recipe`), and a missing or stale one is pulled again or rebuilt with `scripts/sonic-image.sh`.
-- `just lab-up mikrotik`: also deploy the optional MikroTik node (Linux x86_64 with KVM; fails fast without it). `lab-verify` checks it only when it is running.
+- `just lab-up [mikrotik] [vjunos]`: also deploy the optional nodes (Linux x86_64 with KVM; fails fast without it). `lab-verify` checks them only when running.
 - `just lab-status`: inspect running nodes.
 - `just lab-verify`: check the baseline: nokia configured, sonic blank, both links up, SSH to both, NetBox's API, and the GitHub MCP proxy's handshake.
 - `just lab-cli <node>`: open a device's native CLI.
