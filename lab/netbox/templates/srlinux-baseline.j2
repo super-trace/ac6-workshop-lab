@@ -1,0 +1,78 @@
+{#
+  SR Linux baseline: the config NetBox says a router on the "Nokia SR Linux"
+  platform should run, as SR Linux flat set commands.
+
+  - Interfaces, descriptions, addresses and VLANs come from the device's
+    NetBox interfaces. An address on a physical port or loopback goes on its
+    subinterface 0; a child interface named <port>.<n> is subinterface <n>,
+    tagged with its untagged VLAN.
+  - Routing comes from the device's config context, key "bgp" (the
+    "SR Linux BGP" config context, assigned to the platform).
+  - Management interfaces are left out; the lab manages them.
+
+  Seeded by scripts/netbox-seed.sh from lab/netbox/templates/.
+#}
+{% set routed = [] %}
+{% for iface in device.interfaces.all() if not iface.mgmt_only and not iface.parent %}
+{% if iface.type != 'virtual' %}
+set / interface {{ iface.name }} admin-state enable
+{% endif %}
+{% if iface.description %}
+set / interface {{ iface.name }} description "{{ iface.description }}"
+{% endif %}
+{% if iface.mode == 'tagged' %}
+set / interface {{ iface.name }} vlan-tagging true
+{% endif %}
+{% for ip in iface.ip_addresses.all() %}
+{% if loop.first %}
+set / interface {{ iface.name }} subinterface 0 ipv4 admin-state enable
+{% if routed.append(iface.name ~ '.0') %}{% endif %}
+{% endif %}
+set / interface {{ iface.name }} subinterface 0 ipv4 address {{ ip.address }}
+{% endfor %}
+{% for sub in iface.child_interfaces.all() %}
+{% set index = sub.name.split('.')[-1] %}
+{% if sub.description %}
+set / interface {{ iface.name }} subinterface {{ index }} description "{{ sub.description }}"
+{% endif %}
+{% if sub.untagged_vlan %}
+set / interface {{ iface.name }} subinterface {{ index }} vlan encap single-tagged vlan-id {{ sub.untagged_vlan.vid }}
+{% endif %}
+{% for ip in sub.ip_addresses.all() %}
+{% if loop.first %}
+set / interface {{ iface.name }} subinterface {{ index }} ipv4 admin-state enable
+{% if routed.append(sub.name) %}{% endif %}
+{% endif %}
+set / interface {{ iface.name }} subinterface {{ index }} ipv4 address {{ ip.address }}
+{% endfor %}
+{% endfor %}
+
+{% endfor %}
+set / network-instance default type default
+set / network-instance default admin-state enable
+{% for name in routed %}
+set / network-instance default interface {{ name }}
+{% endfor %}
+{% if bgp is defined %}
+
+{% for prefix in bgp.advertise %}
+set / routing-policy prefix-set LOCAL prefix {{ prefix }} mask-length-range exact
+{% endfor %}
+set / routing-policy policy EXPORT-LOCAL default-action policy-result reject
+set / routing-policy policy EXPORT-LOCAL statement 10 match prefix prefix-set LOCAL
+set / routing-policy policy EXPORT-LOCAL statement 10 action policy-result accept
+set / routing-policy policy IMPORT-ALL default-action policy-result accept
+
+set / network-instance default protocols bgp admin-state enable
+set / network-instance default protocols bgp autonomous-system {{ bgp.asn }}
+set / network-instance default protocols bgp router-id {{ bgp.router_id }}
+set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
+{% for peer in bgp.neighbors %}
+set / network-instance default protocols bgp group {{ peer.group }} peer-as {{ peer.remote_as }}
+set / network-instance default protocols bgp group {{ peer.group }} description "eBGP peer AS{{ peer.remote_as }}"
+set / network-instance default protocols bgp group {{ peer.group }} export-policy [EXPORT-LOCAL]
+set / network-instance default protocols bgp group {{ peer.group }} import-policy [IMPORT-ALL]
+set / network-instance default protocols bgp neighbor {{ peer.ip }} peer-group {{ peer.group }}
+set / network-instance default protocols bgp neighbor {{ peer.ip }} description "{{ peer.description }}"
+{% endfor %}
+{% endif %}

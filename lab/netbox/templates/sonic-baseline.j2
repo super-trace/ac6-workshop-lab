@@ -1,0 +1,62 @@
+{#
+  SONiC baseline: the config NetBox says a switch on the "SONiC" platform
+  should run, as SONiC `config` commands followed by FRR configuration for
+  vtysh. SONiC has no `config` command for a port's description, so that
+  goes straight into CONFIG_DB.
+
+  - Interfaces, descriptions, addresses and VLANs come from the device's
+    NetBox interfaces: an Ethernet port in tagged mode creates and carries
+    its tagged VLANs, a LoopbackN interface is created, and every address
+    goes on its interface (a VLAN's gateway on VlanN). SONiC describes
+    physical ports only.
+  - Routing comes from the device's config context, key "bgp" (the
+    "SONiC BGP" config context, assigned to the platform).
+  - Management interfaces are left out; the lab manages them.
+
+  Seeded by scripts/netbox-seed.sh from lab/netbox/templates/.
+#}
+{% for iface in device.interfaces.all() if not iface.mgmt_only %}
+{% if iface.name.startswith('Loopback') %}
+config loopback add {{ iface.name }}
+{% endif %}
+{% if iface.description and iface.name.startswith('Ethernet') %}
+sonic-db-cli CONFIG_DB HSET "PORT|{{ iface.name }}" description "{{ iface.description }}"
+{% endif %}
+{% if iface.mode == 'tagged' %}
+{% for vlan in iface.tagged_vlans.all() %}
+config vlan add {{ vlan.vid }}
+config vlan member add {{ vlan.vid }} {{ iface.name }}
+{% endfor %}
+{% endif %}
+{% for ip in iface.ip_addresses.all() %}
+config interface ip add {{ iface.name }} {{ ip.address }}
+{% endfor %}
+{% endfor %}
+{% if bgp is defined %}
+
+! FRR (vtysh)
+{% for prefix in bgp.advertise %}
+ip prefix-list LOCAL seq {{ loop.index * 5 }} permit {{ prefix }}
+{% endfor %}
+route-map EXPORT-LOCAL permit 10
+ match ip address prefix-list LOCAL
+exit
+route-map IMPORT-ALL permit 10
+exit
+router bgp {{ bgp.asn }}
+ bgp router-id {{ bgp.router_id }}
+{% for peer in bgp.neighbors %}
+ neighbor {{ peer.ip }} remote-as {{ peer.remote_as }}
+ neighbor {{ peer.ip }} description {{ peer.description }}
+{% endfor %}
+ address-family ipv4 unicast
+{% for prefix in bgp.advertise %}
+  network {{ prefix }}
+{% endfor %}
+{% for peer in bgp.neighbors %}
+  neighbor {{ peer.ip }} route-map IMPORT-ALL in
+  neighbor {{ peer.ip }} route-map EXPORT-LOCAL out
+{% endfor %}
+ exit-address-family
+exit
+{% endif %}
