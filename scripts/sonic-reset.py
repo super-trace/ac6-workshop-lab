@@ -70,7 +70,16 @@ for table in tables:
 
 for table in reversed(tables):
     for raw, fields in base.get(table, {}).items():
-        if current.get(table, {}).get(raw) != fields:
+        changed = current.get(table, {}).get(raw)
+        if changed != fields:
+            # A description the workshop added (Ethernet4's, say) must be
+            # blanked before it's dropped: SONiC's daemons copy a field's new
+            # value to APPL_DB, which `show` reads, but never notice it being
+            # deleted, so it would linger in `show interfaces description`
+            # and fail check-standards.
+            added = {f: "" for f in (changed or {}) if f == "description" and f not in fields}
+            if added:
+                db.mod_entry(table, key_of(raw), added)
             db.set_entry(table, key_of(raw), fields)
             restored += 1
 
