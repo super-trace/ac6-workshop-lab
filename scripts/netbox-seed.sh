@@ -65,7 +65,7 @@ post dcim/sites/ "{\"name\":\"lab\",\"slug\":\"lab\",\"status\":\"active\",${why
 post dcim/manufacturers/ "{\"name\":\"Nokia\",\"slug\":\"nokia\",${why}}" >/dev/null
 post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"nokia\"},\"model\":\"7220 IXR-D2L\",\"slug\":\"7220-ixr-d2l\",\"u_height\":0,${why}}" >/dev/null
 post dcim/device-roles/ "{\"name\":\"router\",\"slug\":\"router\",\"color\":\"2196f3\",${why}}" >/dev/null
-srlinux="$(post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufacturer\":{\"slug\":\"nokia\"},\"config_template\":${srlinux_template},${why}}")"
+post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufacturer\":{\"slug\":\"nokia\"},\"config_template\":${srlinux_template},${why}}" >/dev/null
 
 # What sonic needs to be documented, for Scenario 3 to add it: sonic itself
 # isn't in NetBox. Without these the agent would create four more objects
@@ -73,19 +73,15 @@ srlinux="$(post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux
 post dcim/manufacturers/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",${why}}" >/dev/null
 post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"sonic\"},\"model\":\"SONiC virtual switch\",\"slug\":\"sonic-vs\",\"u_height\":0,${why}}" >/dev/null
 post dcim/device-roles/ "{\"name\":\"switch\",\"slug\":\"switch\",\"color\":\"4caf50\",${why}}" >/dev/null
-sonic="$(post dcim/platforms/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",\"manufacturer\":{\"slug\":\"sonic\"},\"config_template\":${sonic_template},${why}}")"
+post dcim/platforms/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",\"manufacturer\":{\"slug\":\"sonic\"},\"config_template\":${sonic_template},${why}}" >/dev/null
 
-# The templates' variables: each platform's BGP settings, as a config
-# context. nokia's match lab/configs/nokia.cfg; sonic's are what Scenario 2
-# builds (router ID 10.255.0.2 on Loopback0, which it advertises).
-context() {
-    post extras/config-contexts/ "{\"name\":\"$1\",\"weight\":1000,\"platforms\":[$2],\"data\":{\"bgp\":$3},${why}}" >/dev/null
-}
-context "SR Linux BGP" "$srlinux" '{"asn":65001,"router_id":"10.255.0.1","advertise":["10.255.0.1/32","172.16.10.0/24"],"neighbors":[{"ip":"10.0.0.1","remote_as":65002,"group":"PEER","description":"eBGP peer"}]}'
-context "SONiC BGP" "$sonic" '{"asn":65002,"router_id":"10.255.0.2","advertise":["10.255.0.2/32"],"neighbors":[{"ip":"10.0.0.0","remote_as":65001,"description":"eBGP peer AS65001"}]}'
+# Each device's BGP AS, a custom field. The templates take the rest of BGP
+# from NetBox's own data: neighbors from cables, the router ID from the
+# loopback-role address, the advertised networks from loopbacks. D.3.7 sets
+# sonic's (65002) when attendees add it.
+post extras/custom-fields/ "{\"name\":\"bgp_asn\",\"label\":\"BGP AS\",\"type\":\"integer\",\"object_types\":[\"dcim.device\"],\"group_name\":\"Routing\",\"description\":\"The device's BGP autonomous system. Config templates read it for the device and for its BGP neighbors.\",\"validation_minimum\":1,\"validation_maximum\":4294967295,${why}}" >/dev/null
 
-
-device="$(post dcim/devices/ "{\"name\":\"nokia\",\"site\":{\"slug\":\"lab\"},\"device_type\":{\"slug\":\"7220-ixr-d2l\"},\"role\":{\"slug\":\"router\"},\"platform\":{\"slug\":\"srlinux\"},\"status\":\"active\",\"comments\":\"SR Linux 25.3.2, AS 65001\",${why}}")"
+device="$(post dcim/devices/ "{\"name\":\"nokia\",\"site\":{\"slug\":\"lab\"},\"device_type\":{\"slug\":\"7220-ixr-d2l\"},\"role\":{\"slug\":\"router\"},\"platform\":{\"slug\":\"srlinux\"},\"status\":\"active\",\"comments\":\"SR Linux 25.3.2, AS 65001\",\"custom_fields\":{\"bgp_asn\":65001},${why}}")"
 
 # Drift: VLAN 130 is CAMERAS on nokia.
 vlan() { post ipam/vlans/ "{\"vid\":$1,\"name\":\"$2\",\"site\":{\"slug\":\"lab\"},\"status\":\"active\",${why}}"; }
@@ -126,4 +122,4 @@ api PATCH "dcim/devices/${device}/" "{\"primary_ip4\":${mgmt},${why}}" >/dev/nul
 
 # Last, so only a complete seed is ever skipped.
 post extras/tags/ "{\"name\":\"workshop-seed\",\"slug\":\"workshop-seed\",\"description\":\"NetBox was seeded for the AC6 workshop\",${why}}" >/dev/null
-echo "NetBox: seeded nokia (site lab, 7 interfaces, 3 VLANs, 6 IP addresses) and two config templates."
+echo "NetBox: seeded nokia (site lab, 7 interfaces, 3 VLANs, 6 IP addresses), two config templates and a BGP AS custom field."

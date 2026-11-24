@@ -685,12 +685,13 @@ the old text, so NetBox changes.
 
 #### D.3.7
 
-Now document sonic, from the switch itself:
+Now document sonic, from the switch itself. NetBox keeps each device's BGP
+AS in a custom field, **BGP AS**, which nokia already has:
 
 **In `stcli`:**
 
 ```
-Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces, their IP addresses, and cables.
+Now add sonic to NetBox the way it's configured right now: the device and its BGP AS, its loopback and connected interfaces, their IP addresses, and cables.
 ```
 
 ✅ **Expect something like:** two approvals, then sonic under **Devices** when you reload the
@@ -731,18 +732,21 @@ Check it's there:
 #### D.3.10
 
 NetBox assigns each platform a config template: one for SR Linux, one for
-SONiC. Have the agent render both and hold each device to its own:
+SONiC. Both build BGP from NetBox's own data: the device's BGP AS, and a
+neighbor at the far end of each cable, in that device's AS. Have the agent
+render both and hold each device to its own:
 
 **In `stcli`:**
 
 ```
-Use NetBox's MCP server to read the config template and config context for nokia's and sonic's platforms. Render each template with that device's data from NetBox, then compare the result with the device's running config and show me what differs.
+Use NetBox's MCP server to read the config templates for nokia's and sonic's platforms. Render each template with that device's data from NetBox, then compare the result with the device's running config and show me what differs.
 ```
 
 ✅ **Expect something like:** a confirm dialog before each NetBox MCP call (press `y`), the
 rendered config for each device, and a short list of differences. nokia
 should match on what the template covers; sonic differs wherever Scenario 2
-built something other than the template.
+built something other than the template. A render with no BGP neighbor
+means NetBox lacks the cable between them, or the far end's BGP AS.
 
 #### D.3.11
 
@@ -808,11 +812,12 @@ I need."* or *"I'd want it to connect to ___ next."*
 fixed nokia in D.1.9; NetBox is seeded with nokia's original, off-standard
 description. Anyone who skipped D.1.9 sees no difference there, and the
 check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`.
-Everything else in NetBox matches nokia: the site `lab`, the device and its
-platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130 subinterfaces,
-VLANs 110 and 120, and the other addresses. sonic isn't in NetBox:
-attendees add it in D.3.7. The seed has what that needs ready: a SONiC
-manufacturer, device type and platform, and a `switch` role.
+Everything else in NetBox matches nokia: the site `lab`, the device, its
+platform and BGP AS (65001), mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
+subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
+NetBox: attendees add it in D.3.7. The seed has what that needs ready: a
+SONiC manufacturer, device type and platform, a `switch` role, and the
+**BGP AS** custom field (sonic's is 65002).
 
 </details>
 
@@ -821,14 +826,25 @@ manufacturer, device type and platform, and a `switch` role.
 
 - **Where they are:** **Customization → Config Templates** has `SR Linux
   baseline` and `SONiC baseline`, each assigned to its platform (**Devices →
-  Platforms**). Their variables, the BGP settings, are config contexts
-  scoped to the same platforms (**Customization → Config Contexts**). The
-  source is in `lab/netbox/templates/`.
+  Platforms**). The source is in `lab/netbox/templates/`.
+- **Where BGP comes from:** no config contexts; the templates derive it all
+  from NetBox's data:
+
+  | Setting | From |
+  | --- | --- |
+  | AS | the device's **BGP AS** custom field; without one, no BGP |
+  | Neighbors | each cabled port with an address: the far end's address in the same subnet, in the far end's BGP AS |
+  | Router ID | the device's address with role **Loopback**, or else lo0's / Loopback0's |
+  | Advertised | the networks on the device's loopbacks |
+
 - **The reference answer:** open a device in NetBox and click its **Render
   Config** tab; NetBox renders the template itself. nokia's matches its
-  startup config once D.3.6 fixed the drift. sonic gets a render only once
-  it's in NetBox (D.3.7), and how close it is depends on what the agent
-  documented there and built in Scenario 2.
+  startup config once D.3.6 fixed the drift and D.3.7 added sonic with its
+  BGP AS and the cable between them; until then nokia's render has no BGP
+  neighbor. lo1 (D.3.6) is also what puts 172.16.10.0/24 in its advertised
+  networks. sonic gets a render only once it's in NetBox (D.3.7), and how
+  close it is depends on what the agent documented there and built in
+  Scenario 2.
 - **Why MCP:** `stcli`'s NetBox connection reads and writes inventory (DCIM,
   IPAM and the like), not config templates. NetBox's MCP server
   (`netboxlabs/netbox-mcp-server`) can read any NetBox object but changes

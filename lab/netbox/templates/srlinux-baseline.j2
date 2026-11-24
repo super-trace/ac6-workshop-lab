@@ -1,19 +1,25 @@
 {#
   SR Linux baseline: the config NetBox says a router on the "Nokia SR Linux"
-  platform should run, as SR Linux flat set commands.
+  platform should run, as SR Linux flat set commands. Everything comes from
+  NetBox's own data; there are no config context variables.
 
   - Interfaces, descriptions, addresses and VLANs come from the device's
     NetBox interfaces. An address on a physical port or loopback goes on its
     subinterface 0; a child interface named <port>.<n> is subinterface <n>,
     tagged with its untagged VLAN.
-  - Routing comes from the device's config context, key "bgp" (the
-    "SR Linux BGP" config context, assigned to the platform).
+  - BGP needs the device's "BGP AS" custom field (bgp_asn):
+    - Neighbors come from cables: for each cabled port with an address, the
+      device at the other end, its address in the same subnet, and that
+      device's BGP AS. A far end without a BGP AS gets no neighbor.
+    - The router ID is the device's address with role "loopback" (or, with
+      none, lo0's).
+    - The device advertises the networks on its loopbacks (lo0, lo1, ...).
   - Management interfaces are left out; the lab manages them.
 
   Seeded by scripts/netbox-seed.sh from lab/netbox/templates/.
 #}
 {% set routed = [] %}
-{% for iface in device.interfaces.all() if not iface.mgmt_only and not iface.parent %}
+{% for iface in device.interfaces.all() if not iface.mgmt_only and not iface.parent and iface.name not in ('mgmt0', 'eth0') %}
 {% if iface.type != 'virtual' %}
 set / interface {{ iface.name }} admin-state enable
 {% endif %}
@@ -53,9 +59,32 @@ set / network-instance default admin-state enable
 {% for name in routed %}
 set / network-instance default interface {{ name }}
 {% endfor %}
-{% if bgp is defined %}
+{% set asn = device.cf.get('bgp_asn') %}
+{% if asn %}
+{# What BGP needs, gathered from interfaces, addresses and cables. #}
+{% set by_role = [] %}
+{% set by_name = [] %}
+{% set advertise = [] %}
+{% set neighbors = [] %}
+{% for iface in device.interfaces.all() if not iface.mgmt_only and iface.name not in ('mgmt0', 'eth0') %}
+{% for ip in iface.ip_addresses.all() %}
+{% if ip.role == 'loopback' and by_role.append(ip.address.ip) %}{% endif %}
+{% if iface.name.startswith('lo') and iface.type == 'virtual' %}
+{% if iface.name == 'lo0' and by_name.append(ip.address.ip) %}{% endif %}
+{% if advertise.append(ip.address.cidr) %}{% endif %}
+{% endif %}
+{% if iface.cable %}
+{% for far in iface.link_peers if far.device is defined and far.device.cf.get('bgp_asn') %}
+{% for theirs in far.ip_addresses.all() if theirs.address.ip in ip.address and theirs.address.ip != ip.address.ip %}
+{% if neighbors.append({'ip': theirs.address.ip, 'asn': far.device.cf.get('bgp_asn')}) %}{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% set router_ids = by_role or by_name %}
 
-{% for prefix in bgp.advertise %}
+{% for prefix in advertise %}
 set / routing-policy prefix-set LOCAL prefix {{ prefix }} mask-length-range exact
 {% endfor %}
 set / routing-policy policy EXPORT-LOCAL default-action policy-result reject
@@ -64,15 +93,24 @@ set / routing-policy policy EXPORT-LOCAL statement 10 action policy-result accep
 set / routing-policy policy IMPORT-ALL default-action policy-result accept
 
 set / network-instance default protocols bgp admin-state enable
-set / network-instance default protocols bgp autonomous-system {{ bgp.asn }}
-set / network-instance default protocols bgp router-id {{ bgp.router_id }}
+set / network-instance default protocols bgp autonomous-system {{ asn }}
+{% if router_ids %}
+set / network-instance default protocols bgp router-id {{ router_ids[0] }}
+{% endif %}
 set / network-instance default protocols bgp afi-safi ipv4-unicast admin-state enable
-{% for peer in bgp.neighbors %}
-set / network-instance default protocols bgp group {{ peer.group }} peer-as {{ peer.remote_as }}
-set / network-instance default protocols bgp group {{ peer.group }} description "eBGP peer AS{{ peer.remote_as }}"
-set / network-instance default protocols bgp group {{ peer.group }} export-policy [EXPORT-LOCAL]
-set / network-instance default protocols bgp group {{ peer.group }} import-policy [IMPORT-ALL]
-set / network-instance default protocols bgp neighbor {{ peer.ip }} peer-group {{ peer.group }}
-set / network-instance default protocols bgp neighbor {{ peer.ip }} description "{{ peer.description }}"
+{% if neighbors %}
+{# One group, PEER, takes the first neighbor's AS; a neighbor in another AS overrides it. #}
+{% set group_as = neighbors[0].asn %}
+set / network-instance default protocols bgp group PEER peer-as {{ group_as }}
+set / network-instance default protocols bgp group PEER description "eBGP peer AS{{ group_as }}"
+set / network-instance default protocols bgp group PEER export-policy [EXPORT-LOCAL]
+set / network-instance default protocols bgp group PEER import-policy [IMPORT-ALL]
+{% for peer in neighbors %}
+set / network-instance default protocols bgp neighbor {{ peer.ip }} peer-group PEER
+{% if peer.asn != group_as %}
+set / network-instance default protocols bgp neighbor {{ peer.ip }} peer-as {{ peer.asn }}
+{% endif %}
+set / network-instance default protocols bgp neighbor {{ peer.ip }} description "eBGP peer"
 {% endfor %}
+{% endif %}
 {% endif %}

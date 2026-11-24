@@ -71,8 +71,8 @@ just lab-verify
 ✅ **You should see:** **LAB IS VERIFIED**, then **Open NetBox: http://localhost:8000**.
 
 It checks that nokia is configured, sonic is blank, both links are up, SSH
-reaches both devices, NetBox answers with its config templates, and
-NetBox's MCP server answers.
+reaches both devices, NetBox answers with its config templates and BGP AS
+field, and NetBox's MCP server answers.
 
 #### 3. Install stcli
 

@@ -83,7 +83,7 @@ else
 fi
 
 echo
-heading "NetBox MCP (expect NetBox's MCP server on port 8002, and NetBox's config templates)"
+heading "NetBox MCP (expect NetBox's MCP server on port 8002, and NetBox's config templates and BGP AS field)"
 # Only the handshake: a 200 proves the server is up and speaks MCP.
 mcp_headers=(-H "Content-Type: application/json" -H "Accept: application/json, text/event-stream")
 code="$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "${mcp_headers[@]}" \
@@ -94,12 +94,19 @@ if [ "$code" = 200 ]; then
 else
     fail "NetBox MCP server not answering on port 8002 (HTTP ${code:-none}) — run 'just netbox-up'"
 fi
-# What Scenario 3 reads through it: one config template per platform.
+# What Scenario 3 reads through it: one config template per platform, and
+# the BGP AS custom field they read (a NetBox seeded before it lacks it).
 if curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
     "http://localhost:8000/api/extras/config-templates/?brief=1" | grep -q '"count":2'; then
     echo "   config templates: SR Linux baseline, SONiC baseline"
 else
     fail "NetBox is missing its config templates — run 'just lab-reset-netbox'"
+fi
+if curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+    "http://localhost:8000/api/extras/custom-fields/?name=bgp_asn&brief=1" | grep -q '"count":1'; then
+    echo "   custom field: BGP AS (bgp_asn)"
+else
+    fail "NetBox is missing its BGP AS custom field — run 'just lab-reset-netbox'"
 fi
 
 echo
