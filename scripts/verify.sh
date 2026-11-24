@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Baseline check: nokia is fully configured, sonic is reachable and blank,
-# both links are up, both SSH aliases work, and NetBox and the GitHub MCP
-# proxy answer.
+# both links are up, both SSH aliases work, and NetBox and its MCP server
+# answer.
 set -euo pipefail
 
 lab="clab-ac6-workshop"
@@ -83,23 +83,31 @@ else
 fi
 
 echo
-heading "GitHub MCP (expect GitHub's MCP server through the proxy on port 8002)"
-# Only the handshake: a 200 proves the proxy is up and GitHub took the token.
+heading "NetBox MCP (expect NetBox's MCP server on port 8002, and NetBox's config templates and BGP AS field)"
+# Only the handshake: a 200 proves the server is up and speaks MCP.
 mcp_headers=(-H "Content-Type: application/json" -H "Accept: application/json, text/event-stream")
 code="$(curl -s --max-time 15 -o /dev/null -w '%{http_code}' "${mcp_headers[@]}" \
     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"lab-verify","version":"1"}}}' \
-    "http://localhost:8002/mcp/readonly" || true)"
-case "$code" in
-    200) echo "   GitHub answered: ok" ;;
-    401)
-        if [ "${CODESPACES:-}" = "true" ]; then
-            fail "GitHub refused the token — run 'just lab-up' again from a Codespace terminal"
-        else
-            echo "   GitHub refused: GITHUB_TOKEN wasn't set when the lab started (fine outside a Codespace; export one and run 'just netbox-up' to use it)"
-        fi
-        ;;
-    *) fail "GitHub MCP proxy not answering on port 8002 (HTTP ${code:-none}) — run 'just netbox-up'" ;;
-esac
+    "http://localhost:8002/mcp" || true)"
+if [ "$code" = 200 ]; then
+    echo "   NetBox MCP answered: ok"
+else
+    fail "NetBox MCP server not answering on port 8002 (HTTP ${code:-none}) — run 'just netbox-up'"
+fi
+# What Scenario 3 reads through it: one config template per platform, and
+# the BGP AS custom field they read (a NetBox seeded before it lacks it).
+if curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+    "http://localhost:8000/api/extras/config-templates/?brief=1" | grep -q '"count":2'; then
+    echo "   config templates: SR Linux baseline, SONiC baseline"
+else
+    fail "NetBox is missing its config templates — run 'just lab-reset-netbox'"
+fi
+if curl -s --max-time 10 -H "Authorization: Bearer ${netbox_token}" \
+    "http://localhost:8000/api/extras/custom-fields/?name=bgp_asn&brief=1" | grep -q '"count":1'; then
+    echo "   custom field: BGP AS (bgp_asn)"
+else
+    fail "NetBox is missing its BGP AS custom field — run 'just lab-reset-netbox'"
+fi
 
 echo
 if (( checks_failed )); then

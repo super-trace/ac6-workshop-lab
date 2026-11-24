@@ -45,11 +45,27 @@ fi
 
 why='"changelog_message":"workshop seed: nokia as documented"'
 
+# Each platform's Jinja2 config template (lab/netbox/templates/), read in
+# Scenario 3 over NetBox's MCP server: stcli's own NetBox link doesn't read
+# templates. Every device on the platform inherits it, sonic included once
+# attendees add it with platform SONiC.
+templates="$(cd "$(dirname "$0")/../lab/netbox/templates" && pwd)"
+# json_string FILE: the file as a JSON string (perl: no jq or python3 here).
+json_string() {
+    printf '"%s"' "$(perl -0777 -pe 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r//g; s/\n/\\n/g' "$1")"
+}
+# template NAME FILE DESCRIPTION: prints the template's id.
+template() {
+    post extras/config-templates/ "{\"name\":\"$1\",\"description\":\"$3\",\"template_code\":$(json_string "${templates}/$2"),\"environment_params\":{\"trim_blocks\":true,\"lstrip_blocks\":true},${why}}"
+}
+srlinux_template="$(template "SR Linux baseline" srlinux-baseline.j2 "Interfaces, addresses, VLANs and BGP for an SR Linux router, as set commands")"
+sonic_template="$(template "SONiC baseline" sonic-baseline.j2 "Interfaces, addresses, VLANs and BGP for a SONiC switch, as config commands and FRR")"
+
 post dcim/sites/ "{\"name\":\"lab\",\"slug\":\"lab\",\"status\":\"active\",${why}}" >/dev/null
 post dcim/manufacturers/ "{\"name\":\"Nokia\",\"slug\":\"nokia\",${why}}" >/dev/null
 post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"nokia\"},\"model\":\"7220 IXR-D2L\",\"slug\":\"7220-ixr-d2l\",\"u_height\":0,${why}}" >/dev/null
 post dcim/device-roles/ "{\"name\":\"router\",\"slug\":\"router\",\"color\":\"2196f3\",${why}}" >/dev/null
-post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufacturer\":{\"slug\":\"nokia\"},${why}}" >/dev/null
+post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufacturer\":{\"slug\":\"nokia\"},\"config_template\":${srlinux_template},${why}}" >/dev/null
 
 # What sonic needs to be documented, for Scenario 3 to add it: sonic itself
 # isn't in NetBox. Without these the agent would create four more objects
@@ -57,9 +73,15 @@ post dcim/platforms/ "{\"name\":\"Nokia SR Linux\",\"slug\":\"srlinux\",\"manufa
 post dcim/manufacturers/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",${why}}" >/dev/null
 post dcim/device-types/ "{\"manufacturer\":{\"slug\":\"sonic\"},\"model\":\"SONiC virtual switch\",\"slug\":\"sonic-vs\",\"u_height\":0,${why}}" >/dev/null
 post dcim/device-roles/ "{\"name\":\"switch\",\"slug\":\"switch\",\"color\":\"4caf50\",${why}}" >/dev/null
-post dcim/platforms/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",\"manufacturer\":{\"slug\":\"sonic\"},${why}}" >/dev/null
+post dcim/platforms/ "{\"name\":\"SONiC\",\"slug\":\"sonic\",\"manufacturer\":{\"slug\":\"sonic\"},\"config_template\":${sonic_template},${why}}" >/dev/null
 
-device="$(post dcim/devices/ "{\"name\":\"nokia\",\"site\":{\"slug\":\"lab\"},\"device_type\":{\"slug\":\"7220-ixr-d2l\"},\"role\":{\"slug\":\"router\"},\"platform\":{\"slug\":\"srlinux\"},\"status\":\"active\",\"comments\":\"SR Linux 25.3.2, AS 65001\",${why}}")"
+# Each device's BGP AS, a custom field. The templates take the rest of BGP
+# from NetBox's own data: neighbors from cables, the router ID from the
+# loopback-role address, the advertised networks from loopbacks. D.3.7 sets
+# sonic's (65002) when attendees add it.
+post extras/custom-fields/ "{\"name\":\"bgp_asn\",\"label\":\"BGP AS\",\"type\":\"integer\",\"object_types\":[\"dcim.device\"],\"group_name\":\"Routing\",\"description\":\"The device's BGP autonomous system. Config templates read it for the device and for its BGP neighbors.\",\"validation_minimum\":1,\"validation_maximum\":4294967295,${why}}" >/dev/null
+
+device="$(post dcim/devices/ "{\"name\":\"nokia\",\"site\":{\"slug\":\"lab\"},\"device_type\":{\"slug\":\"7220-ixr-d2l\"},\"role\":{\"slug\":\"router\"},\"platform\":{\"slug\":\"srlinux\"},\"status\":\"active\",\"comments\":\"SR Linux 25.3.2, AS 65001\",\"custom_fields\":{\"bgp_asn\":65001},${why}}")"
 
 # Drift: VLAN 130 is CAMERAS on nokia.
 vlan() { post ipam/vlans/ "{\"vid\":$1,\"name\":\"$2\",\"site\":{\"slug\":\"lab\"},\"status\":\"active\",${why}}"; }
@@ -100,4 +122,4 @@ api PATCH "dcim/devices/${device}/" "{\"primary_ip4\":${mgmt},${why}}" >/dev/nul
 
 # Last, so only a complete seed is ever skipped.
 post extras/tags/ "{\"name\":\"workshop-seed\",\"slug\":\"workshop-seed\",\"description\":\"NetBox was seeded for the AC6 workshop\",${why}}" >/dev/null
-echo "NetBox: seeded nokia (site lab, 7 interfaces, 3 VLANs, 6 IP addresses)."
+echo "NetBox: seeded nokia (site lab, 7 interfaces, 3 VLANs, 6 IP addresses), two config templates and a BGP AS custom field."

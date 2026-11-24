@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1120" height="736" viewBox="0 0 1120 736" role="img" aria-labelledby="title description">
   <title id="title">AC6 workshop lab topology</title>
-  <desc id="description">Nokia SR Linux, configured at management address 172.20.23.2/24, connects to a blank SONiC switch at 172.20.23.3/24 over two physical links. The lab SSH aliases forward Nokia to 127.0.0.1:2401 and SONiC to 127.0.0.1:2402. The eBGP link joins ethernet-1/1, 10.0.0.0/31 in AS 65001, to Ethernet0, with target address 10.0.0.1/31 in AS 65002. The 802.1Q trunk joins ethernet-1/2 to Ethernet4 and carries VLANs 110, 120 and 130 on Nokia. The workshop configures both links on SONiC. NetBox 4.7 provides its UI and API at http://localhost:8000. It initially documents Nokia with intentional drift; SONiC is not yet documented. The dashed line represents documentation, not a physical connection.</desc>
+  <desc id="description">Nokia SR Linux, configured at management address 172.20.23.2/24, connects to a blank SONiC switch at 172.20.23.3/24 over two physical links. The lab SSH aliases forward Nokia to 127.0.0.1:2401 and SONiC to 127.0.0.1:2402. The eBGP link joins ethernet-1/1, 10.0.0.0/31 in AS 65001, to Ethernet0, with target address 10.0.0.1/31 in AS 65002. The 802.1Q trunk joins ethernet-1/2 to Ethernet4 and carries VLANs 110, 120 and 130 on Nokia. The workshop configures both links on SONiC. NetBox 4.7 provides its UI and API at http://localhost:8000, and NetBox's MCP server listens at http://localhost:8002/mcp. It initially documents Nokia with intentional drift; SONiC is not yet documented. The dashed line represents documentation, not a physical connection.</desc>
   <defs>
     <style>
       text { font-family: Arial, Helvetica, sans-serif; fill: #172b45; }
@@ -76,7 +76,7 @@
   <text x="86" y="659" class="small muted">Source of truth</text>
   <path d="M302 610 V662" stroke="#e4eaf0"/>
   <text x="328" y="628" font-size="19">NetBox 4.7</text>
-  <text x="328" y="655" class="small muted">UI + API: localhost:8000</text>
+  <text x="328" y="655" class="small muted">UI + API :8000 · MCP :8002</text>
   <path d="M567 610 V662" stroke="#e4eaf0"/>
   <text x="593" y="628" font-size="19">Nokia documented, with intentional drift</text>
   <text x="593" y="655" class="small muted">SONiC is not in NetBox yet</text>

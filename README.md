@@ -43,7 +43,7 @@ While it starts, here's the lab you'll work with:
               │ documents nokia (drift included); sonic isn't in it yet
   ┌───────────┴─────────────────────────────────────────────────────────────┐
   │ netbox                              source of truth                     │
-  │ NetBox 4.7 · UI and API on :8000                                        │
+  │ NetBox 4.7 · UI and API on :8000 · MCP server on :8002                  │
   └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -104,8 +104,8 @@ source ~/.bashrc
 
 #### C.1
 
-Start the lab. It takes about 3 minutes, and also starts NetBox and readies
-GitHub's MCP server, both for Scenario 3:
+Start the lab. It takes about 3 minutes, and also starts NetBox and NetBox's
+MCP server, both for Scenario 3:
 
 **In the terminal:**
 
@@ -139,7 +139,7 @@ If it says **LAB VERIFICATION FAILED**, the failed checks are in red above
 it; see [G. Troubleshooting](#g-troubleshooting).
 
 `lab-verify` checks the starting point: nokia configured, sonic blank, both
-links up, SSH to both, and NetBox and GitHub's MCP server answering.
+links up, SSH to both, and NetBox and its MCP server answering.
 
 #### C.3
 
@@ -574,8 +574,9 @@ approvals felt ___."*
 
 ### Scenario 3: plug in the tools you already use
 
-You'll give `stcli` the tools you already use: the web, GitHub over MCP, and
-NetBox, your source of truth, which it reads and fixes.
+You'll give `stcli` the tools you already use: the web, and NetBox, your
+source of truth, which it reads and fixes, then reads further over NetBox's
+own MCP server.
 
 #### D.3.1
 
@@ -605,46 +606,6 @@ Search the web for any recent patches or security advisories for the software ve
 
 #### D.3.3
 
-Plug GitHub in. MCP is how `stcli` uses tools beyond your devices, and
-GitHub runs an MCP server. `just lab-up` already set it up for you, signed in
-with your Codespace's GitHub account, so there's no token to paste:
-
-**In `stcli`:**
-
-```
-/mcp add github http://localhost:8002/mcp/readonly
-```
-
-✅ **Expect something like:** `github` added.
-
-#### D.3.4
-
-Check it's there:
-
-**In `stcli`:**
-
-```
-/mcp list
-```
-
-✅ **You should see:** `github` in the list.
-
-#### D.3.5
-
-Ask GitHub why FRR, the routing daemon sonic runs, exchanges no eBGP routes
-until a policy allows them:
-
-**In `stcli`:**
-
-```
-Search the FRRouting/frr GitHub issues for ebgp-requires-policy. Why does eBGP exchange no routes until a policy allows them?
-```
-
-✅ **Expect something like:** a confirm dialog before each GitHub call (press `y`), then an answer
-citing the issues it read.
-
-#### D.3.6
-
 Now NetBox, the lab's source of truth. Like every real NetBox, it has
 drifted from the network; the agent will find where and fix it.
 
@@ -657,6 +618,8 @@ Look at **Devices → nokia**, and keep the tab open to watch it change.
 Use the **Open NetBox** address `just lab-verify` printed. Or, in the
 Codespace's **Ports** tab, hover over port **8000 (NetBox)** and click the
 globe icon (**Open in Browser**).
+
+Running the lab locally? It's <http://localhost:8000>.
 
 </details>
 
@@ -679,7 +642,7 @@ nbt_ac6workshop0.ac6workshopnetboxapitoken000000000000000
 The token stays in the Codespace, like your SSH password: `stcli` never
 sends it to the agent.
 
-#### D.3.7
+#### D.3.4
 
 Ask what NetBox knows. Reads from NetBox run without asking you:
 
@@ -691,7 +654,7 @@ What does NetBox document about our network? List every site, device, interface,
 
 ✅ **Expect something like:** the site `lab` and nokia, and "sonic isn't in NetBox."
 
-#### D.3.8
+#### D.3.5
 
 Compare NetBox with the real device:
 
@@ -703,7 +666,7 @@ Compare nokia's running configuration with NetBox and show me every difference.
 
 ✅ **Expect something like:** a table of differences, and "Which side is right?"
 
-#### D.3.9
+#### D.3.6
 
 Here the device is the source of truth, so NetBox is what's stale. Tell it:
 
@@ -720,14 +683,15 @@ One of the changes is your own work: the `ethernet-1/2` description you
 fixed in Scenario 1. nokia follows the standard now, and NetBox still has
 the old text, so NetBox changes.
 
-#### D.3.10
+#### D.3.7
 
-Now document sonic, from the switch itself:
+Now document sonic, from the switch itself. NetBox keeps each device's BGP
+AS in a custom field, **BGP AS**, which nokia already has:
 
 **In `stcli`:**
 
 ```
-Now add sonic to NetBox the way it's configured right now: the device, its connected interfaces, their IP addresses, and cables.
+Now add sonic to NetBox the way it's configured right now: the device and its BGP AS, its loopback and connected interfaces, their IP addresses, and cables.
 ```
 
 ✅ **Expect something like:** two approvals, then sonic under **Devices** when you reload the
@@ -735,6 +699,54 @@ NetBox tab.
 
 Each change is in NetBox's **Operations → Change Log**, with the agent's
 reason as its message.
+
+#### D.3.8
+
+NetBox holds more than inventory. Its **config templates** are Jinja2 that
+render each device's intended config from NetBox's own data. `stcli`'s
+NetBox connection reads the inventory; for everything else, plug in
+NetBox's own MCP server. MCP is how `stcli` uses tools beyond your devices,
+and `just lab-up` already started this one, signed in to NetBox for you,
+so there's no token to paste:
+
+**In `stcli`:**
+
+```
+/mcp add netbox http://localhost:8002/mcp
+```
+
+✅ **You should see:** **mcp netbox: connected (4 tools)**.
+
+#### D.3.9
+
+Check it's there:
+
+**In `stcli`:**
+
+```
+/mcp list
+```
+
+✅ **You should see:** `netbox` in the list, **connected (4 tools)**.
+
+#### D.3.10
+
+NetBox assigns each platform a config template: one for SR Linux, one for
+SONiC. Both build BGP from NetBox's own data: the device's BGP AS, and a
+neighbor at the far end of each cable, in that device's AS. Have the agent
+render both and hold each device to its own:
+
+**In `stcli`:**
+
+```
+Use NetBox's MCP server to read the config templates for nokia's and sonic's platforms. Render each template with that device's data from NetBox, then compare the result with the device's running config and show me what differs.
+```
+
+✅ **Expect something like:** a confirm dialog before each NetBox MCP call (press `y`), the
+rendered config for each device, and a short list of differences. nokia
+should match on what the template covers; sonic differs wherever Scenario 2
+built something other than the template. A render with no BGP neighbor
+means NetBox lacks the cable between them, or the far end's BGP AS.
 
 #### D.3.11
 
@@ -800,11 +812,43 @@ I need."* or *"I'd want it to connect to ___ next."*
 fixed nokia in D.1.9; NetBox is seeded with nokia's original, off-standard
 description. Anyone who skipped D.1.9 sees no difference there, and the
 check fails until nokia and NetBox both read `TRUNK: VLANs 110,120,130`.
-Everything else in NetBox matches nokia: the site `lab`, the device and its
-platform, mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130 subinterfaces,
-VLANs 110 and 120, and the other addresses. sonic isn't in NetBox:
-attendees add it in D.3.10. The seed has what that needs ready: a SONiC
-manufacturer, device type and platform, and a `switch` role.
+Everything else in NetBox matches nokia: the site `lab`, the device, its
+platform and BGP AS (65001), mgmt0, ethernet-1/1, lo0, the VLAN 110 and 130
+subinterfaces, VLANs 110 and 120, and the other addresses. sonic isn't in
+NetBox: attendees add it in D.3.7. The seed has what that needs ready: a
+SONiC manufacturer, device type and platform, a `switch` role, and the
+**BGP AS** custom field (sonic's is 65002).
+
+</details>
+
+<details>
+<summary>Facilitator reference: config templates (D.3.10)</summary>
+
+- **Where they are:** **Customization → Config Templates** has `SR Linux
+  baseline` and `SONiC baseline`, each assigned to its platform (**Devices →
+  Platforms**). The source is in `lab/netbox/templates/`.
+- **Where BGP comes from:** no config contexts; the templates derive it all
+  from NetBox's data:
+
+  | Setting | From |
+  | --- | --- |
+  | AS | the device's **BGP AS** custom field; without one, no BGP |
+  | Neighbors | each cabled port with an address: the far end's address in the same subnet, in the far end's BGP AS |
+  | Router ID | the device's address with role **Loopback**, or else lo0's / Loopback0's |
+  | Advertised | the networks on the device's loopbacks |
+
+- **The reference answer:** open a device in NetBox and click its **Render
+  Config** tab; NetBox renders the template itself. nokia's matches its
+  startup config once D.3.6 fixed the drift and D.3.7 added sonic with its
+  BGP AS and the cable between them; until then nokia's render has no BGP
+  neighbor. lo1 (D.3.6) is also what puts 172.16.10.0/24 in its advertised
+  networks. sonic gets a render only once it's in NetBox (D.3.7), and how
+  close it is depends on what the agent documented there and built in
+  Scenario 2.
+- **Why MCP:** `stcli`'s NetBox connection reads and writes inventory (DCIM,
+  IPAM and the like), not config templates. NetBox's MCP server
+  (`netboxlabs/netbox-mcp-server`) can read any NetBox object but changes
+  none: its four tools only read.
 
 </details>
 
@@ -816,8 +860,8 @@ manufacturer, device type and platform, and a `switch` role.
   allows it. Otherwise, in the Ports tab, right-click port 8000 and pick
   **Port Visibility → Public**. Anyone with the URL can then log in with the
   lab login, so keep it to this disposable lab.
-- **Without the devices:** `just netbox-up` starts NetBox and the GitHub
-  MCP proxy on their own.
+- **Without the devices:** `just netbox-up` starts NetBox and its MCP
+  server on their own.
 - **Delete its data:** `just netbox-down` stops NetBox and deletes what's in
   it; the next `just lab-up` seeds it again. (`just lab-reset-netbox` does
   both in one step.)
@@ -995,7 +1039,7 @@ Type `/help` in `stcli` for the same list, plus the keyboard shortcuts.
 | `/disconnect [name]` | Closes one device's connection; `/connect` brings it back. |
 | `/sessions` | Picks a past session to resume. |
 | `/skills` | Lists your skills; shows or deletes one. |
-| `/mcp` | Lists, adds or removes MCP servers, such as GitHub's. |
+| `/mcp` | Lists, adds or removes MCP servers, such as NetBox's. |
 | `/netbox` | Connects, shows or disconnects NetBox. |
 | `/copy` | Copies the agent's last reply. |
 | `/usage` (`/credits`) | Shows your remaining credits, and your spend and tokens over 30 days. |
